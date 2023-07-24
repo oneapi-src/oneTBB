@@ -16,16 +16,13 @@
 
 // avoid Windows macros
 #define NOMINMAX
-#include <iostream>
+#include <algorithm>
 #include <cfloat>
-#include <vector>
-#include <limits>
-#include <tbb/tbb.h>
+#include <iostream>
 #include <random>
+#include <vector>
+#include <tbb/tbb.h>
 
-//
-// The data type used in this example
-//
 struct DataItem { int id; double value; };
 using QSVector = std::vector<DataItem>;
 
@@ -35,50 +32,66 @@ using QSVector = std::vector<DataItem>;
 static QSVector makeQSData(int N);
 template<typename Iterator> void serialQuicksort(Iterator b, Iterator e);
 static void warmupTBB();
-static bool resultsAreValid(const QSVector&, const QSVector&, 
-                            const QSVector&, const QSVector&);
+static bool resultsAreValid(const QSVector&, const QSVector&);
 
 //
 // OVERVIEW
 //
-// This examples demonstrates how parallel_invoke can be used to execute 
-// functions calls in parallel. The function used to demonstrate this 
-// implements quicksort, and is compared against two sequential calls to
-// quicksort.
+// This examples demonstrates that recursively calling a function
+// that uses parallel_invoke leads to more scalable solution.
 //
 
-int main(int argc, char *argv[]) {
-  const int N = 10000000;
+template<typename Iterator>
+void parallelQuicksort(Iterator b, Iterator e) {
+  const int cutoff = 100;
 
-  // Create 4 vectors with the same random elements
-  QSVector sv1, sv2, tv1, tv2;
-  tv2 = tv1 = sv2 = sv1 = makeQSData(N);
+  if (e - b < cutoff) {
+    serialQuicksort(b, e);
+  } else {
+    // do shuffle
+    double pivot_value = b->value;
+    Iterator i = b, j = e - 1;
+    while (i != j) {
+      while (i != j && pivot_value < j->value) --j;
+      while (i != j && i->value <= pivot_value) ++i;
+      std::iter_swap(i, j);
+    }
+    std::iter_swap(b, i);
 
-  // Sort two of the vectors serially, one after the other
+    // recursive call
+    tbb::parallel_invoke(
+      [=]() { parallelQuicksort(b, i); },
+      [=]() { parallelQuicksort(i + 1, e); }
+    );
+  }
+}
+
+int main() {
+  const int N = 1000000;
+
+  // Create a vectors random elements
+  QSVector sv, tv;
+  sv = tv = makeQSData(N);
+
+  // Sort one of the vectors serially
   tbb::tick_count t0 = tbb::tick_count::now();
-  serialQuicksort(sv1.begin(), sv1.end());
-  serialQuicksort(sv2.begin(), sv2.end());
+  serialQuicksort(sv.begin(), sv.end());
   double serial_time = (tbb::tick_count::now() - t0).seconds();
 
   // Since this is a trivial example, warmup the library
   // to make the comparison meangingful
   warmupTBB();
 
-  // Sort the other two vectors in parallel using parallel_invoke
   tbb::tick_count t1 = tbb::tick_count::now();
-  tbb::parallel_invoke(
-    [&tv1]() { serialQuicksort(tv1.begin(), tv1.end()); },
-    [&tv2]() { serialQuicksort(tv2.begin(), tv2.end()); }
-  );
+  parallelQuicksort(tv.begin(), tv.end());
   double tbb_time = (tbb::tick_count::now() - t1).seconds();
 
-  if (resultsAreValid(sv1, sv2, tv1, tv2)) {
+  if (resultsAreValid(sv, tv)) {
     std::cout << "serial_time == " << serial_time << " seconds" << std::endl
               << "tbb_time == " << tbb_time << " seconds" << std::endl
-              << "speedup == " << serial_time/tbb_time << std::endl
-              << "NOTE: the maximum possible speedup is 2" << std::endl;
+              << "speedup == " << serial_time/tbb_time << std::endl;
     return 0;
-  }  
+  }
   return 1;
 }
 
@@ -142,10 +155,7 @@ static bool checkIsSorted(const QSVector& v) {
   return true;
 }
 
-static bool resultsAreValid(const QSVector& v1, const QSVector& v2, 
-                             const QSVector& v3, const QSVector& v4) {
-  return checkIsSorted(v1) && checkIsSorted(v2) 
-         && checkIsSorted(v3) && checkIsSorted(v4);
+static bool resultsAreValid(const QSVector& v1, const QSVector& v2) {
+  return checkIsSorted(v1) && checkIsSorted(v2);
 }
-
 
