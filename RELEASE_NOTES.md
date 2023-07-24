@@ -38,6 +38,6 @@ This document contains changes of oneTBB compared to the last release.
 - C++ exception handling mechanism on Windows* OS on ARM64* might corrupt memory if an exception is thrown from any oneTBB parallel algorithm (see Windows* OS on ARM64* compiler issue: https://developercommunity.visualstudio.com/t/ARM64-incorrect-stack-unwinding-for-alig/1544293).
 
 ## :hammer: Fixed Issues
-- Fixed the hang in the reserve method of concurrent unordered containers (GitHub* #1056).
-- Fixed the C++20 three-way comparison feature detection (GitHub* #1093).
+- Fixed the hang in the reserve method of concurrent unordered containers ([GitHub* #1056](http://github.com/oneapi-src/oneTBB/issues/1056)).
+- Fixed the C++20 three-way comparison feature detection ([GitHub* #1093](http://github.com/oneapi-src/oneTBB/issues/1093)).
 - Fixed oneTBB integration with CMake* in the Conda* environment.
