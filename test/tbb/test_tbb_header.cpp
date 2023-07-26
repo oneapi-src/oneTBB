@@ -165,6 +165,7 @@ static void TestExceptionClassesExports () {
     TestExceptionClassExports( std::out_of_range("test"), tbb::detail::exception_id::invalid_key );
     TestExceptionClassExports( tbb::user_abort(), tbb::detail::exception_id::user_abort );
     TestExceptionClassExports( std::runtime_error("test"), tbb::detail::exception_id::bad_tagged_msg_cast );
+    TestExceptionClassExports( tbb::unsafe_wait("test"), tbb::detail::exception_id::unsafe_wait );
 }
 
 #if __TBB_CPF_BUILD
