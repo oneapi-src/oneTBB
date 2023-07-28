@@ -60,7 +60,6 @@ numa_binding_observer* construct_binding_observer( d1::task_arena* ta, int num_s
     if ((core_type >= 0 && core_type_count() > 1) || (numa_id >= 0 && numa_node_count() > 1) || max_threads_per_core > 0) {
         binding_observer = new(allocate_memory(sizeof(numa_binding_observer))) numa_binding_observer(ta, num_slots, numa_id, core_type, max_threads_per_core);
         __TBB_ASSERT(binding_observer, "Failure during NUMA binding observer allocation and construction");
-        binding_observer->observe(true);
     }
     return binding_observer;
 }
@@ -526,6 +525,7 @@ void __TBB_EXPORTED_FUNC enqueue(d1::task& t, d1::task_group_context& ctx, d1::t
 void task_arena_impl::initialize(d1::task_arena_base& ta) {
     // Enforce global market initialization to properly initialize soft limit
     (void)governor::get_thread_data();
+
     if (ta.my_max_concurrency < 1) {
 #if __TBB_ARENA_BINDING
         d1::constraints arena_constraints = d1::constraints{}
@@ -538,14 +538,26 @@ void task_arena_impl::initialize(d1::task_arena_base& ta) {
 #endif /*!__TBB_ARENA_BINDING*/
     }
 
+#if __TBB_ARENA_BINDING
+    numa_binding_observer* observer = construct_binding_observer(
+        static_cast<d1::task_arena*>(&ta), arena::num_arena_slots(ta.my_max_concurrency, ta.my_num_reserved_slots),
+        ta.my_numa_id, ta.core_type(), ta.max_threads_per_core());
+    if (observer) {
+        observer->on_scheduler_entry(true);
+    }
+#endif /*__TBB_ARENA_BINDING*/
+
     __TBB_ASSERT(ta.my_arena.load(std::memory_order_relaxed) == nullptr, "Arena already initialized");
     unsigned priority_level = arena_priority_level(ta.my_priority);
     threading_control* thr_control = threading_control::register_public_reference();
     arena& a = arena::create(thr_control, unsigned(ta.my_max_concurrency), ta.my_num_reserved_slots, priority_level);
     ta.my_arena.store(&a, std::memory_order_release);
 #if __TBB_ARENA_BINDING
-    a.my_numa_binding_observer = construct_binding_observer(
-        static_cast<d1::task_arena*>(&ta), a.my_num_slots, ta.my_numa_id, ta.core_type(), ta.max_threads_per_core());
+    a.my_numa_binding_observer = observer;
+    if (observer) {
+        observer->on_scheduler_exit(true);
+        observer->observe(true);
+    }
 #endif /*__TBB_ARENA_BINDING*/
 }
 
