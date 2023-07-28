@@ -14,8 +14,8 @@
 
 if(EMSCRIPTEN)
   set(TBB_EMSCRIPTEN 1)
-  set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} " -pthread -sINITIAL_MEMORY=65536000 -s ALLOW_MEMORY_GROWTH=1 -s EXIT_RUNTIME=1 -s PROXY_TO_PTHREAD=1 -fexceptions")
-  set(CMAKE_CXX_LINK_FLAGS ${CMAKE_CXX_LINK_FLAGS} -pthread)
+  set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} " -pthread -fexceptions")
+  set(CMAKE_CXX_LINK_FLAGS ${CMAKE_CXX_LINK_FLAGS} " -sINITIAL_MEMORY=65536000 -s ALLOW_MEMORY_GROWTH=1 -s EXIT_RUNTIME=1")
 endif()
 
 if (MINGW)
@@ -56,12 +56,8 @@ if (CMAKE_SYSTEM_PROCESSOR MATCHES "(AMD64|amd64|i.86|x86)")
 endif()
 
 # Clang flags to prevent compiler from optimizing out security checks
-if(EMSCRIPTEN)
-    set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -Wformat -Wformat-security -Werror=format-security -fPIC)
-else()
-    set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -Wformat -Wformat-security -Werror=format-security
-    				                             -fstack-protector-strong -fPIC)
-endif()
+set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -Wformat -Wformat-security -Werror=format-security -fPIC $<$<NOT:$<IF:${EMSCRIPTEN},1,0>>:-fstack-protector-strong>)
+
 set(TBB_LIB_LINK_FLAGS ${TBB_LIB_LINK_FLAGS} -Wl,-z,relro,-z,now)
 
 set(TBB_COMMON_LINK_LIBS ${CMAKE_DL_LIBS})
