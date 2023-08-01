@@ -227,6 +227,8 @@ static void DefinitionPresence() {
     TestTypeDefinitionPresence( queuing_rw_mutex );
     TestTypeDefinitionPresence( spin_mutex );
     TestTypeDefinitionPresence( spin_rw_mutex );
+    TestTypeDefinitionPresence( mutex );
+    TestTypeDefinitionPresence( rw_mutex );
     TestTypeDefinitionPresence( speculative_spin_mutex );
     TestTypeDefinitionPresence( speculative_spin_rw_mutex );
     TestTypeDefinitionPresence( task_group_context );

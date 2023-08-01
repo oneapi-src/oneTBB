@@ -63,6 +63,8 @@
 #include "oneapi/tbb/queuing_rw_mutex.h"
 #include "oneapi/tbb/spin_mutex.h"
 #include "oneapi/tbb/spin_rw_mutex.h"
+#include "oneapi/tbb/mutex.h"
+#include "oneapi/tbb/rw_mutex.h"
 #include "oneapi/tbb/task.h"
 #include "oneapi/tbb/task_arena.h"
 #include "oneapi/tbb/task_group.h"
