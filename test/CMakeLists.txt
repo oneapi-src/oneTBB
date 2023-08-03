@@ -16,6 +16,11 @@ include(ProcessorCount)
 
 # General function for test target generation
 function(tbb_add_test)
+
+    if (TBB_EMSCRIPTEN)
+      set(TBB_TEST_LINK_FLAGS  ${TBB_COMMON_LINK_FLAGS} -fexceptions -sINITIAL_MEMORY=65536000 -sALLOW_MEMORY_GROWTH=1 -sEXIT_RUNTIME=1)
+    endif()
+
     set(oneValueArgs SUBDIR NAME SUFFIX)
     set(multiValueArgs DEPENDENCIES)
     cmake_parse_arguments(_tbb_test "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
