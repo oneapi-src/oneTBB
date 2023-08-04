@@ -53,7 +53,7 @@ The TBBbind library has three versions: `tbbbind`, `tbbbind_2_0`, and `tbbbind_2
 The search for a suitable version of the HWLOC library is enabled by default. If you want to use a specific version of the library, you can specify the path to it manually using the following CMake variables:
 
  - `CMAKE_HWLOC_<HWLOC_VER>_LIBRARY_PATH` - path to the corresponding HWLOC version shared library on Linux* OS or path to `.lib` file on Windows* OS
- - `CMAKE_HWLOC_<HWLOC_VER>_INCLUDE_PATH` - path to the corresponding HWLOC version, including directory
+ - `CMAKE_HWLOC_<HWLOC_VER>_INCLUDE_PATH` - path to the corresponding HWLOC-version including directory
 
 
 ---
