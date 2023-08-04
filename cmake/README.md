@@ -53,7 +53,7 @@ The TBBbind library has three versions: `tbbbind`, `tbbbind_2_0`, and `tbbbind_2
 The search for a suitable version of the HWLOC library is enabled by default. If you want to use a specific version of the library, you can specify the path to it manually using the following CMake variables:
 
  - `CMAKE_HWLOC_<HWLOC_VER>_LIBRARY_PATH` - path to the corresponding HWLOC version shared library on Linux* OS or path to `.lib` file on Windows* OS
- - `CMAKE_HWLOC_<HWLOC_VER>_INCLUDE_PATH` - path to the corresponding HWLOC-version including directory
+ - `CMAKE_HWLOC_<HWLOC_VER>_INCLUDE_PATH` - path to the corresponding HWLOC version including directory
 
 
 ---
@@ -240,7 +240,7 @@ target_link_libraries(foo TBB::tbb)
 oneTBB components can be passed to [find_package](https://cmake.org/cmake/help/latest/command/find_package.html) after keyword ``COMPONENTS`` or ``REQUIRED``.
 Use basic names of components (`tbb`, `tbbmalloc`, etc.).
 
-If components are not specified, then the default setting is used: `tbb`, `tbbmalloc`, and ``tbbmalloc_proxy``.
+If components are not specified, then the default set is used: `tbb`, `tbbmalloc`, and ``tbbmalloc_proxy``.
 
 If `tbbmalloc_proxy` is requested, the `tbbmalloc` component is also added and set as a dependency for `tbbmalloc_proxy`.
 
