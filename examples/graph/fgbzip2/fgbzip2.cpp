@@ -28,16 +28,6 @@
 #include "oneapi/tbb/flow_graph.h"
 #include "oneapi/tbb/tick_count.h"
 #include "oneapi/tbb/concurrent_queue.h"
-//////////GLOBAL VARIABLES
-
-    oneapi::tbb::tick_count mainStartTime = oneapi::tbb::tick_count::now();
-
-    const std::string archiveExtension = ".bz2";
-    bool verbose = false;
-    bool asyncType;
-    std::string inputFileName;
-    int blockSizeIn100KB = 1; // block size in 100KB chunks
-    std::size_t memoryLimitIn1MB = 1; // memory limit for compression in megabytes granularity
 
 // TODO: change memory allocation/deallocation to be managed in constructor/destructor
 struct Buffer {
@@ -294,7 +284,6 @@ bool endsWith(const std::string& str, const std::string& suffix) {
 //-----------------------------------------------------------------------------------------------------------------------
 
 int main(int argc, char* argv[]) {
-  /*
     oneapi::tbb::tick_count mainStartTime = oneapi::tbb::tick_count::now();
 
     const std::string archiveExtension = ".bz2";
@@ -303,7 +292,7 @@ int main(int argc, char* argv[]) {
     std::string inputFileName;
     int blockSizeIn100KB = 1; // block size in 100KB chunks
     std::size_t memoryLimitIn1MB = 1; // memory limit for compression in megabytes granularity
-  */
+
     utility::parse_cli_arguments(
         argc,
         argv,
