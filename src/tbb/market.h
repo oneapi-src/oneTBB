@@ -194,7 +194,7 @@ private:
 
     void remove_arena_from_list ( arena& a );
 
-    arena* arena_in_need ( arena_list_type* arenas, arena* hint );
+    arena* arena_in_need ( arena_list_type* arenas, arena* hint, bool should_join = true );
 
     int update_allotment ( arena_list_type* arenas, int total_demand, int max_workers );
 
@@ -240,6 +240,9 @@ public:
 
     //! Decrements market's refcount and destroys it in the end
     bool release ( bool is_public, bool blocking_terminate );
+
+    //! Check if there is an arena to join
+    bool check_for_arena_in_need();
 
     //! Return wait list
     extended_concurrent_monitor& get_wait_list() { return my_sleep_monitor; }

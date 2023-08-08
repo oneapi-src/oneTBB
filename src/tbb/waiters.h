@@ -45,6 +45,10 @@ public:
     }
 
 protected:
+    bool is_arena_empty() const {
+        return my_arena.my_pool_state.load(std::memory_order_relaxed) == arena::SNAPSHOT_EMPTY;
+    }
+
     arena& my_arena;
     stealing_loop_backoff my_backoff;
 };
@@ -57,6 +61,23 @@ public:
         __TBB_ASSERT(t == nullptr, nullptr);
 
         if (is_worker_should_leave(slot)) {
+            static constexpr std::chrono::microseconds worker_wait_leave_duration(400);
+            static_assert(worker_wait_leave_duration > std::chrono::steady_clock::duration(1), "Clock resolution is not enough for measured interval.");
+
+            for (auto t1 = std::chrono::steady_clock::now(), t2 = t1;
+                std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1) < worker_wait_leave_duration;
+                t2 = std::chrono::steady_clock::now())
+            {
+                if (!is_arena_empty() && !my_arena.is_recall_requested()) {
+                    return true;
+                }
+
+                if (my_arena.my_market->check_for_arena_in_need()) {
+                    break;
+                }
+                d0::yield();
+            }
+
             // Leave dispatch loop
             return false;
         }
@@ -108,10 +129,6 @@ private:
 class sleep_waiter : public waiter_base {
 protected:
     using waiter_base::waiter_base;
-
-    bool is_arena_empty() {
-        return my_arena.my_pool_state.load(std::memory_order_relaxed) == arena::SNAPSHOT_EMPTY;
-    }
 
     template <typename Pred>
     void sleep(std::uintptr_t uniq_tag, Pred wakeup_condition) {
