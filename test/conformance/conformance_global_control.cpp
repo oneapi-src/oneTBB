@@ -349,7 +349,7 @@ TEST_CASE("simple prolong lifetime 3") {
 
 // The test cannot work correctly with statically linked runtime.
 // TODO: investigate a failure in debug with MSVC
-#if !_MSC_VER || (defined(_DLL) && !defined(_DEBUG))
+#if (!_MSC_VER || (defined(_DLL) && !defined(_DEBUG))) && !EMSCRIPTEN
 #include <csetjmp>
 
 // Overall, the test case is not safe because the dtors might not be called during long jump.

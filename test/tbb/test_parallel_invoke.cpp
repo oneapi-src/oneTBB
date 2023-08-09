@@ -29,6 +29,7 @@
 
 //! Testing parallel_invoke memory usage
 //! \brief \ref resource_usage \ref stress
+#if !EMSCRIPTEN
 TEST_CASE("Test memory leaks") {
     std::size_t number_of_measurements = 500;
     std::size_t current_memory_usage = 0, max_memory_usage = 0, stability_counter=0;
@@ -56,6 +57,7 @@ TEST_CASE("Test memory leaks") {
     }
     REQUIRE_MESSAGE(false, "Seems like we get memory leak here.");
 }
+#endif
 
 template<typename Body>
 void test_from_2_to_10_arguments(const Body& body, const std::atomic<std::size_t>& counter) {
