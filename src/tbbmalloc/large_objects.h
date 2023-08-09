@@ -80,6 +80,7 @@ public:
     static const unsigned NumBins = (MaxSizeExp - MinSizeExp) * StepFactor;
 
     static size_t alignToBin(size_t size) {
+        MALLOC_ASSERT(size >= StepFactor, "Size must not be less than the StepFactor");
         size_t minorStepExp = BitScanRev(size) - StepFactorExp;
         return alignUp(size, 1ULL << minorStepExp);
     }
