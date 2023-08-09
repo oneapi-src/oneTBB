@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020-2021 Intel Corporation
+    Copyright (c) 2020-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -27,9 +27,9 @@
 //! \file test_parallel_invoke.cpp
 //! \brief Test for [algorithms.parallel_invoke]
 
+#if !EMSCRIPTEN
 //! Testing parallel_invoke memory usage
 //! \brief \ref resource_usage \ref stress
-#if !EMSCRIPTEN
 TEST_CASE("Test memory leaks") {
     std::size_t number_of_measurements = 500;
     std::size_t current_memory_usage = 0, max_memory_usage = 0, stability_counter=0;

@@ -197,6 +197,7 @@ endif()
 
 # -------------------------------------------------------------------
 # Common dependencies
+#force -pthread during compilation for Emscripten
 if (EMSCRIPTEN)
    set(THREADS_HAVE_PTHREAD_ARG TRUE)
 endif()

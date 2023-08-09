@@ -385,12 +385,6 @@ if (TARGET TBB::tbb)
     if (WIN32)
         tbb_add_test(SUBDIR tbb NAME test_numa_dist DEPENDENCIES TBB::tbb)
     endif()
-    tbb_add_test(SUBDIR tbb NAME test_partitioner DEPENDENCIES TBB::tbb)
-    tbb_add_test(SUBDIR tbb NAME test_parallel_invoke DEPENDENCIES TBB::tbb)
-    tbb_add_test(SUBDIR tbb NAME test_parallel_pipeline DEPENDENCIES TBB::tbb)
-    tbb_add_test(SUBDIR tbb NAME test_task_group DEPENDENCIES TBB::tbb)
-    tbb_add_test(SUBDIR tbb NAME test_task_arena DEPENDENCIES TBB::tbb)
-
     tbb_add_test(SUBDIR tbb NAME test_collaborative_call_once DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_concurrent_lru_cache DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_concurrent_unordered_map DEPENDENCIES TBB::tbb)
@@ -398,15 +392,20 @@ if (TARGET TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_concurrent_map DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_concurrent_set DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_concurrent_priority_queue DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_partitioner DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_parallel_for DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_parallel_for_each DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_parallel_reduce DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_parallel_sort DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_parallel_invoke DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_parallel_scan DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_parallel_pipeline DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_eh_algorithms DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_blocked_range DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_concurrent_vector DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_task_group DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_concurrent_hash_map DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_task_arena DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_enumerable_thread_specific DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_concurrent_queue DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_resumable_tasks DEPENDENCIES TBB::tbb)
@@ -461,7 +460,7 @@ if (TARGET TBB::tbb)
         tbb_add_tbbbind_test(SUBDIR tbb NAME test_arena_constraints)
     endif()
 
-    if ((NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "mips") AND (NOT TBB_EMSCRIPTEN))
+if ((NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "mips") AND (NOT TBB_EMSCRIPTEN))
         # TODO: Fix for MIPS
         tbb_add_test(SUBDIR tbb NAME test_tbb_fork DEPENDENCIES TBB::tbb)
     endif()
@@ -537,9 +536,9 @@ if (TARGET TBB::tbb)
 
     # HWLOC related conformance
     if (NOT TBB_EMSCRIPTEN)
-        tbb_add_tbbbind_test(SUBDIR conformance NAME conformance_arena_constraints)
+    tbb_add_tbbbind_test(SUBDIR conformance NAME conformance_arena_constraints)
     endif()
-    
+
     if (MSVC AND BUILD_SHARED_LIBS AND CMAKE_VERSION VERSION_GREATER 3.13) # LINK_OPTIONS property first appeared in 3.13
                                                     # version of the CMake
         tbb_add_test(SUBDIR tbb NAME test_implicit_linkage_on_windows)
@@ -559,12 +558,12 @@ if (TARGET TBB::tbbmalloc)
         if (NOT TBB_EMSCRIPTEN)
             # Define TBB malloc tests
 	    tbb_add_test(SUBDIR tbbmalloc NAME test_scalable_allocator DEPENDENCIES TBB::tbbmalloc)
-	    tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_pools DEPENDENCIES TBB::tbbmalloc)
-	    tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_init_shutdown DEPENDENCIES TBB::tbbmalloc)
-	    tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_regression DEPENDENCIES TBB::tbbmalloc)
-	    if (TARGET TBB::tbb)
-	        tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_shutdown_hang DEPENDENCIES TBB::tbb TBB::tbbmalloc)
-	    endif()
+            tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_pools DEPENDENCIES TBB::tbbmalloc)
+            tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_init_shutdown DEPENDENCIES TBB::tbbmalloc)
+            tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_regression DEPENDENCIES TBB::tbbmalloc)
+            if (TARGET TBB::tbb)
+                tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_shutdown_hang DEPENDENCIES TBB::tbb TBB::tbbmalloc)
+            endif()
 
             if (NOT (WINDOWS_STORE OR TBB_WINDOWS_DRIVER))
                 # TODO: Consider adding following tests on WINDOWS_STORE and TBB_WINDOWS_DRIVER platforms
@@ -577,7 +576,7 @@ if (TARGET TBB::tbbmalloc)
 
             enable_language(C)
             tbb_add_c_test(SUBDIR tbbmalloc NAME test_malloc_pure_c DEPENDENCIES TBB::tbbmalloc)
-	endif()
+        endif()
         # ----------------------------------------------------------------------------------------
         # Whitebox testing
 
@@ -631,7 +630,7 @@ if (TARGET TBB::tbbmalloc)
             # Define TBB malloc proxy tests
             tbb_add_lib_test(SUBDIR tbbmalloc NAME test_malloc_atexit DEPENDENCIES TBB::tbbmalloc_proxy TBB::tbbmalloc)
 	    if (NOT TBB_EMSCRIPTEN)
-                tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_atexit DEPENDENCIES TBB::tbbmalloc_proxy TBB::tbbmalloc _test_malloc_atexit)
+	        tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_atexit DEPENDENCIES TBB::tbbmalloc_proxy TBB::tbbmalloc _test_malloc_atexit)
 	    endif()
             tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_overload DEPENDENCIES TBB::tbbmalloc_proxy)
             tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_overload_disable DEPENDENCIES TBB::tbbmalloc_proxy TBB::tbbmalloc) # safer_msize call need to be available
