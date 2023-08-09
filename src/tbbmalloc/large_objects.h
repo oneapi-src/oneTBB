@@ -88,8 +88,10 @@ public:
     static int sizeToIdx(size_t size) {
         MALLOC_ASSERT(MinSize <= size && size <= MaxSize, ASSERT_TEXT);
         int sizeExp = (int)BitScanRev(size); // same as __TBB_Log2
+        MALLOC_ASSERT(sizeExp >= 0, "A shift amount (sizeExp) must not be negative");
         size_t majorStepSize = 1ULL << sizeExp;
         int minorStepExp = sizeExp - StepFactorExp;
+        MALLOC_ASSERT(minorStepExp >= 0, "A shift amount (minorStepExp) must not be negative");
         int minorIdx = (size - majorStepSize) >> minorStepExp;
         MALLOC_ASSERT(size == majorStepSize + ((size_t)minorIdx << minorStepExp),
             "Size is not aligned on the bin");
