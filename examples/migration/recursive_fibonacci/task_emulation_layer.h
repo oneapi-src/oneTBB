@@ -55,7 +55,7 @@ public:
     void operator() () const {
         base_task* parent_snapshot = m_parent;
         const_cast<base_task*>(this)->execute();
-        if (m_parent && parent_snapshot == m_parent) {
+        if (m_parent && parent_snapshot == m_parent && m_child_counter == 0) {
             m_parent->release();
         }
     }
@@ -70,8 +70,19 @@ public:
         return continuation;
     }
 
+    // Will not increment parent reference
     template <typename F, typename... Args>
     F create_child_of_continuation(Args&&... args) {
+        F obj{std::forward<Args>(args)...};
+        obj.reset_parent(this);
+        return obj;
+    }
+
+    // Will increment parent reference
+    template <typename F, typename... Args>
+    F create_child_of_continuation_safe(Args&&... args) {
+        this->reserve();
+
         F obj{std::forward<Args>(args)...};
         obj.reset_parent(this);
         return obj;
@@ -81,6 +92,8 @@ public:
     void recycle_as_child_of_continuation(C& c) {
         reset_parent(&c);
     }
+
+    void recycle_as_continuation() {}
 
 protected:
     void reserve() {
