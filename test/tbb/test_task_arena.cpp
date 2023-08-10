@@ -1832,6 +1832,7 @@ TEST_CASE("Test for concurrent functionality") {
 }
 
 #if !EMSCRIPTEN
+//! For emscripten, FPU control state has not been set correctly
 //! Test for arena entry consistency
 //! \brief \ref requirement \ref error_guessing
 TEST_CASE("Test for task arena entry consistency") {
@@ -1870,6 +1871,7 @@ TEST_CASE("Delegated spawn wait") {
 }
 
 #if !EMSCRIPTEN
+//! For emscripten, FPU control state has not been set correctly
 //! Test task arena isolation functionality
 //! \brief \ref requirement \ref interface
 TEST_CASE("Isolated execute") {
@@ -1893,6 +1895,7 @@ TEST_CASE("Arena workers migration") {
 }
 
 #if !EMSCRIPTEN
+//! For emscripten, FPU control state has not been set correctly
 //! Test for multiple waits, threads should not block each other
 //! \brief \ref requirement
 TEST_CASE("Multiple waits") {
@@ -1990,6 +1993,7 @@ TEST_CASE("Empty task_handle cannot be scheduled"
 #endif
 
 #if !EMSCRIPTEN
+//! For emscripten, FPU control state has not been set correctly
 //! \brief \ref error_guessing
 TEST_CASE("Test threads sleep") {
     for (auto concurrency_level : utils::concurrency_range()) {

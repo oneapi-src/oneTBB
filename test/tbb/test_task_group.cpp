@@ -756,6 +756,7 @@ namespace TestIsolationNS {
 //! \brief \ref error_guessing \ref resource_usage
 TEST_CASE("Memory leaks test is not applicable under ASAN\n" * doctest::skip(true)) {}
 #elif !EMSCRIPTEN
+//! Emscripten requires preloading of the file used to determine memory usage, hence disabled.
 //! Test for thread safety for the task_group
 //! \brief \ref error_guessing \ref resource_usage
 TEST_CASE("Thread safety test for the task group") {

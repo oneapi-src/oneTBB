@@ -28,6 +28,7 @@
 //! \brief Test for [algorithms.parallel_invoke]
 
 #if !EMSCRIPTEN
+//! Emscripten requires preloading of the file used to determine memory usage, hence disabled.
 //! Testing parallel_invoke memory usage
 //! \brief \ref resource_usage \ref stress
 TEST_CASE("Test memory leaks") {

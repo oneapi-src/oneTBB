@@ -44,6 +44,9 @@ template <typename PerBodyFunc> float test(PerBodyFunc&& body) {
 #if __TBB_USE_THREAD_SANITIZER
     // Reduce execution time under Thread Sanitizer
     const std::size_t repeats = 50;
+#elif EMSCRIPTEN
+    // Reduce execution time for emscripten
+    const std::size_t repeats = 10;
 #else
     const std::size_t repeats = 100;
 #endif
@@ -143,9 +146,7 @@ void strict_test() {
 //! \brief \ref error_guessing
 TEST_CASE("Threads respect task affinity") {
     task_affinity_retention::relaxed_test();
-#if !EMSCRIPTEN    
     task_affinity_retention::strict_test();
-#endif
 }
 
 template <typename Range>
