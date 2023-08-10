@@ -591,7 +591,7 @@ public:
 private:
     std::atomic<bool> unused;
 public:
-    TLSData(MemoryPool *mPool, Backend *bknd) : memPool(mPool), freeSlabBlocks(bknd) {}
+    TLSData(MemoryPool *mPool, Backend *bknd) : memPool(mPool), freeSlabBlocks(bknd), currCacheIdx(0) {}
     MemoryPool *getMemPool() const { return memPool; }
     Bin* getAllocationBin(size_t size);
     void release();
