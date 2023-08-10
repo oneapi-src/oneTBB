@@ -537,7 +537,6 @@ private:
     std::atomic<Block*> head;
     int         size;
     Backend    *backend;
-    bool        lastAccessMiss;
 public:
     static const int POOL_HIGH_MARK = 32;
     static const int POOL_LOW_MARK  = 8;
@@ -1646,6 +1645,7 @@ bool OrphanedBlocks::cleanup(Backend* backend)
 FreeBlockPool::ResOfGet FreeBlockPool::getBlock()
 {
     Block *b = head.exchange(nullptr);
+    bool lastAccessMiss;
 
     if (b) {
         size--;
