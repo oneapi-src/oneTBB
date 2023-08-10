@@ -536,7 +536,7 @@ if ((NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "mips") AND (NOT TBB_EMSCRIPTEN))
 
     # HWLOC related conformance
     if (NOT TBB_EMSCRIPTEN)
-    tbb_add_tbbbind_test(SUBDIR conformance NAME conformance_arena_constraints)
+        tbb_add_tbbbind_test(SUBDIR conformance NAME conformance_arena_constraints)
     endif()
 
     if (MSVC AND BUILD_SHARED_LIBS AND CMAKE_VERSION VERSION_GREATER 3.13) # LINK_OPTIONS property first appeared in 3.13
