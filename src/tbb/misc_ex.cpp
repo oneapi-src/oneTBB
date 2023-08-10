@@ -215,6 +215,7 @@ int AvailableHwConcurrency() {
         }
         fscanf(fp, ",");
     }
+    fclose(fp);
     return (num_cpus > 0) ? num_cpus : 1;
 }
 
