@@ -30,14 +30,14 @@ if { $tcl_version < $min_tcl_ver } {
 # if modulefile script name is a symlink, resolve it and then
 # get the fully qualified pathname to this modulefile script
 set scriptpath "${ModulesCurrentModulefile}"
-if { "[file type "$scriptpath"]" eq "link" } {
-    set scriptpath "[file readlink "$scriptpath"]"
+if { "[file type "${scriptpath}"]" eq "link" } {
+    set scriptpath "[file readlink "${scriptpath}"]"
 }
-set scriptpath "[file normalize "$scriptpath"]"
+set scriptpath "[file normalize "${scriptpath}"]"
 
-# define componentroot, modulefileroot, modulefilename and modulefilever
+# define componentroot, modulefilepath, modulefilename and modulefilever
 set modulefilename "[file tail [file dirname "${scriptpath}"]]"
-set modulefilever "[file tail "$scriptpath"]"
+set modulefilever "[file tail "${scriptpath}"]"
 set modulefilepath "${scriptpath}"
 set componentroot "[file dirname [file dirname [file dirname [file dirname "${scriptpath}"]]]]"
 
