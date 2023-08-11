@@ -755,7 +755,8 @@ namespace TestIsolationNS {
 //! Test for thread safety for the task_group
 //! \brief \ref error_guessing \ref resource_usage
 TEST_CASE("Memory leaks test is not applicable under ASAN\n" * doctest::skip(true)) {}
-#else
+#elif !EMSCRIPTEN
+//! Emscripten requires preloading of the file used to determine memory usage, hence disabled.
 //! Test for thread safety for the task_group
 //! \brief \ref error_guessing \ref resource_usage
 TEST_CASE("Thread safety test for the task group") {
@@ -823,7 +824,7 @@ TEST_CASE("Move semantics test for the task group") {
 //! Test for thread safety for the isolated_task_group
 //! \brief \ref error_guessing
 TEST_CASE("Memory leaks test is not applicable under ASAN\n" * doctest::skip(true)) {}
-#else
+#elif !EMSCRIPTEN
 //! Test for thread safety for the isolated_task_group
 //! \brief \ref error_guessing
 TEST_CASE("Thread safety test for the isolated task group") {

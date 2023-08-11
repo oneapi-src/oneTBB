@@ -1831,11 +1831,14 @@ TEST_CASE("Test for concurrent functionality") {
     TestConcurrentFunctionality();
 }
 
+#if !EMSCRIPTEN
+//! For emscripten, FPU control state has not been set correctly
 //! Test for arena entry consistency
 //! \brief \ref requirement \ref error_guessing
 TEST_CASE("Test for task arena entry consistency") {
     TestArenaEntryConsistency();
 }
+#endif
 
 //! Test for task arena attach functionality
 //! \brief \ref requirement \ref interface
@@ -1867,6 +1870,8 @@ TEST_CASE("Delegated spawn wait") {
     TestDelegatedSpawnWait();
 }
 
+#if !EMSCRIPTEN
+//! For emscripten, FPU control state has not been set correctly
 //! Test task arena isolation functionality
 //! \brief \ref requirement \ref interface
 TEST_CASE("Isolated execute") {
@@ -1875,6 +1880,7 @@ TEST_CASE("Isolated execute") {
         TestIsolatedExecute();
     }
 }
+#endif
 
 //! Test for TBB Workers creation limits
 //! \brief \ref requirement
@@ -1888,11 +1894,14 @@ TEST_CASE("Arena workers migration") {
     TestArenaWorkersMigration();
 }
 
+#if !EMSCRIPTEN
+//! For emscripten, FPU control state has not been set correctly
 //! Test for multiple waits, threads should not block each other
 //! \brief \ref requirement
 TEST_CASE("Multiple waits") {
     TestMultipleWaits();
 }
+#endif
 
 //! Test for small stack size settings and arena initialization
 //! \brief \ref error_guessing
@@ -1983,6 +1992,8 @@ TEST_CASE("Empty task_handle cannot be scheduled"
 }
 #endif
 
+#if !EMSCRIPTEN
+//! For emscripten, FPU control state has not been set correctly
 //! \brief \ref error_guessing
 TEST_CASE("Test threads sleep") {
     for (auto concurrency_level : utils::concurrency_range()) {
@@ -1993,6 +2004,7 @@ TEST_CASE("Test threads sleep") {
         test_threads_sleep(conc, conc);
     }
 }
+#endif
 
 #if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
 

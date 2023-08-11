@@ -192,6 +192,11 @@ endif()
 
 # -------------------------------------------------------------------
 # Common dependencies
+#force -pthread during compilation for Emscripten
+if (EMSCRIPTEN)
+   set(THREADS_HAVE_PTHREAD_ARG TRUE)
+endif()
+
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads REQUIRED)
 # -------------------------------------------------------------------
