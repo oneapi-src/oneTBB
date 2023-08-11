@@ -22,6 +22,7 @@
 #include <iostream>
 #include <numeric>
 #include <utility>
+#include <functional>
 
 extern int cutoff;
 
@@ -49,7 +50,7 @@ struct fib_computation : task_emulation::base_task {
         }
         else {
             // Continuation passing
-            auto& c = *this->create_continuation<fib_continuation>(/* children_counter = */ 2, *x);
+            auto& c = *this->allocate_continuation<fib_continuation>(/* children_counter = */ 2, *x);
             task_emulation::run_task(c.create_child_of_continuation<fib_computation>(n - 1, &c.x));
 
             // Recycling

@@ -53,7 +53,7 @@ int main(int argc, char* argv[]) {
     std::cout << "Fibonacci two tasks impl N = " << res.first << " Avg time = " << res.second << " ms"
               << std::endl;
 
-    auto res = measure(fibonacci_single_task, numbers, ntrial);
+    res = measure(fibonacci_single_task, numbers, ntrial);
     std::cout << "Fibonacci single task impl N = " << res.first << " Avg time = " << res.second << " ms"
               << std::endl;
 }

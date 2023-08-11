@@ -56,8 +56,8 @@ struct single_fib_task : task_emulation::base_task {
             *x = serial_fib_1(n);
         }
         else {
-            task_emulation::run_task(this->create_child_of_continuation_safe<single_fib_task>(n - 1, &x_l));
-            auto bypass = this->create_child_of_continuation_safe<single_fib_task>(n - 2, &x_r);
+            auto bypass = this->allocate_child_of_continuation_safe<single_fib_task>(n - 2, &x_r);
+            task_emulation::run_task(this->allocate_child_of_continuation_safe<single_fib_task>(n - 1, &x_l));
 
             // Recycling
             this->s = state::sum;
@@ -69,7 +69,7 @@ struct single_fib_task : task_emulation::base_task {
             // Consider submit another task if recursion call is not acceptable
             // i.e. instead of Recycling + Direct Body call
             // submit task_emulation::run_task(c.create_child_of_continuation<fib_computation>(n - 2, &c.y));
-            bypass.operator()();
+            bypass->operator()();
         }
     }
 
@@ -84,8 +84,7 @@ struct single_fib_task : task_emulation::base_task {
 int fibonacci_single_task(int n) {
     int sum{};
     tbb::task_group tg;
-    tg.run_and_wait(
-        task_emulation::create_root_task<single_fib_task>(/* for root task = */ tg, n, &sum));
+    task_emulation::run_and_wait(tg, task_emulation::allocate_root_task<single_fib_task>(/* for root task = */ tg, n, &sum));
     return sum;
 }
 
