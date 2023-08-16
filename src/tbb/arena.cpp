@@ -551,7 +551,7 @@ void task_arena_impl::initialize(d1::task_arena_base& ta) {
         ta.my_max_concurrency = (int)default_concurrency(arena_constraints);
 #else /*!__TBB_ARENA_BINDING*/
         ta.my_max_concurrency = (int)governor::default_num_threads();
-#endif /*__TBB_ARENA_BINDING*/
+#endif /*!__TBB_ARENA_BINDING*/
     }
 
     __TBB_ASSERT(ta.my_arena.load(std::memory_order_relaxed) == nullptr, "Arena already initialized");

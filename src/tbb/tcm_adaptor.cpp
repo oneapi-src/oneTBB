@@ -81,7 +81,7 @@ static const dynamic_link_descriptor tcm_link_table[] = {
 #define LIBRARY_EXTENSION ".dll"
 #define LIBRARY_PREFIX
 #elif __unix__
-#define LIBRARY_EXTENSION ".so"
+#define LIBRARY_EXTENSION ".so.1"
 #define LIBRARY_PREFIX "lib"
 #else
 #define LIBRARY_EXTENSION
@@ -90,7 +90,7 @@ static const dynamic_link_descriptor tcm_link_table[] = {
 
 #define TCMLIB_NAME LIBRARY_PREFIX "tcm" DEBUG_SUFFIX LIBRARY_EXTENSION
 
-bool tcm_functions_loaded{ false };
+static bool tcm_functions_loaded{ false };
 }
 
 class tcm_client : public pm_client {
@@ -110,7 +110,6 @@ public:
         return my_arena.update_concurrency(static_cast<int>(concurrency));
     }
 
-    //! The index in the array of per priority lists of arenas this object is in.
     unsigned priority_level() {
         return my_arena.priority_level();
     }
@@ -136,14 +135,17 @@ public:
 
             // The permit has changed during the reading, so the callback will be invoked soon one more time and
             // we can just skip this renegotiation iteration.
-            if (new_permit.state == TCM_PERMIT_STATE_INACTIVE) {
-                delta = update_concurrency(0);
-            }
-            else if (!new_permit.flags.stale) {
+            if (!new_permit.flags.stale) {
+                __TBB_ASSERT(
+                    new_permit.state != TCM_PERMIT_STATE_INACTIVE || new_concurrency == 0,
+                    "TCM did not nullify resources while deactivating the permit"
+                );
                 delta = update_concurrency(new_concurrency);
             }
         }
-        my_tcm_adaptor.notify_thread_request(delta);
+        if (delta) {
+            my_tcm_adaptor.notify_thread_request(delta);
+        }
     }
 
     void request_permit(tcm_client_id_t client_id) {
@@ -240,7 +242,7 @@ bool tcm_adaptor::is_initialized() {
 }
 
 void tcm_adaptor::print_version() {
-    if (tcm_functions_loaded) {
+    if (is_initialized()) {
         __TBB_ASSERT(tcm_get_version_info, nullptr);
         char buffer[1024];
         tcm_get_version_info(buffer, 1024);
