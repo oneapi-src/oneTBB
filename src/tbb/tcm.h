@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef __TCM_TYPES_HEADER
-#define __TCM_TYPES_HEADER
+#ifndef _TBB_tcm_H
+#define _TBB_tcm_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -170,4 +170,4 @@ __TCM_EXPORT tcm_result_t tcmGetVersionInfo(char* buffer, uint32_t buffer_size);
 } // extern "C"
 #endif
 
-#endif /* __TCM_TYPES_HEADER */
+#endif /* _TBB_tcm_H */
