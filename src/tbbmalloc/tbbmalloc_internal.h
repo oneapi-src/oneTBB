@@ -722,6 +722,9 @@ public:
             free(malloc(1));
         }
     }
+    private:
+        RecursiveMallocCallProtector(RecursiveMallocCallProtector&) {}
+        RecursiveMallocCallProtector& operator=(RecursiveMallocCallProtector) { return *this; }
 };
 
 #else
