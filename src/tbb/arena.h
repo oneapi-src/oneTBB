@@ -392,7 +392,7 @@ public:
 
     void set_allotment(unsigned allotment);
 
-    int update_concurrency(int concurrency);
+    int update_concurrency(unsigned concurrency);
 
     std::pair</*min workers = */ int, /*max workers = */ int> update_request(int mandatory_delta, int workers_delta);
 

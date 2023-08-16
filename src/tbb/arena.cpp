@@ -409,12 +409,9 @@ void arena::set_allotment(unsigned allotment) {
     }
 }
 
-int arena::update_concurrency(int concurrency) {
-    int delta = concurrency - static_cast<int>(my_num_workers_allotted.load(std::memory_order_relaxed));
-    if (delta != 0) {
-        my_num_workers_allotted.store(concurrency, std::memory_order_relaxed);
-    }
-    return delta;
+int arena::update_concurrency(unsigned allotment) {
+    set_allotment(allotment);
+    return allotment - static_cast<int>(my_num_workers_allotted.load(std::memory_order_relaxed));
 }
 
 std::pair<int, int> arena::update_request(int mandatory_delta, int workers_delta) {

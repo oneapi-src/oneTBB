@@ -16,6 +16,7 @@
 
 #include "oneapi/tbb/detail/_intrusive_list_node.h"
 #include "oneapi/tbb/detail/_template_helpers.h"
+#include "oneapi/tbb/task_arena.h"
 
 #include "pm_client.h"
 #include "dynamic_link.h"
@@ -107,7 +108,7 @@ public:
     }
 
     int update_concurrency(uint32_t concurrency) {
-        return my_arena.update_concurrency(static_cast<int>(concurrency));
+        return my_arena.update_concurrency(concurrency);
     }
 
     unsigned priority_level() {
@@ -122,7 +123,7 @@ public:
         return my_permit_handle;
     }
 
-    void update_permit() {
+    void actualize_permit() {
         __TBB_ASSERT(tcm_get_permit_data, nullptr);
         int delta{};
         {
@@ -175,7 +176,10 @@ public:
         __TBB_ASSERT(tcm_request_permit, nullptr);
         __TBB_ASSERT(tcm_deactivate_permit, nullptr);
 
-        if (constraints.core_type != -1 || constraints.numa_id != -1 || constraints.max_threads_per_core != -1) {
+        if (constraints.core_type            != d1::task_arena::automatic ||
+            constraints.numa_id              != d1::task_arena::automatic ||
+            constraints.max_threads_per_core != d1::task_arena::automatic)
+        {
             my_permit_constraints.max_concurrency = constraints.max_concurrency;
             my_permit_constraints.min_concurrency = 0;
             my_permit_constraints.core_type_id = constraints.core_type;
@@ -229,7 +233,7 @@ struct tcm_adaptor_impl {
 
 tcm_result_t renegotiation_callback(tcm_permit_handle_t, void* client_ptr, tcm_callback_flags_t) {
     __TBB_ASSERT(client_ptr, nullptr);
-    static_cast<tcm_client*>(client_ptr)->update_permit();
+    static_cast<tcm_client*>(client_ptr)->actualize_permit();
     return TCM_RESULT_SUCCESS;
 }
 
@@ -311,7 +315,7 @@ void tcm_adaptor::adjust_demand(pm_client& c, int mandatory_delta, int workers_d
         }
     }
 
-    client.update_permit();
+    client.actualize_permit();
 }
 
 } // namespace r1
