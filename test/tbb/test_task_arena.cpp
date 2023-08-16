@@ -1941,7 +1941,6 @@ TEST_CASE("Stress test with mixing functionality") {
     StressTestMixFunctionality();
 }
 
-#if !__TBB_TEST_TCM
 //! \brief \ref stress
 TEST_CASE("Workers oversubscription") {
     std::size_t num_threads = utils::get_platform_max_threads();
@@ -1978,7 +1977,6 @@ TEST_CASE("Workers oversubscription") {
         );
     });
 }
-#endif // __TBB_TEST_TCM
 
 #if TBB_USE_EXCEPTIONS
 //! The test for error in scheduling empty task_handle
