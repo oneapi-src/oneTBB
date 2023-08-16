@@ -186,6 +186,11 @@ class ThreadId {
 #endif
 public:
     ThreadId() : tid(GetMyTID()) {}
+    ThreadId(ThreadId &other) {
+        tid.store(other.tid.load(std::memory_order_relaxed), std::memory_order_relaxed);
+    }
+    ~ThreadId() {}
+
 #if USE_PTHREAD
     bool isCurrentThreadId() const { return pthread_equal(pthread_self(), tid.load(std::memory_order_relaxed)); }
 #else
