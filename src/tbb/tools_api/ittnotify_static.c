@@ -305,7 +305,7 @@ __itt_global _N_(_ittapi_global) = {
     __itt_collection_uninitialized,                /* collection state */
     NULL,                                          /* counter_list */
     0,                                             /* ipt_collect_events */
-    NULL                                           /* histogram_list */
+    NULL,                                          /* histogram_list */
     NULL                                           /* counter_metadata_list */
 };
 
