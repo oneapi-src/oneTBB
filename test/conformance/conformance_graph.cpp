@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020-2023 Intel Corporation
+    Copyright (c) 2020-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -67,21 +67,20 @@ void test_input_node_rf_reset_protocol(){
 
 template<typename Node>
 void test_functional_nodes_rf_reset_protocol(){
-    int concurrency_limit = 1;
-    oneapi::tbb::task_arena arena(concurrency_limit);
-    arena.execute([] {
-        oneapi::tbb::flow::graph g;
-        conformance::counting_functor<int> counting_body;
-        Node f(g, oneapi::tbb::flow::serial, counting_body);
+    oneapi::tbb::flow::graph g;
+    size_t concurrency_limit = 1;
+    oneapi::tbb::global_control control(oneapi::tbb::global_control::max_allowed_parallelism, concurrency_limit);
 
-        f.try_put(0);
-        f.try_put(0);
-        CHECK_MESSAGE((counting_body.execute_count == 0), "Body should not be executed");
-        g.reset(oneapi::tbb::flow::rf_reset_protocol);
+    conformance::counting_functor<int> counting_body;
+    Node f(g, oneapi::tbb::flow::serial, counting_body);
 
-        g.wait_for_all();
-        CHECK_MESSAGE((counting_body.execute_count == 1), "Body should be executed");
-    });
+    f.try_put(0);
+    f.try_put(0);
+    CHECK_MESSAGE((counting_body.execute_count == 0), "Body should not be executed");
+    g.reset(oneapi::tbb::flow::rf_reset_protocol);
+
+    g.wait_for_all();
+    CHECK_MESSAGE((counting_body.execute_count == 1), "Body should be executed");
 }
 
 template<typename Node, typename ...Args>

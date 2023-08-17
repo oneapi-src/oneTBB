@@ -359,6 +359,7 @@ void test() {
 
 } // namespace HighPriorityArenasTakeExecutionPrecedence
 
+
 // TODO: nested arena case
 //! Test for setting a priority to arena
 //! \brief \ref requirement
