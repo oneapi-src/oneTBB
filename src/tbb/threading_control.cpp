@@ -17,6 +17,7 @@
 #include "threading_control.h"
 #include "permit_manager.h"
 #include "market.h"
+#include "tcm_adaptor.h"
 #include "thread_dispatcher.h"
 #include "governor.h"
 #include "thread_dispatcher_client.h"
@@ -61,6 +62,12 @@ unsigned threading_control_impl::calc_workers_soft_limit(unsigned workers_hard_l
 }
 
 cache_aligned_unique_ptr<permit_manager> threading_control_impl::make_permit_manager(unsigned workers_soft_limit) {
+     if (tcm_adaptor::is_initialized()) {
+        auto tcm = make_cache_aligned_unique<tcm_adaptor>();
+        if (tcm->is_connected()) {
+            return tcm;
+        }
+    }
     return make_cache_aligned_unique<market>(workers_soft_limit);
 }
 
@@ -125,8 +132,8 @@ bool threading_control_impl::try_destroy_client(threading_control_impl::client_s
     return false;
 }
 
-void threading_control_impl::publish_client(threading_control_client tc_client) {
-    my_permit_manager->register_client(tc_client.get_pm_client());
+void threading_control_impl::publish_client(threading_control_client tc_client, d1::constraints& constraints) {
+    my_permit_manager->register_client(tc_client.get_pm_client(), constraints);
     my_thread_dispatcher->register_client(tc_client.get_thread_dispatcher_client());
 }
 
@@ -306,8 +313,8 @@ threading_control_client threading_control::create_client(arena& a) {
     return my_pimpl->create_client(a);
 }
 
-void threading_control::publish_client(threading_control_client client) {
-    return my_pimpl->publish_client(client);
+void threading_control::publish_client(threading_control_client client, d1::constraints& constraints) {
+    return my_pimpl->publish_client(client, constraints);
 }
 
 threading_control::client_snapshot threading_control::prepare_client_destruction(threading_control_client client) {

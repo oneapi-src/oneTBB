@@ -26,6 +26,7 @@ namespace r1 {
 class pm_client {
 public:
     pm_client(arena& a) : my_arena(a) {}
+    virtual ~pm_client() {}
 
     unsigned priority_level() {
         return my_arena.priority_level();
@@ -49,6 +50,11 @@ public:
         set_workers(min_max_workers.first, min_max_workers.second);
         return delta;
     }
+
+    virtual void register_thread() = 0;
+
+    virtual void unregister_thread() = 0;
+
 
 protected:
     void set_workers(int mn_w, int mx_w) {

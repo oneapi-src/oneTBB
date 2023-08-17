@@ -25,6 +25,7 @@ add_library(tbb
     itt_notify.cpp
     main.cpp
     market.cpp
+    tcm_adaptor.cpp
     misc.cpp
     misc_ex.cpp
     observer_proxy.cpp

@@ -47,7 +47,7 @@ public:
     void release(bool blocking_terminate);
 
     threading_control_client create_client(arena& a);
-    void publish_client(threading_control_client client);
+    void publish_client(threading_control_client client, d1::constraints& constraints);
 
     struct client_snapshot {
         std::uint64_t aba_epoch;
@@ -103,7 +103,7 @@ public:
     static bool unregister_lifetime_control(bool blocking_terminate);
 
     threading_control_client create_client(arena& a);
-    void publish_client(threading_control_client client);
+    void publish_client(threading_control_client client, d1::constraints& constraints);
     client_snapshot prepare_client_destruction(threading_control_client client);
     bool try_destroy_client(client_snapshot deleter);
 

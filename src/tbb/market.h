@@ -36,7 +36,7 @@ public:
     market(unsigned soft_limit);
 
     pm_client* create_client(arena& a) override;
-    void register_client(pm_client* client) override;
+    void register_client(pm_client* client, d1::constraints&) override;
     void unregister_and_destroy_client(pm_client& c) override;
 
     //! Request that arena's need in workers should be adjusted.
