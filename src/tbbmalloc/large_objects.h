@@ -85,7 +85,7 @@ public:
         return alignUp(size, 1ULL << minorStepExp);
     }
 
-    // Sizes between the power of 2 values are aproximated to StepFactor.
+    // Sizes between the power of 2 values are approximated to StepFactor.
     static int sizeToIdx(size_t size) {
         MALLOC_ASSERT(MinSize <= size && size <= MaxSize, ASSERT_TEXT);
         int sizeExp = (int)BitScanRev(size); // same as __TBB_Log2
@@ -243,7 +243,7 @@ private:
     // for fast finding of used bins and bins with non-zero usedSize;
     // indexed from the end, as we need largest 1st
     BinBitMask   bitMask;
-    // bins with lists of recently freed large blocks cached for re-use
+    // bins with lists of recently freed large blocks cached for reuse
     CacheBin bin[numBins];
 
 public:

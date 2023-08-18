@@ -750,7 +750,7 @@ namespace TestIsolatedExecuteNS {
             for ( int i = 0; i <= max_repeats; ++i ) {
                 OuterParFor<OuterPartitioner, NestedPartitioner>( outer_isolation, is_stolen )();
             }
-            REQUIRE_MESSAGE( !is_stolen, "isolate() on nested levels should prevent stealing from outer leves" );
+            REQUIRE_MESSAGE( !is_stolen, "isolate() on nested levels should prevent stealing from outer levels" );
         }
     }
 
@@ -1125,7 +1125,7 @@ void TestMultipleWaits( int num_threads, int num_bunches, int bunch_size ) {
     for ( int repeats = 0; repeats<10; ++repeats ) {
         int idx = 0;
         for ( int bunch = 0; bunch < num_bunches-1; ++bunch ) {
-            // Sync with the previous bunch of waiters to prevent "false" nested dependicies (when a nested task waits for an outer task).
+            // Sync with the previous bunch of waiters to prevent "false" nested dependencies (when a nested task waits for an outer task).
             while ( processed < bunch*bunch_size ) utils::yield();
             // Run the bunch of threads/waiters that depend on the next bunch of threads/waiters.
             for ( int i = 0; i<bunch_size; ++i ) {
@@ -1493,7 +1493,7 @@ void TestAbilityToCreateWorkers(int thread_num) {
     // Checks only some part of reserved-external threads amount:
     // 0 and 1 reserved threads are important cases but it is also needed
     // to collect some statistic data with other amount and to not consume
-    // whole test sesion time checking each amount
+    // whole test session time checking each amount
     TestArenaConcurrency(thread_num - 1, 0, int(thread_num / 2.72));
     TestArenaConcurrency(thread_num, 1, int(thread_num / 3.14));
 }

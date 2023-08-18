@@ -81,7 +81,7 @@ typical threading packages in the following ways:
 
 Specification in terms of requirements on types enables the template to
 sort many different representations of sequences, such as vectors and
-deques. Similarly, the oneTBB templates specify requirements on types,
+dequeues. Similarly, the oneTBB templates specify requirements on types,
 not particular types, and thus adapt to different data representations.
 Generic programming enables oneTBB to deliver high performance
 algorithms with broad applicability.

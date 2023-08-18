@@ -104,7 +104,7 @@ void suppress_unused_warning( const T& ) {}
  */
 static const size_t HUGE_PAGE_SIZE = 2 * 1024 * 1024;
 
-/********** End of global default constatns *********/
+/********** End of global default constants *********/
 
 /********** Various numeric parameters controlling allocations ********/
 

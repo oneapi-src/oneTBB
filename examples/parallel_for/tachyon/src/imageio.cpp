@@ -47,7 +47,7 @@
  *  imageio.cpp - This file deals with reading/writing image files
  */
 
-/* For our puposes, we're interested only in the 3 byte per pixel 24 bit
+/* For our purposes, we're interested only in the 3 byte per pixel 24 bit
  * truecolor sort of file..
  */
 

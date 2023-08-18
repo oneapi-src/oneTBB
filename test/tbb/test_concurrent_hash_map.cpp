@@ -570,13 +570,13 @@ public:
 
         bool upgrade_to_writer() const {
             // upgrade_to_writer should return false if the mutex simulates
-            // reaquiring the lock on upgrade operation
+            // reacquiring the lock on upgrade operation
             return !SimulateReacquiring;
         }
 
         bool downgrade_to_reader() const {
             // downgrade_to_reader should return false if the mutex simulates
-            // reaquiring the lock on upgrade operation
+            // reacquiring the lock on upgrade operation
             return !SimulateReacquiring;
         }
 

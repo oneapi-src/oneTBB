@@ -59,7 +59,7 @@ struct function_invoker : public task {
 }; // struct function_invoker
 
 //! Task object for managing subroots in trinary task trees.
-// Endowed with additional synchronization logic (compatible with wait object intefaces) to support
+// Endowed with additional synchronization logic (compatible with wait object interfaces) to support
 // continuation passing execution. This task spawns 2 function_invoker tasks with first and second functors
 // and then executes first functor by itself. But only the last executed functor must destruct and deallocate
 // the subroot task.

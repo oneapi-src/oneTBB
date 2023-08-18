@@ -1487,9 +1487,9 @@ void test_heterogeneous_lookup() {
     test_heterogeneous_equal_range();
 }
 
-//! Test consruction with hash_compare
+//! Test construction with hash_compare
 //! \brief \ref interface \ref requirement
-TEST_CASE("testing consruction with hash_compare") {
+TEST_CASE("testing contsruction with hash_compare") {
     TestHashCompareConstructors();
 }
 

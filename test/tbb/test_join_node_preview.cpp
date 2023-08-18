@@ -84,7 +84,7 @@ void test_follows_and_precedes_api() {
 
 //! Test follows and precedes API
 //! \brief \ref error_guessing
-TEST_CASE("Test follows and preceedes API"){
+TEST_CASE("Test follows and precedes API"){
     test_follows_and_precedes_api();
 }
 

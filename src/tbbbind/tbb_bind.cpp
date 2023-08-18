@@ -76,7 +76,7 @@ class system_topology {
 
     // Binding threads that locate in another Windows Processor groups
     // is allowed only if machine topology contains several Windows Processors groups
-    // and process affinity mask wasn`t limited manually (affinity mask cannot violates
+    // and process affinity mask wasn't limited manually (affinity mask cannot violates
     // processors group boundaries).
     bool intergroup_binding_allowed(std::size_t groups_num) { return groups_num > 1; }
 

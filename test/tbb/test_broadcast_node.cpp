@@ -267,9 +267,9 @@ TEST_CASE("Resets"){
 }
 
 #if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
-//! Test deprecated follows and preceedes API
+//! Test deprecated follows and precedes API
 //! \brief \ref error_guessing
-TEST_CASE("Follows and preceedes API"){
+TEST_CASE("Follows and precedes API"){
     test_follows_and_precedes_api();
 }
 #endif
