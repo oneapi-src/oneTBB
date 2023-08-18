@@ -672,13 +672,16 @@ class RecursiveMallocCallProtector {
     char scoped_lock_space[sizeof(MallocMutex::scoped_lock)+1];
     
 public:
-
     RecursiveMallocCallProtector() : lock_acquired(nullptr) {
         lock_acquired = new (scoped_lock_space) MallocMutex::scoped_lock( rmc_mutex );
         if (canUsePthread)
             owner_thread.store(pthread_self(), std::memory_order_relaxed);
         autoObjPtr.store(&scoped_lock_space, std::memory_order_relaxed);
     }
+
+    RecursiveMallocCallProtector(RecursiveMallocCallProtector&) = delete;
+    RecursiveMallocCallProtector& operator=(RecursiveMallocCallProtector) = delete;
+
     ~RecursiveMallocCallProtector() {
         if (lock_acquired) {
             autoObjPtr.store(nullptr, std::memory_order_relaxed);
@@ -722,9 +725,6 @@ public:
             free(malloc(1));
         }
     }
-    private:
-        RecursiveMallocCallProtector(RecursiveMallocCallProtector&) {}
-        RecursiveMallocCallProtector& operator=(RecursiveMallocCallProtector) { return *this; }
 };
 
 #else
