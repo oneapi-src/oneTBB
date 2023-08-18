@@ -99,19 +99,12 @@ struct RegisterProcessShutdownNotification {
         dlopen(MALLOCLIB_NAME, RTLD_NOW);
     }
 
+    RegisterProcessShutdownNotification(RegisterProcessShutdownNotification&) = delete;
+    RegisterProcessShutdownNotification& operator=(const RegisterProcessShutdownNotification&) = delete;
+
     ~RegisterProcessShutdownNotification() {
         __TBB_mallocProcessShutdownNotification(false);
     }
-
-private:
-    RegisterProcessShutdownNotification(RegisterProcessShutdownNotification&) {
-        MALLOC_ASSERT(false, "Illegal operation");
-    };
-
-    RegisterProcessShutdownNotification& operator=(const RegisterProcessShutdownNotification&) {
-        MALLOC_ASSERT(false, "Illegal operation");
-        return *this;
-    };
 };
 
 static RegisterProcessShutdownNotification reg;

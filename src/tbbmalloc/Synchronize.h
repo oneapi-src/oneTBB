@@ -62,15 +62,14 @@ public:
             }
             if (locked) *locked = m_taken;
         }
+
+        scoped_lock(scoped_lock& other) = delete;
+        scoped_lock& operator=(scoped_lock&) = delete;
+
         ~scoped_lock() {
             if (m_taken) {
                 m_mutex.unlock();
             }
-        }
-    private:
-        scoped_lock(scoped_lock& other) : m_mutex(other.m_mutex) {}
-        scoped_lock& operator=(scoped_lock&) {
-            return *this;
         }
     };
     friend class scoped_lock;
