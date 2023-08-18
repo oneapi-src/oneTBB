@@ -70,7 +70,7 @@ public:
     virtual void execute() = 0;
 
     template <typename C, typename... Args>
-    C* allocate_continuation(std::uint64_t ref, Args&&... args) {
+    C* allocate_predecessor(std::uint64_t ref, Args&&... args) {
         C* continuation = new C{std::forward<Args>(args)...};
         continuation->m_type = task_type::continuation;
         continuation->reset_parent(reset_parent());
@@ -79,33 +79,33 @@ public:
     }
 
     template <typename F, typename... Args>
-    F create_child_of_continuation(Args&&... args) {
-        return create_child_of_continuation_impl<F>(std::forward<Args>(args)...);
+    F create_child(Args&&... args) {
+        return create_child_impl<F>(std::forward<Args>(args)...);
     }
 
     template <typename F, typename... Args>
-    F create_child_of_continuation_safe(Args&&... args) {
+    F create_child_and_increment(Args&&... args) {
         add_reference();
-        return create_child_of_continuation_impl<F>(std::forward<Args>(args)...);
+        return create_child_impl<F>(std::forward<Args>(args)...);
     }
 
     template <typename F, typename... Args>
-    F* allocate_child_of_continuation(Args&&... args) {
-        return allocate_child_of_continuation_impl<F>(std::forward<Args>(args)...);
+    F* allocate_child(Args&&... args) {
+        return allocate_child_impl<F>(std::forward<Args>(args)...);
     }
 
     template <typename F, typename... Args>
-    F* allocate_child_of_continuation_safe(Args&&... args) {
+    F* allocate_child_and_increment(Args&&... args) {
         add_reference();
-        return allocate_child_of_continuation_impl<F>(std::forward<Args>(args)...);
+        return allocate_child_impl<F>(std::forward<Args>(args)...);
     }
 
     template <typename C>
-    void recycle_as_child_of_continuation(C& c) {
+    void recycle_as_child_of_predecessor(C& c) {
         reset_parent(&c);
     }
 
-    void recycle_as_continuation() {
+    void recycle_as_predecessor() {
         m_type = task_type::continuation;
     }
 
@@ -134,7 +134,7 @@ private:
     friend F* allocate_root_task(tbb::task_group& tg, Args&&... args);
 
     template <typename F, typename... Args>
-    F create_child_of_continuation_impl(Args&&... args) {
+    F create_child_impl(Args&&... args) {
         F obj{std::forward<Args>(args)...};
         obj.m_type = task_type::created;
         obj.reset_parent(this);
@@ -142,7 +142,7 @@ private:
     }
 
     template <typename F, typename... Args>
-    F* allocate_child_of_continuation_impl(Args&&... args) {
+    F* allocate_child_impl(Args&&... args) {
         F* obj = new F{std::forward<Args>(args)...};
         obj->m_type = task_type::allocated;
         obj->reset_parent(this);

@@ -50,11 +50,11 @@ struct fib_computation : task_emulation::base_task {
         }
         else {
             // Continuation passing
-            auto& c = *this->allocate_continuation<fib_continuation>(/* children_counter = */ 2, *x);
-            task_emulation::run_task(c.create_child_of_continuation<fib_computation>(n - 1, &c.x));
+            auto& c = *this->allocate_predecessor<fib_continuation>(/* children_counter = */ 2, *x);
+            task_emulation::run_task(c.create_child<fib_computation>(n - 1, &c.x));
 
             // Recycling
-            this->recycle_as_child_of_continuation(c);
+            this->recycle_as_child_of_predecessor(c);
             n = n - 2;
             x = &c.y;
 
@@ -63,7 +63,7 @@ struct fib_computation : task_emulation::base_task {
             // `return task_group::defer()` (check Migration Guide).
             // Consider submit another task if recursion call is not acceptable
             // i.e. instead of Recycling + Direct Body call
-            // submit task_emulation::run_task(c.create_child_of_continuation<fib_computation>(n - 2, &c.y));
+            // submit task_emulation::run_task(c.create_child<fib_computation>(n - 2, &c.y));
             this->operator()();
         }
     }

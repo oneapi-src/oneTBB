@@ -56,19 +56,19 @@ struct single_fib_task : task_emulation::base_task {
             *x = serial_fib_1(n);
         }
         else {
-            auto bypass = this->allocate_child_of_continuation_safe<single_fib_task>(n - 2, &x_r);
-            task_emulation::run_task(this->allocate_child_of_continuation_safe<single_fib_task>(n - 1, &x_l));
+            auto bypass = this->allocate_child_and_increment<single_fib_task>(n - 2, &x_r);
+            task_emulation::run_task(this->allocate_child_and_increment<single_fib_task>(n - 1, &x_l));
 
             // Recycling
             this->s = state::sum;
-            this->recycle_as_continuation();
+            this->recycle_as_predecessor();
 
             // Bypass is not supported by task_emulation and next_task executed directly.
             // However, the old-TBB bypass behavior can be achieved with
             // `return task_group::defer()` (check Migration Guide).
             // Consider submit another task if recursion call is not acceptable
-            // i.e. instead of Recycling + Direct Body call
-            // submit task_emulation::run_task(c.create_child_of_continuation<fib_computation>(n - 2, &c.y));
+            // i.e. instead of Direct Body call
+            // submit task_emulation::run_task(this->allocate_child_and_increment<single_fib_task>(n - 2, &x_r));
             bypass->operator()();
         }
     }
