@@ -61,7 +61,7 @@ struct single_fib_task : task_emulation::base_task {
 
             // Recycling
             this->s = state::sum;
-            this->recycle_as_predecessor();
+            this->recycle_as_continuation();
 
             // Bypass is not supported by task_emulation and next_task executed directly.
             // However, the old-TBB bypass behavior can be achieved with

@@ -50,11 +50,11 @@ struct fib_computation : task_emulation::base_task {
         }
         else {
             // Continuation passing
-            auto& c = *this->allocate_predecessor<fib_continuation>(/* children_counter = */ 2, *x);
+            auto& c = *this->allocate_continuation<fib_continuation>(/* children_counter = */ 2, *x);
             task_emulation::run_task(c.create_child<fib_computation>(n - 1, &c.x));
 
             // Recycling
-            this->recycle_as_child_of_predecessor(c);
+            this->recycle_as_child_of(c);
             n = n - 2;
             x = &c.y;
 

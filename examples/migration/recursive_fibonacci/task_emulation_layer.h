@@ -70,7 +70,7 @@ public:
     virtual void execute() = 0;
 
     template <typename C, typename... Args>
-    C* allocate_predecessor(std::uint64_t ref, Args&&... args) {
+    C* allocate_continuation(std::uint64_t ref, Args&&... args) {
         C* continuation = new C{std::forward<Args>(args)...};
         continuation->m_type = task_type::continuation;
         continuation->reset_parent(reset_parent());
@@ -101,11 +101,11 @@ public:
     }
 
     template <typename C>
-    void recycle_as_child_of_predecessor(C& c) {
+    void recycle_as_child_of(C& c) {
         reset_parent(&c);
     }
 
-    void recycle_as_predecessor() {
+    void recycle_as_continuation() {
         m_type = task_type::continuation;
     }
 
