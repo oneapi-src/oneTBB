@@ -1489,7 +1489,7 @@ void test_heterogeneous_lookup() {
 
 //! Test construction with hash_compare
 //! \brief \ref interface \ref requirement
-TEST_CASE("testing contsruction with hash_compare") {
+TEST_CASE("testing construction with hash_compare") {
     TestHashCompareConstructors();
 }
 
