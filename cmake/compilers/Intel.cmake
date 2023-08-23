@@ -15,9 +15,12 @@
 if (MSVC)
     include(${CMAKE_CURRENT_LIST_DIR}/MSVC.cmake)
     set(TBB_WARNING_LEVEL ${TBB_WARNING_LEVEL} /W3)
-    set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} /Qconditional-branch=keep
-                                 /Qconditional-branch=pattern-report
-                                 /Qconditonal-branch=pattern-fix)
+    #Spectre Variant 1 Mitigation
+    set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} /Qconditonal-branch=pattern-report)
+    #Spectre Variant 2 Mitigation
+    set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} /Qfunction-return=thunk
+                                 /Qindirect-branch=thunk
+                                 /Qindirect-branch-register)
     set(TBB_OPENMP_FLAG /Qopenmp)
     set(TBB_IPO_COMPILE_FLAGS $<$<NOT:$<CONFIG:Debug>>:/Qipo>)
     set(TBB_IPO_LINK_FLAGS $<$<NOT:$<CONFIG:Debug>>:/INCREMENTAL:NO>)
@@ -30,8 +33,12 @@ elseif (APPLE)
 else()
     include(${CMAKE_CURRENT_LIST_DIR}/GNU.cmake)
     set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} $<$<EQUAL:${TBB_ARCH},32>:-falign-stack=maintain-16-byte>)
-    set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -mconditional-branch=keep
-                                 -mconditional-branch=pattern-report)
+    #Spectre Variant 1 Mitigation
+    set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -mconditional-branch=keep)
+    #Spectre Variant 2 Mitigation
+    set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -mfunction-return=thunk
+                                 -mindirect-branch=thunk
+                                 -mindirect-branch-register)
     set(TBB_LIB_LINK_FLAGS ${TBB_LIB_LINK_FLAGS} -static-intel)
     set(TBB_OPENMP_FLAG -qopenmp)
     set(TBB_IPO_COMPILE_FLAGS $<$<NOT:$<CONFIG:Debug>>:-ipo>)
