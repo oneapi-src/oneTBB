@@ -237,7 +237,7 @@ TEST_CASE("prolong lifetime auto init") {
 //! Testing lifetime control advanced
 //! \brief \ref error_guessing
 TEST_CASE("prolong lifetime advanced") {
-    // Exceptions test leaves auto-initialized sheduler after,
+    // Exceptions test leaves auto-initialized scheduler after,
     // because all blocking terminate calls are inside the parallel region,
     // thus resulting in false termination result.
     utils::NativeParallelFor(1,

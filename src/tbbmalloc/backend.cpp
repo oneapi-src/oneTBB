@@ -608,7 +608,7 @@ FreeBlock *Backend::splitBlock(FreeBlock *fBlock, int num, size_t size, bool blo
             fBlock = (FreeBlock*)((uintptr_t)splitBlock + splitSize);
             fBlock->initHeader();
         } else {
-            // For large object blocks cut original block and put free righ part to backend
+            // For large object blocks cut original block and put free right part to backend
             splitBlock = (FreeBlock*)((uintptr_t)fBlock + totalSize);
             splitBlock->initHeader();
         }
