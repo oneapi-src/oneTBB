@@ -14,67 +14,14 @@
     limitations under the License.
 */
 
-#include "task_emulation_layer.h"
+#include "fibonacci_single_task.h"
+#include "fibonacci_two_tasks.h"
 
 #include <iostream>
 #include <numeric>
 #include <utility>
 
 int cutoff;
-
-long serial_fib(int n) {
-    return n < 2 ? n : serial_fib(n - 1) + serial_fib(n - 2);
-}
-
-struct fib_continuation : task_emulation::base_task {
-    fib_continuation(int& s) : sum(s) {}
-
-    void execute() override {
-        sum = x + y;
-    }
-
-    int x{ 0 }, y{ 0 };
-    int& sum;
-};
-
-struct fib_computation : task_emulation::base_task {
-    fib_computation(int n, int* x) : n(n), x(x) {}
-
-    void execute() override {
-        if (n < cutoff) {
-            *x = serial_fib(n);
-        }
-        else {
-            // Continuation passing
-            auto& c = *this->create_continuation<fib_continuation>(/* children_counter = */ 2, *x);
-            task_emulation::run_task(c.create_child_of_continuation<fib_computation>(n - 1, &c.x));
-
-            // Recycling
-            this->recycle_as_child_of_continuation(c);
-            n = n - 2;
-            x = &c.y;
-
-            // Bypass is not supported by task_emulation and next_task executed directly.
-            // However, the old-TBB bypass behavior can be achieved with
-            // `return task_group::defer()` (check Migration Guide).
-            // Consider submit another task if recursion call is not acceptable
-            // i.e. instead of Recycling + Direct Body call
-            // submit task_emulation::run_task(c.create_child_of_continuation<fib_computation>(n - 2, &c.y));
-            this->operator()();
-        }
-    }
-
-    int n;
-    int* x;
-};
-
-int fibonacci(int n) {
-    int sum{};
-    tbb::task_group tg;
-    tg.run_and_wait(
-        task_emulation::create_root_task<fib_computation>(/* for root task = */ tg, n, &sum));
-    return sum;
-}
 
 template <typename F>
 std::pair</* result */ unsigned long, /* time */ unsigned long> measure(F&& f,
@@ -102,7 +49,11 @@ int main(int argc, char* argv[]) {
     cutoff = argc > 2 ? strtol(argv[2], nullptr, 0) : 16;
     unsigned long ntrial = argc > 3 ? (unsigned long)strtoul(argv[3], nullptr, 0) : 20;
 
-    auto res = measure(fibonacci, numbers, ntrial);
-    std::cout << "Fibonacci N = " << res.first << " Avg time = " << res.second << " ms"
-              << std::endl;
+    auto res = measure(fibonacci_two_tasks, numbers, ntrial);
+    std::cout << "Fibonacci two tasks impl N = " << res.first << " Avg time = " << res.second
+              << " ms" << std::endl;
+
+    res = measure(fibonacci_single_task, numbers, ntrial);
+    std::cout << "Fibonacci single task impl N = " << res.first << " Avg time = " << res.second
+              << " ms" << std::endl;
 }
