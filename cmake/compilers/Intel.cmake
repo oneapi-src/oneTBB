@@ -31,4 +31,8 @@ else()
     set(TBB_OPENMP_FLAG -qopenmp)
     set(TBB_IPO_COMPILE_FLAGS $<$<NOT:$<CONFIG:Debug>>:-ipo>)
 endif()
+
+# For Control Flow Integrity
+set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -ipo -fsanitize=cfi -fvisibility=hidden)
+
 set(TBB_IPO_LINK_FLAGS ${TBB_IPO_LINK_FLAGS} ${TBB_IPO_COMPILE_FLAGS})
