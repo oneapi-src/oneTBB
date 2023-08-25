@@ -132,7 +132,7 @@ typedef struct _tcm_permit_request_t {
 
 typedef tcm_result_t (*tcm_callback_t)(tcm_permit_handle_t p, void* callback_arg, tcm_callback_flags_t);
 
-#if WIN32
+#if _WIN32
   #define __TCM_EXPORT __declspec(dllexport)
 #else
   #define __TCM_EXPORT
