@@ -27,13 +27,11 @@ if { $tcl_version < $min_tcl_ver } {
     exit 1
 }
 
-# if modulefile script name is a symlink, resolve it and then
-# get the fully qualified pathname to this modulefile script
+# if modulefile script name is a symlink, resolve it to get the fully
+# qualified pathname that points to the actual modulefile script
+# see: https://wiki.tcl-lang.org/page/file+normalize
 set scriptpath "${ModulesCurrentModulefile}"
-if { "[file type "${scriptpath}"]" eq "link" } {
-    set scriptpath "[file readlink "${scriptpath}"]"
-}
-set scriptpath "[file normalize "${scriptpath}"]"
+set scriptpath "[file dirname [file normalize "$scriptpath/___"]]"
 
 # define componentroot, modulefilepath, modulefilename and modulefilever
 set modulefilename "[file tail [file dirname "${scriptpath}"]]"
