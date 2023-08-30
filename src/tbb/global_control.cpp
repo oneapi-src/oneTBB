@@ -91,10 +91,6 @@ class alignas(max_nfs_size) allowed_parallelism_control : public control_storage
         // +1 to take external thread into account
         return workers ? min(workers + 1, my_active_value) : my_active_value;
     }
-public:
-    std::size_t active_value_if_present() const {
-        return !my_list.empty() ? my_active_value : 0;
-    }
 };
 
 class alignas(max_nfs_size) stack_size_control : public control_storage {
@@ -139,12 +135,6 @@ class alignas(max_nfs_size) lifetime_control : public control_storage {
             threading_control::unregister_lifetime_control(/*blocking_terminate*/ false);
         }
         control_storage::apply_active(new_active);
-    }
-
-public:
-    bool is_empty() {
-        spin_mutex::scoped_lock lock(my_list_mutex);
-        return my_list.empty();
     }
 };
 
