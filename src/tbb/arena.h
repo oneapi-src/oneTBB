@@ -174,9 +174,6 @@ public:
         }
         return false;
     }
-    void clear() {
-        my_state.store(UNSET, std::memory_order_release);
-    }
     bool test(std::memory_order order = std::memory_order_acquire) {
         return my_state.load(order) != UNSET;
     }
