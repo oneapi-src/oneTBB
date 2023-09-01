@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -365,15 +365,10 @@ arena* market::arena_in_need ( arena_list_type* arenas, arena* hint, bool should
             it = arenas[curr_priority_level].begin();
         }
 
-        auto try_join = [&] {
-            bool can_join = a.num_workers_active() < a.my_num_workers_allotted.load(std::memory_order_relaxed);
-            if (can_join && should_join) {
+        if (a.num_workers_active() < a.my_num_workers_allotted.load(std::memory_order_relaxed)) {
+            if (should_join) {
                 a.my_references += arena::ref_worker;
             }
-            return can_join;
-        };
-
-        if (try_join()) {
             return &a;
         }
     } while ( it != hint );
