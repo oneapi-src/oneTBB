@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -348,7 +348,7 @@ void market::try_destroy_arena ( arena* a, uintptr_t aba_epoch, unsigned priorit
 }
 
 /** This method must be invoked under my_arenas_list_mutex. **/
-arena* market::arena_in_need ( arena_list_type* arenas, arena* hint ) {
+arena* market::arena_in_need ( arena_list_type* arenas, arena* hint, bool should_join ) {
     // TODO: make sure arena with higher priority returned only if there are available slots in it.
     hint = select_next_arena( hint );
     if ( !hint )
@@ -364,8 +364,11 @@ arena* market::arena_in_need ( arena_list_type* arenas, arena* hint ) {
             } while ( arenas[curr_priority_level].empty() );
             it = arenas[curr_priority_level].begin();
         }
-        if( a.num_workers_active() < a.my_num_workers_allotted.load(std::memory_order_relaxed) ) {
-            a.my_references += arena::ref_worker;
+
+        if (a.num_workers_active() < a.my_num_workers_allotted.load(std::memory_order_relaxed)) {
+            if (should_join) {
+                a.my_references += arena::ref_worker;
+            }
             return &a;
         }
     } while ( it != hint );
@@ -380,6 +383,11 @@ arena* market::arena_in_need(arena* prev) {
     if ( is_arena_alive(prev) )
         return arena_in_need(my_arenas, prev);
     return arena_in_need(my_arenas, my_next_arena);
+}
+
+bool market::check_for_arena_in_need() {
+    arenas_list_mutex_type::scoped_lock lock(my_arenas_list_mutex, /*is_writer=*/false);
+    return arena_in_need(my_arenas, nullptr, /* should_join = */ false) != nullptr;
 }
 
 int market::update_allotment ( arena_list_type* arenas, int workers_demand, int max_workers ) {
