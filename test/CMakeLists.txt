@@ -558,7 +558,7 @@ if (TARGET TBB::tbb)
         target_include_directories(test_implicit_linkage_on_windows PRIVATE
         $<TARGET_PROPERTY:TBB::tbb,INTERFACE_INCLUDE_DIRECTORIES>)
         set_target_properties(test_implicit_linkage_on_windows PROPERTIES
-        LINK_OPTIONS /LIBPATH:$<TARGET_LINKER_FILE_DIR:TBB::tbb>)
+        LINK_OPTIONS LINKER:/LIBPATH:$<TARGET_LINKER_FILE_DIR:TBB::tbb>)
         add_dependencies(test_implicit_linkage_on_windows TBB::tbb)
     endif()
 endif()
