@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020-2022 Intel Corporation
+    Copyright (c) 2020-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -308,6 +308,36 @@ void decrease_thread_priority() {
     ASSERT(err == 0, "Can not change thread priority.");
 #endif
 }
+
+#if __unix__
+class increased_priority_guard {
+public:
+    increased_priority_guard() : m_backup(get_current_schedparam()) {
+        increase_thread_priority();
+    }
+
+    ~increased_priority_guard() {
+        // restore priority on destruction
+        pthread_t this_thread = pthread_self();
+        int err = pthread_setschedparam(this_thread, 
+            /*policy*/ m_backup.first, /*sched_param*/ &m_backup.second);
+        ASSERT(err == 0, nullptr);
+    }
+private:
+    std::pair<int, sched_param> get_current_schedparam() {
+        pthread_t this_thread = pthread_self();
+        sched_param params;
+        int policy;
+        int err = pthread_getschedparam(this_thread, &policy, &params);
+        ASSERT(err == 0, nullptr);
+        return std::make_pair(policy, params);
+    }
+
+    std::pair<int, sched_param> m_backup;
+};
+#else
+    class increased_priority_guard{};
+#endif
 
 } // namespace utils
 
