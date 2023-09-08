@@ -327,7 +327,7 @@ private:
     std::pair<int, sched_param> get_current_schedparam() {
         pthread_t this_thread = pthread_self();
         sched_param params;
-        int policy;
+        int policy = 0;
         int err = pthread_getschedparam(this_thread, &policy, &params);
         ASSERT(err == 0, nullptr);
         return std::make_pair(policy, params);
