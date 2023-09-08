@@ -287,28 +287,6 @@ bool can_change_thread_priority() {
     return false;
 }
 
-void increase_thread_priority() {
-#if __unix__
-    pthread_t this_thread = pthread_self();
-    sched_param params;
-    params.sched_priority = sched_get_priority_max(SCHED_FIFO);
-    ASSERT(params.sched_priority != -1, nullptr);
-    int err = pthread_setschedparam(this_thread, SCHED_FIFO, &params);
-    ASSERT(err == 0, "Can not change thread priority.");
-#endif
-}
-
-void decrease_thread_priority() {
-#if __unix__
-    pthread_t this_thread = pthread_self();
-    sched_param params;
-    params.sched_priority = sched_get_priority_min(SCHED_FIFO);
-    ASSERT(params.sched_priority != -1, nullptr);
-    int err = pthread_setschedparam(this_thread, SCHED_FIFO, &params);
-    ASSERT(err == 0, "Can not change thread priority.");
-#endif
-}
-
 #if __unix__
 class increased_priority_guard {
 public:
@@ -331,6 +309,15 @@ private:
         int err = pthread_getschedparam(this_thread, &policy, &params);
         ASSERT(err == 0, nullptr);
         return std::make_pair(policy, params);
+    }
+
+    void increase_thread_priority() {
+        pthread_t this_thread = pthread_self();
+        sched_param params;
+        params.sched_priority = sched_get_priority_max(SCHED_FIFO);
+        ASSERT(params.sched_priority != -1, nullptr);
+        int err = pthread_setschedparam(this_thread, SCHED_FIFO, &params);
+        ASSERT(err == 0, "Can not change thread priority.");
     }
 
     std::pair<int, sched_param> m_backup;
