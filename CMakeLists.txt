@@ -16,6 +16,11 @@ cmake_minimum_required(VERSION 3.1)
 
 # Enable CMake policies
 
+if (POLICY CMP0068)
+    # RPATH settings do not affect install_name on macOS since CMake 3.9
+    cmake_policy(SET CMP0068 NEW)
+endif()
+
 if (POLICY CMP0091)
     # The NEW behavior for this policy is to not place MSVC runtime library flags in the default
     # CMAKE_<LANG>_FLAGS_<CONFIG> cache entries and use CMAKE_MSVC_RUNTIME_LIBRARY abstraction instead.
@@ -104,7 +109,7 @@ option(TBBMALLOC_BUILD "Enable tbbmalloc build" ON)
 cmake_dependent_option(TBBMALLOC_PROXY_BUILD "Enable tbbmalloc_proxy build" ON "TBBMALLOC_BUILD" OFF)
 option(TBB_CPF "Enable preview features of the library" OFF)
 option(TBB_FIND_PACKAGE "Enable search for external oneTBB using find_package instead of build from sources" OFF)
-option(TBB_DISABLE_HWLOC_AUTOMATIC_SEARCH "Disable HWLOC automatic search by pkg-config tool" OFF)
+option(TBB_DISABLE_HWLOC_AUTOMATIC_SEARCH "Disable HWLOC automatic search by pkg-config tool" ${CMAKE_CROSSCOMPILING})
 option(TBB_ENABLE_IPO "Enable Interprocedural Optimization (IPO) during the compilation" ON)
 option(TBB_FUZZ_TESTING "Enable fuzz testing" OFF)
 
