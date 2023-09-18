@@ -16,16 +16,57 @@
 
 # WASM Support
 
+oneTBB extends its capabilities by offering robust support for ``WASM``. 
+
 ``WASM`` stands for WebAssembly, a low-level binary format for executing code in web browsers. 
-It is designed to be a portable target for compilers and to be efficient to parse and execute. 
+It is designed to be a portable target for compilers and efficient to parse and execute. 
 
-WebAssembly aims to provide a fast, efficient, and safe way to run code in web browsers without needing plugins or other software. Code written in a variety of programming languages, including C, C++, Rust and others, can be compiled into WebAssembly format for use in web pages. This allows you to write high-performance applications that run directly in the browser.
+By integrating oneTBB with WASM, you can take full advantage of parallelism and concurrency while working on web-based applications, interactive websites, and a variety of other WASM-compatible platforms.
 
-We currently have an [under development branch that provides you with WASM support](https://github.com/oneapi-src/oneTBB/tree/tbb_wasm). 
+oneTBB offers WASM support through the integration with [Emscripten*](https://emscripten.org/docs/introducing_emscripten/index.html), a powerful toolchain for compiling C and C++ code into WASM-compatible runtimes. 
 
-By using WASM, you can:
-* Create highly performant and scalable applications that can meet the demands of modern web-based systems. 
-* Take advantage of oneTBB features to optimize the performance of your web-based applications.
+## Build
+
+**Prerequisites:** Download and install Emscripten*. See the [instructions](https://emscripten.org/docs/getting_started/downloads.html). 
+
+To build the system, run:
+
+```
+mkdir build && cd build
+emcmake cmake .. -DCMAKE_CXX_COMPILER=em++ -DCMAKE_C_COMPILER=emcc -DTBB_STRICT=OFF -DCMAKE_CXX_FLAGS=-Wno-unused-command-line-argument -DTBB_DISABLE_HWLOC_AUTOMATIC_SEARCH=ON -DBUILD_SHARED_LIBS=ON -DTBB_EXAMPLES=ON -DTBB_TEST=ON
+cmake --build . <options>
+cmake --install . <options>
+```
+
+Where:
+
+* ``emcmake`` - a tool that sets up the environment for Emscripten*. 
+* ``-DCMAKE_CXX_COMPILER=em++`` - specifies the C++ compiler as Emscripten* C++ compiler. 
+* ``-DCMAKE_C_COMPILER=emcc`` - specifies the C compiler as Emscripten* C compiler.
 
 
+> **_NOTE:_** See [CMake documentation](https://github.com/oneapi-src/oneTBB/blob/master/cmake/README.md) to learn about other options. 
 
+
+## Run Test
+
+To run tests, use:
+
+```
+ctest
+```
+
+To run tests manually, use:
+
+```
+em++ -D__TBB_SOURCE_DIRECTLY_INCLUDED=1 -I<include> -pthread -O2 -g -DNDEBUG -fPIE -Wall -Wextra -Wshadow -Wcast-qual -Woverloaded-virtual -Wnon-virtual-dtor -std=c++11 -o <test_file>.o -c <test_file>.cpp
+
+em++ -Wno-unused-command-line-argument -pthread -s TOTAL_MEMORY=128MB -s EXIT_RUNTIME=1 -s PROXY_TO_PTHREAD=1 -O2 -g -DNDEBUG -pthread -rdynamic <test_file>.o -o <test_file>.js libtbb.a -ldl
+
+node --experimental-wasm-threads --experimental-wasm-bulk-memory <test_file>.js
+```
+
+Where: 
+
+* ``--experimental-wasm-threads`` - enables experimental support for WASM threads in *Node.js*.
+* ``--experimental-wasm-bulk-memory`` - enables experimental support for bulk memory operations in *Node.js*.
