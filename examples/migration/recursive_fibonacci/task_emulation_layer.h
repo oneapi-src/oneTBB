@@ -47,22 +47,28 @@ class base_task {
 public:
     base_task() = default;
 
-    base_task(const base_task& t) : m_parent(t.m_parent), m_child_counter(t.m_child_counter.load())
+    base_task(const base_task& t) : m_parent(t.m_parent), m_ref_counter(t.m_ref_counter.load())
     {}
 
     virtual ~base_task() = default;
 
     void operator() () const {
         base_task* parent_snapshot = m_parent;
+        task_type type_snapshot = m_type;
+
         const_cast<base_task*>(this)->execute();
-        if (m_parent && parent_snapshot == m_parent && m_child_counter == 0) {
-            if (m_parent->remove_reference() == 0) {
+
+        if (m_parent && parent_snapshot == m_parent && type_snapshot == m_type) {
+            m_parent->add_self_ref();
+            auto child_ref = m_parent->remove_child_reference() & (m_self_ref - 1);
+            if (child_ref == 0) {
                 m_parent->operator()();
+            } else if (m_parent->remove_self_ref() == 0) {
                 delete m_parent;
             }
         }
 
-        if (m_child_counter == 0 && m_type == task_type::allocated) {
+        if (m_type != task_type::stack_based && const_cast<base_task*>(this)->remove_self_ref() == 0) {
             delete this;
         }
     }
@@ -74,7 +80,7 @@ public:
         C* continuation = new C{std::forward<Args>(args)...};
         continuation->m_type = task_type::continuation;
         continuation->reset_parent(reset_parent());
-        continuation->m_child_counter = ref;
+        continuation->m_ref_counter = ref;
         return continuation;
     }
 
@@ -85,7 +91,7 @@ public:
 
     template <typename F, typename... Args>
     F create_child_and_increment(Args&&... args) {
-        add_reference();
+        add_child_reference();
         return create_child_impl<F>(std::forward<Args>(args)...);
     }
 
@@ -96,7 +102,7 @@ public:
 
     template <typename F, typename... Args>
     F* allocate_child_and_increment(Args&&... args) {
-        add_reference();
+        add_child_reference();
         return allocate_child_impl<F>(std::forward<Args>(args)...);
     }
 
@@ -109,17 +115,17 @@ public:
         m_type = task_type::continuation;
     }
 
-    void add_reference() {
-        ++m_child_counter;
+    void add_child_reference() {
+        ++m_ref_counter;
     }
 
-    std::uint64_t remove_reference() {
-        return --m_child_counter;
+    std::uint64_t remove_child_reference() {
+        return --m_ref_counter;
     }
 
 protected:
     enum class task_type {
-        created,
+        stack_based,
         allocated,
         continuation
     };
@@ -136,7 +142,7 @@ private:
     template <typename F, typename... Args>
     F create_child_impl(Args&&... args) {
         F obj{std::forward<Args>(args)...};
-        obj.m_type = task_type::created;
+        obj.m_type = task_type::stack_based;
         obj.reset_parent(this);
         return obj;
     }
@@ -145,6 +151,7 @@ private:
     F* allocate_child_impl(Args&&... args) {
         F* obj = new F{std::forward<Args>(args)...};
         obj->m_type = task_type::allocated;
+        obj->add_self_ref();
         obj->reset_parent(this);
         return obj;
     }
@@ -155,14 +162,23 @@ private:
         return p;
     }
 
+    void add_self_ref() {
+        m_ref_counter.fetch_add(m_self_ref);
+    }
+
+    std::uint64_t remove_self_ref() {
+        return m_ref_counter.fetch_sub(m_self_ref) - m_self_ref;
+    }
+
     base_task* m_parent{nullptr};
-    std::atomic<std::uint64_t> m_child_counter{0};
+    static constexpr std::uint64_t m_self_ref = std::uint64_t(1) << 48;
+    std::atomic<std::uint64_t> m_ref_counter{0};
 };
 
 class root_task : public base_task {
 public:
     root_task(tbb::task_group& tg) : m_tg(tg), m_callback(m_tg.defer([] { /* Create empty callback to preserve reference for wait. */})) {
-        add_reference();
+        add_child_reference();
         m_type = base_task::task_type::continuation;
     }
 
@@ -178,7 +194,7 @@ private:
 template <typename F, typename... Args>
 F create_root_task(tbb::task_group& tg, Args&&... args) {
     F obj{std::forward<Args>(args)...};
-    obj.m_type = base_task::task_type::created;
+    obj.m_type = base_task::task_type::stack_based;
     obj.reset_parent(new root_task{tg});
     return obj;
 }
@@ -187,6 +203,7 @@ template <typename F, typename... Args>
 F* allocate_root_task(tbb::task_group& tg, Args&&... args) {
     F* obj = new F{std::forward<Args>(args)...};
     obj->m_type = base_task::task_type::allocated;
+    obj->add_self_ref();
     obj->reset_parent(new root_task{tg});
     return obj;
 }
