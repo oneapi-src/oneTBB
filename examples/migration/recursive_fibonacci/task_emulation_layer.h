@@ -59,12 +59,9 @@ public:
         const_cast<base_task*>(this)->execute();
 
         if (m_parent && parent_snapshot == m_parent && type_snapshot == m_type) {
-            m_parent->add_self_ref();
             auto child_ref = m_parent->remove_child_reference() & (m_self_ref - 1);
             if (child_ref == 0) {
                 m_parent->operator()();
-            } else if (m_parent->remove_self_ref() == 0) {
-                delete m_parent;
             }
         }
 
@@ -112,6 +109,7 @@ public:
     }
 
     void recycle_as_continuation() {
+        add_self_ref();
         m_type = task_type::continuation;
     }
 
