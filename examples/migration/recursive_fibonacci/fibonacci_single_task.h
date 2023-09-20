@@ -24,6 +24,7 @@
 #include <utility>
 
 extern int cutoff;
+extern bool tesing_enabled;
 
 long serial_fib_1(int n) {
     return n < 2 ? n : serial_fib_1(n - 1) + serial_fib_1(n - 2);
@@ -32,8 +33,7 @@ long serial_fib_1(int n) {
 struct single_fib_task : task_emulation::base_task {
     enum class state {
         compute,
-        sum,
-        print_status
+        sum
     };
 
     single_fib_task(int n, int* x) : n(n), x(x), s(state::compute)
@@ -48,15 +48,13 @@ struct single_fib_task : task_emulation::base_task {
             case state::sum : {
                 *x = x_l + x_r;
 
-                // Recycling
-                this->s = state::print_status;
-                this->recycle_as_continuation();
-                this->operator()();
+                if (tesing_enabled) {
+                    if (n == cutoff && num_recycles > 0) {
+                        --num_recycles;
+                        compute_impl();
+                    }
+                }
 
-                break;
-            }
-            case state::print_status: {
-                std::cout << std::to_string(n) + "\n";
                 break;
             }
         }
@@ -90,6 +88,7 @@ struct single_fib_task : task_emulation::base_task {
     state s;
 
     int x_l{ 0 }, x_r{ 0 };
+    int num_recycles{5};
 };
 
 int fibonacci_single_task(int n) {
