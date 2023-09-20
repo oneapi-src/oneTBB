@@ -32,7 +32,8 @@ long serial_fib_1(int n) {
 struct single_fib_task : task_emulation::base_task {
     enum class state {
         compute,
-        sum
+        sum,
+        print_status
     };
 
     single_fib_task(int n, int* x) : n(n), x(x), s(state::compute)
@@ -46,6 +47,16 @@ struct single_fib_task : task_emulation::base_task {
             }
             case state::sum : {
                 *x = x_l + x_r;
+
+                // Recycling
+                this->s = state::print_status;
+                this->recycle_as_continuation();
+                this->operator()();
+
+                break;
+            }
+            case state::print_status: {
+                std::cout << std::to_string(n) + "\n";
                 break;
             }
         }
