@@ -47,7 +47,7 @@ class base_task {
 public:
     base_task() = default;
 
-    base_task(const base_task& t) : m_parent(t.m_parent), m_ref_counter(t.m_ref_counter.load())
+    base_task(const base_task& t) : m_type(t.m_type), m_parent(t.m_parent), m_ref_counter(t.m_ref_counter.load())
     {}
 
     virtual ~base_task() = default;
@@ -78,6 +78,7 @@ public:
         continuation->m_type = task_type::continuation;
         continuation->reset_parent(reset_parent());
         continuation->m_ref_counter = ref;
+        continuation->add_self_ref();
         return continuation;
     }
 
@@ -122,6 +123,14 @@ public:
     }
 
 protected:
+    void add_self_ref() {
+        m_ref_counter.fetch_add(m_self_ref);
+    }
+
+    std::uint64_t remove_self_ref() {
+        return m_ref_counter.fetch_sub(m_self_ref) - m_self_ref;
+    }
+
     enum class task_type {
         stack_based,
         allocated,
@@ -160,14 +169,6 @@ private:
         return p;
     }
 
-    void add_self_ref() {
-        m_ref_counter.fetch_add(m_self_ref);
-    }
-
-    std::uint64_t remove_self_ref() {
-        return m_ref_counter.fetch_sub(m_self_ref) - m_self_ref;
-    }
-
     base_task* m_parent{nullptr};
     static constexpr std::uint64_t m_self_ref = std::uint64_t(1) << 48;
     std::atomic<std::uint64_t> m_ref_counter{0};
@@ -177,6 +178,7 @@ class root_task : public base_task {
 public:
     root_task(tbb::task_group& tg) : m_tg(tg), m_callback(m_tg.defer([] { /* Create empty callback to preserve reference for wait. */})) {
         add_child_reference();
+        add_self_ref();
         m_type = base_task::task_type::continuation;
     }
 
