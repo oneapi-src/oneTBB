@@ -47,25 +47,28 @@ class base_task {
 public:
     base_task() = default;
 
-    base_task(const base_task& t) : m_type(t.m_type), m_parent(t.m_parent), m_ref_counter(t.m_ref_counter.load())
+    base_task(const base_task& t) : m_type(t.m_type.load()), m_parent(t.m_parent), m_ref_counter(t.m_ref_counter.load())
     {}
 
     virtual ~base_task() = default;
 
     void operator() () const {
         base_task* parent_snapshot = m_parent;
-        task_type type_snapshot = m_type;
+        std::uint64_t type_snapshot = m_type;
 
         const_cast<base_task*>(this)->execute();
 
-        if (m_parent && parent_snapshot == m_parent && type_snapshot == m_type) {
+        bool is_task_recycled_as_child = parent_snapshot != m_parent;
+        bool is_task_recycled_as_continuation = type_snapshot != m_type;
+
+        if (m_parent && !is_task_recycled_as_child && !is_task_recycled_as_continuation) {
             auto child_ref = m_parent->remove_child_reference() & (m_self_ref - 1);
             if (child_ref == 0) {
                 m_parent->operator()();
             }
         }
 
-        if (m_type != task_type::stack_based && const_cast<base_task*>(this)->remove_self_ref() == 0) {
+        if (type_snapshot != task_type::stack_based && const_cast<base_task*>(this)->remove_self_ref() == 0) {
             delete this;
         }
     }
@@ -111,7 +114,7 @@ public:
 
     void recycle_as_continuation() {
         add_self_ref();
-        m_type = task_type::continuation;
+        m_type += task_type::continuation;
     }
 
     void add_child_reference() {
@@ -131,13 +134,13 @@ protected:
         return m_ref_counter.fetch_sub(m_self_ref) - m_self_ref;
     }
 
-    enum class task_type {
-        stack_based,
-        allocated,
-        continuation
+    struct task_type {
+        static constexpr std::uint64_t stack_based = 1;
+        static constexpr std::uint64_t allocated = 1 << 1;
+        static constexpr std::uint64_t continuation = 1 << 2;
     };
 
-    task_type m_type;
+    std::atomic<std::uint64_t> m_type;
 
 private:
     template <typename F, typename... Args>
@@ -178,7 +181,6 @@ class root_task : public base_task {
 public:
     root_task(tbb::task_group& tg) : m_tg(tg), m_callback(m_tg.defer([] { /* Create empty callback to preserve reference for wait. */})) {
         add_child_reference();
-        add_self_ref();
         m_type = base_task::task_type::continuation;
     }
 
