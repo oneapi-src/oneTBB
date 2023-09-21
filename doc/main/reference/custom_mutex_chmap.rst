@@ -13,7 +13,7 @@ The customizing mutex type for ``concurrent_hash_map``
 Description
 ***********
 
-oneTBB ``concurrnent_hash_map`` class uses reader-writer mutex
+oneTBB ``concurrent_hash_map`` class uses reader-writer mutex
 to provide thread safety and avoid data races for insert, lookup, and erasure operations. This feature adds an extra template parameter
 for ``concurrent_hash_map`` that allows to customize the type of the reader-writer mutex.
 
