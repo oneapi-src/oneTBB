@@ -113,7 +113,7 @@ destruction to end thread lifetime:
 ::
 
 
-           StringTable accessor a;
+           StringTable::accessor a;
            for( string* p=range.begin(); p!=range.end(); ++p ) {
                table.insert( a, *p );
                a->second += 1;
