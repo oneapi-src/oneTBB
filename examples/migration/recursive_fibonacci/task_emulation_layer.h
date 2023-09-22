@@ -47,7 +47,7 @@ class base_task {
 public:
     base_task() = default;
 
-    base_task(const base_task& t) : m_type(t.m_type), m_parent(t.m_parent), m_ref_counter(t.m_ref_counter.load())
+    base_task(const base_task& t) : m_type(t.m_type), m_parent(t.m_parent), m_child_counter(t.m_child_counter.load())
     {}
 
     virtual ~base_task() = default;
@@ -91,7 +91,7 @@ public:
         C* continuation = new C{std::forward<Args>(args)...};
         continuation->m_type = task_type::allocated;
         continuation->reset_parent(reset_parent());
-        continuation->m_ref_counter = ref;
+        continuation->m_child_counter = ref;
         return continuation;
     }
 
@@ -128,15 +128,15 @@ public:
     }
 
     void add_child_reference() {
-        ++m_ref_counter;
+        ++m_child_counter;
     }
 
     std::uint64_t remove_child_reference() {
-        return --m_ref_counter;
+        return --m_child_counter;
     }
 
 protected:
-    enum task_type {
+    enum class task_type {
         stack_based,
         allocated,
         recycled
@@ -174,7 +174,7 @@ private:
     }
 
     base_task* m_parent{nullptr};
-    std::atomic<std::uint64_t> m_ref_counter{0};
+    std::atomic<std::uint64_t> m_child_counter{0};
 };
 
 class root_task : public base_task {
