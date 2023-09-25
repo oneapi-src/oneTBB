@@ -33,7 +33,7 @@ set(EXECUTABLE "$<TARGET_FILE:recursive_fibonacci>")
 # `N` - specifies the fibonacci number which would be calculated.
 # `C` - cutoff that will be used to stop recursive split.
 # `I` - number of iteration to measure benchmark time.
-set(ARGS 30 16 20)
+set(ARGS 30 16 20 1)
 set(PERF_ARGS 50 5 20)
 
 add_execution_target(run_recursive_fibonacci recursive_fibonacci ${EXECUTABLE} "${ARGS}")
