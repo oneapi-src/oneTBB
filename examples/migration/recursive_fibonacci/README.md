@@ -20,4 +20,4 @@ recursive_fibonacci N C I T
 * `N` - specifies the fibonacci number which would be calculated.
 * `C` - cutoff that will be used to stop recursive split.
 * `I` - number of iteration to measure benchmark time.
-* `T` - enables extended testing
+* `T` - enables extended testing (recycle task in a loop).

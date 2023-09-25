@@ -24,7 +24,7 @@
 #include <utility>
 
 extern int cutoff;
-extern bool tesing_enabled;
+extern bool testing_enabled;
 
 long serial_fib_1(int n) {
     return n < 2 ? n : serial_fib_1(n - 1) + serial_fib_1(n - 2);
@@ -49,7 +49,7 @@ struct single_fib_task : task_emulation::base_task {
             case state::sum : {
                 *x = x_l + x_r;
 
-                if (tesing_enabled) {
+                if (testing_enabled) {
                     if (n == cutoff && num_recycles > 0) {
                         --num_recycles;
                         bypass = compute_impl();

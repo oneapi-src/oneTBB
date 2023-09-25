@@ -53,21 +53,17 @@ public:
     virtual ~base_task() = default;
 
     void operator() () const {
-        base_task* parent_snapshot = m_parent;
         task_type type_snapshot = m_type;
 
         base_task* bypass = const_cast<base_task*>(this)->execute();
 
-        bool is_task_recycled_as_child = parent_snapshot != m_parent;
-        bool is_task_recycled_as_continuation = type_snapshot != m_type;
-
-        if (m_parent && !is_task_recycled_as_child && !is_task_recycled_as_continuation) {
+        if (m_parent && m_type != task_type::recycled) {
             if (m_parent->remove_child_reference() == 0) {
                 m_parent->operator()();
             }
         }
 
-        if (type_snapshot != task_type::stack_based && !is_task_recycled_as_child && !is_task_recycled_as_continuation) {
+        if (m_type == task_type::allocated) {
             delete this;
         }
 
