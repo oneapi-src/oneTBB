@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2022 Intel Corporation
+    Copyright (c) 2005-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -41,27 +41,12 @@ const char* user_abort::what() const noexcept(true) { return "User-initiated abo
 const char* missing_wait::what() const noexcept(true) { return "wait() was not called on the structured_task_group"; }
 
 #if TBB_USE_EXCEPTIONS
-    template <typename F>
-    /*[[noreturn]]*/ void do_throw_noexcept(F throw_func) noexcept {
-        throw_func();
-    }
-
-    /*[[noreturn]]*/ void do_throw_noexcept(void (*throw_func)()) noexcept {
-        throw_func();
-#if __GNUC__ == 7
-        // In release, GCC 7 loses noexcept attribute during tail call optimization.
-        // The following statement prevents tail call optimization.
-        volatile bool reach_this_point = true;
-        suppress_unused_warning(reach_this_point);
-#endif
-    }
-
     bool terminate_on_exception(); // defined in global_control.cpp and ipc_server.cpp
 
     template <typename F>
     /*[[noreturn]]*/ void do_throw(F throw_func) {
         if (terminate_on_exception()) {
-            do_throw_noexcept(throw_func);
+            std::terminate();
         }
         throw_func();
     }

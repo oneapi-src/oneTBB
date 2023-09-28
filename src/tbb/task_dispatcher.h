@@ -54,9 +54,6 @@ inline d1::task* get_self_recall_task(arena_slot& slot) {
     return t;
 }
 
-// Defined in exception.cpp
-/*[[noreturn]]*/void do_throw_noexcept(void (*throw_exception)()) noexcept;
-
 //------------------------------------------------------------------------
 // Suspend point
 //------------------------------------------------------------------------
@@ -356,7 +353,7 @@ d1::task* task_dispatcher::local_wait_for_all(d1::task* t, Waiter& waiter ) {
             break; // Exit exception loop;
         } catch (...) {
             if (global_control::active_value(global_control::terminate_on_exception) == 1) {
-                do_throw_noexcept([] { throw; });
+                std::terminate();
             }
             if (ed.context->cancel_group_execution()) {
                 /* We are the first to signal cancellation, so store the exception that caused it. */
