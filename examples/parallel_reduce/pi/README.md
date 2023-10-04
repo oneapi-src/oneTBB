@@ -2,6 +2,7 @@
 Parallel version of calculating &pi; by numerical integration.
 
 ## Build
+To build the sample, run the following commands:
 ```
 cmake <path_to_example>
 cmake --build .
