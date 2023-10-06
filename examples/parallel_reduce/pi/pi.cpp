@@ -32,24 +32,24 @@ struct reduce_body {
 };
 
 double compute_pi_parallel() {
-    inv_intervals = pi_t(1.0) / num_intervals;
+    step = pi_t(1.0) / num_intervals;
 
     double ret = 0.0;
 
     reduce_body body;
     tbb::parallel_reduce(tbb::blocked_range<number_t>(0, num_intervals), body);
 
-    ret = body.my_pi * inv_intervals;
+    ret = body.my_pi * step;
 
     return ret;
 }
 
 static std::unique_ptr<tbb::global_control> gc;
 
-void init_threading(int p) {
+threading::threading(int p) {
     gc.reset(new tbb::global_control(tbb::global_control::max_allowed_parallelism, p));
 }
 
-void destroy_threading() {
+threading::~threading() {
     gc.reset();
 }

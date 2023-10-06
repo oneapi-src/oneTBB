@@ -24,12 +24,12 @@ typedef double pi_t;
 
 extern const number_t chunk_size;
 extern number_t num_intervals;
-extern pi_t inv_intervals;
+extern pi_t step;
 
 extern bool silent;
 
 inline pi_t pi_kernel(number_t i) {
-    pi_t dx = (pi_t(i) + pi_t(0.5)) * inv_intervals;
+    pi_t dx = (pi_t(i) + pi_t(0.5)) * step;
     return pi_t(4.0) / (pi_t(1.0) + dx * dx);
 }
 
@@ -41,8 +41,11 @@ inline double pi_slice_kernel(number_t slice, number_t slice_size = chunk_size) 
     return pi;
 }
 
-void init_threading(int p);
-void destroy_threading();
+struct threading {
+    threading(int p);
+    ~threading();
+};
+
 double compute_pi_parallel();
 
 #endif //  TBB_examples_pi_H

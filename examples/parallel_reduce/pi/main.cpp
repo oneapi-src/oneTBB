@@ -25,14 +25,14 @@ const number_t chunk_size = 4096; // Multiple of 16, to fit float datatype to a 
 
 // number of intervals
 number_t num_intervals = 1000000000;
-pi_t inv_intervals = pi_t(0.0);
+pi_t step = pi_t(0.0);
 
 bool silent = false;
 
 double compute_pi_serial() {
     double ret = 0;
 
-    inv_intervals = pi_t(1.0) / num_intervals;
+    step = pi_t(1.0) / num_intervals;
 
     number_t tail = num_intervals % chunk_size;
     number_t last = num_intervals - tail;
@@ -41,7 +41,7 @@ double compute_pi_serial() {
         ret += pi_slice_kernel(slice);
     }
     ret += pi_slice_kernel(last, tail);
-    ret *= inv_intervals;
+    ret *= step;
 
     return ret;
 }
@@ -72,11 +72,10 @@ int main(int argc, char* argv[]) {
             }
             else {
                 //run a parallel version
-                init_threading(p);
+                threading tp(p);
                 tbb::tick_count compute_start_time = tbb::tick_count::now();
                 pi = compute_pi_parallel();
                 compute_time = (tbb::tick_count::now() - compute_start_time).seconds();
-                destroy_threading();
             }
 
             if (!silent) {
