@@ -375,19 +375,18 @@ arena* market::arena_in_need ( arena_list_type* arenas, arena* hint, bool should
     return nullptr;
 }
 
-arena* market::arena_in_need(arena* prev) {
+arena* market::arena_in_need(arena* prev, bool should_join) {
     if (my_total_demand.load(std::memory_order_acquire) <= 0)
         return nullptr;
     arenas_list_mutex_type::scoped_lock lock(my_arenas_list_mutex, /*is_writer=*/false);
     // TODO: introduce three state response: alive, not_alive, no_market_arenas
     if ( is_arena_alive(prev) )
-        return arena_in_need(my_arenas, prev);
-    return arena_in_need(my_arenas, my_next_arena);
+        return arena_in_need(my_arenas, prev, should_join);
+    return arena_in_need(my_arenas, my_next_arena, should_join);
 }
 
 bool market::check_for_arena_in_need() {
-    arenas_list_mutex_type::scoped_lock lock(my_arenas_list_mutex, /*is_writer=*/false);
-    return arena_in_need(my_arenas, nullptr, /* should_join = */ false) != nullptr;
+    return arena_in_need(nullptr, /* should_join = */ false) != nullptr;
 }
 
 int market::update_allotment ( arena_list_type* arenas, int workers_demand, int max_workers ) {
