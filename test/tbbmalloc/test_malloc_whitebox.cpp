@@ -1257,7 +1257,11 @@ void TestTHP() {
     scalable_allocation_mode(USE_HUGE_PAGES, 1);
     REQUIRE_MESSAGE(hugePages.isEnabled, "Huge pages should be enabled via scalable_allocation_mode");
 
+#if defined __loongarch64
+    const int HUGE_PAGE_SIZE = 32 * 1024 * 1024;
+#else
     const int HUGE_PAGE_SIZE = 2 * 1024 * 1024;
+#endif
 
     // allocCount transparent huge pages should be allocated
     const int allocCount = 10;
