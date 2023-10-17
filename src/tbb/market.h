@@ -174,7 +174,7 @@ private:
     }
 
     //! Returns next arena that needs more workers, or NULL.
-    arena* arena_in_need(arena* prev);
+    arena* arena_in_need(arena* prev, bool should_join = true );
 
     template <typename Pred>
     static void enforce (Pred pred, const char* msg) {
@@ -194,7 +194,7 @@ private:
 
     void remove_arena_from_list ( arena& a );
 
-    arena* arena_in_need ( arena_list_type* arenas, arena* hint, bool should_join = true );
+    arena* arena_in_need ( arena_list_type* arenas, arena* hint, bool should_join );
 
     int update_allotment ( arena_list_type* arenas, int total_demand, int max_workers );
 
