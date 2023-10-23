@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.5)
 
 # Enable CMake policies
 
@@ -41,12 +41,6 @@ if (APPLE)
     if (NOT CMAKE_C_OSX_DEPLOYMENT_TARGET_FLAG)
         set(CMAKE_C_OSX_DEPLOYMENT_TARGET_FLAG "-mmacosx-version-min=" CACHE STRING "Minimum macOS version flag")
     endif()
-endif()
-
-# Until CMake 3.4.0 FindThreads.cmake requires C language enabled.
-# Enable C language before CXX to avoid possible override of CMAKE_SIZEOF_VOID_P.
-if (CMAKE_VERSION VERSION_LESS 3.4)
-    enable_language(C)
 endif()
 
 file(READ include/oneapi/tbb/version.h _tbb_version_info)
