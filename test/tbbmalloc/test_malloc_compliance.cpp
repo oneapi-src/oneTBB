@@ -21,6 +21,10 @@
 
 #define __STDC_LIMIT_MACROS 1 // to get SIZE_MAX from stdint.h
 
+// There is no RLIMIT_AS on OpenBSD.
+// Therefore, the tests for memory limit is unreasonable.
+#if !__OpenBSD__
+
 #include "common/test.h"
 
 #include "common/utils.h"
@@ -1091,3 +1095,4 @@ TEST_CASE("MAIN TEST") {
 }
 
 #endif /* __TBB_WIN8UI_SUPPORT	 */
+#endif /* Enable test */
