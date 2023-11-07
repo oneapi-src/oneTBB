@@ -21,10 +21,6 @@
 
 #define __STDC_LIMIT_MACROS 1 // to get SIZE_MAX from stdint.h
 
-// There is no RLIMIT_AS on OpenBSD.
-// Therefore, the tests for memory limit is unreasonable.
-#if !__OpenBSD__
-
 #include "common/test.h"
 
 #include "common/utils.h"
@@ -33,6 +29,10 @@
 #include "common/memory_usage.h"
 
 #include "oneapi/tbb/detail/_config.h"
+
+// There is no RLIMIT_AS on OpenBSD.
+// Therefore, the tests for memory limit is unreasonable.
+#if !__OpenBSD__
 
 #define __TBB_NO_IMPLICIT_LINKAGE 1
 #include "tbb/scalable_allocator.h"
