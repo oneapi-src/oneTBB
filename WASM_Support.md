@@ -56,17 +56,3 @@ To run tests, use:
 ctest
 ```
 
-To run tests manually, use:
-
-```
-em++ -D__TBB_SOURCE_DIRECTLY_INCLUDED=1 -I<include> -pthread -O2 -g -DNDEBUG -fPIE -Wall -Wextra -Wshadow -Wcast-qual -Woverloaded-virtual -Wnon-virtual-dtor -std=c++11 -o <test_file>.o -c <test_file>.cpp
-
-em++ -Wno-unused-command-line-argument -pthread -s TOTAL_MEMORY=128MB -s EXIT_RUNTIME=1 -s PROXY_TO_PTHREAD=1 -O2 -g -DNDEBUG -pthread -rdynamic <test_file>.o -o <test_file>.js libtbb.a -ldl
-
-node --experimental-wasm-threads --experimental-wasm-bulk-memory <test_file>.js
-```
-
-Where: 
-
-* ``--experimental-wasm-threads`` - enables experimental support for WASM threads in *Node.js*.
-* ``--experimental-wasm-bulk-memory`` - enables experimental support for bulk memory operations in *Node.js*.
