@@ -265,6 +265,10 @@ else()
                 COMPONENT devel)
         file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
                    "include(\${CMAKE_CURRENT_LIST_DIR}/${PROJECT_NAME}Targets.cmake)\n")
+        if (NOT BUILD_SHARED_LIBS)
+            file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
+                       "include(CMakeFindDependencyMacro)\nfind_dependency(Threads)\n")
+        endif()
 
         write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
                                          COMPATIBILITY AnyNewerVersion)
