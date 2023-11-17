@@ -18,12 +18,8 @@
 This document contains changes of oneTBB compared to the last release.
 
 ## Table of Contents <!-- omit in toc -->
-- [New Features](#new-features)
 - [Known Limitations](#known-limitations)
 - [Fixed Issues](#fixed-issues)
-
-## :tada: New Features
-- oneTBB can now coordinate with Intel® OpenMP Runtime on CPU resource usage to avoid excessive oversubscription when both runtimes are used within a process. To use it, set the ``TCM_ENABLE`` environmental variable to 1.
 
 ## :rotating_light: Known Limitations
 - The ``oneapi::tbb::info`` namespace interfaces might unexpectedly change the process affinity mask on Windows* OS systems (see https://github.com/open-mpi/hwloc/issues/366 for details) when using hwloc version lower than 2.5.
@@ -31,7 +27,6 @@ This document contains changes of oneTBB compared to the last release.
 - The NUMA topology may be detected incorrectly on Windows* OS machines where the number of NUMA node threads exceeds the size of 1 processor group.
 - On Windows OS on ARM64*, when compiling an application using oneTBB with the Microsoft* Compiler, the compiler issues a warning C4324 that a structure was padded due to the alignment specifier. Consider suppressing the warning by specifying /wd4324 to the compiler command line.
 - C++ exception handling mechanism on Windows* OS on ARM64* might corrupt memory if an exception is thrown from any oneTBB parallel algorithm (see Windows* OS on ARM64* compiler issue: https://developercommunity.visualstudio.com/t/ARM64-incorrect-stack-unwinding-for-alig/1544293).
-- When CPU resource coordination is enabled, tasks from a lower-priority task_arena might be executed before tasks from a higher-priority task_arena.
 - Using ``TBBConfig.cmake`` in 32-bit environment may cause incorrect linkage with 64-bit oneTBB library. As a workaround, set ``CMAKE_PREFIX_PATH``:
   - On Linux* OS: to ``TBBROOT/lib32/``
   - On Windows* OS: to ``TBBROOT/lib32/;TBBROOT/bin32/``
