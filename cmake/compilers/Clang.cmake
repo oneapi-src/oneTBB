@@ -57,7 +57,11 @@ if (CMAKE_SYSTEM_PROCESSOR MATCHES "(AMD64|amd64|i.86|x86)")
 endif()
 
 # Clang flags to prevent compiler from optimizing out security checks
-set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -Wformat -Wformat-security -Werror=format-security -fPIC $<$<NOT:$<BOOL:${EMSCRIPTEN}>>:-fstack-protector-strong>)
+set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -Wformat -Wformat-security -Werror=format-security $<$<NOT:$<BOOL:${EMSCRIPTEN}>>:-fstack-protector-strong>)
+
+if(CMAKE_POSITION_INDEPENDENT_CODE)
+    set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -fPIC)
+endif()
 
 # -z switch is not supported on MacOS
 if (NOT APPLE)
