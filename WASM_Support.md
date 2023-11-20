@@ -21,7 +21,7 @@ oneTBB extends its capabilities by offering robust support for ``WASM``.
 ``WASM`` stands for WebAssembly, a low-level binary format for executing code in web browsers. 
 It is designed to be a portable target for compilers and efficient to parse and execute. 
 
-By integrating oneTBB with WASM, you can take full advantage of parallelism and concurrency while working on web-based applications, interactive websites, and a variety of other WASM-compatible platforms.
+Using oneTBB with WASM, you can take full advantage of parallelism and concurrency while working on web-based applications, interactive websites, and a variety of other WASM-compatible platforms.
 
 oneTBB offers WASM support through the integration with [Emscripten*](https://emscripten.org/docs/introducing_emscripten/index.html), a powerful toolchain for compiling C and C++ code into WASM-compatible runtimes. 
 
