@@ -21,7 +21,11 @@ if (MSVC)
 elseif (APPLE)
     include(${CMAKE_CURRENT_LIST_DIR}/AppleClang.cmake)
     set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -fstack-protector -Wformat -Wformat-security
-                                 $<$<NOT:$<CONFIG:Debug>>:-fno-omit-frame-pointer -qno-opt-report-embed -D_FORTIFY_SOURCE=2>)
+                                 $<$<NOT:$<CONFIG:Debug>>:-fno-omit-frame-pointer -qno-opt-report-embed>)
+    if (NOT CMAKE_CXX_FLAGS MATCHES "_FORTIFY_SOURCE")
+        set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} $<$<NOT:$<CONFIG:Debug>>:-D_FORTIFY_SOURCE=2>)
+    endif ()
+
     set(TBB_OPENMP_FLAG -qopenmp)
     set(TBB_IPO_COMPILE_FLAGS $<$<NOT:$<CONFIG:Debug>>:-ipo>)
 else()
