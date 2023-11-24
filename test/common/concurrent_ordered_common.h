@@ -163,7 +163,7 @@ struct OrderedMoveTraitsBase {
     static constexpr std::size_t expected_number_of_items_to_allocate_for_steal_move = 584; // TODO: remove allocation of dummy_node
 
     template <typename OrderedType, typename Iterator>
-    static OrderedType& construct_container( typename std::aligned_storage<sizeof(OrderedType)>::type& storage,
+    static OrderedType& construct_container( UninitializedStorage<OrderedType, 1>& storage,
                                              Iterator begin, Iterator end )
     {
         OrderedType* ptr = reinterpret_cast<OrderedType*>(&storage);
@@ -172,7 +172,7 @@ struct OrderedMoveTraitsBase {
     }
 
     template <typename OrderedType, typename Iterator, typename Allocator>
-    static OrderedType& construct_container( typename std::aligned_storage<sizeof(OrderedType)>::type& storage,
+    static OrderedType& construct_container( UninitializedStorage<OrderedType, 1>& storage,
                                              Iterator begin, Iterator end, const Allocator& alloc )
     {
         OrderedType* ptr = reinterpret_cast<OrderedType*>(&storage);

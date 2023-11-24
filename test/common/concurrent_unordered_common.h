@@ -117,7 +117,7 @@ struct UnorderedMoveTraitsBase {
     static constexpr std::size_t expected_number_of_items_to_allocate_for_steal_move = 3; // TODO: check
 
     template <typename UnorderedType, typename Iterator>
-    static UnorderedType& construct_container( typename std::aligned_storage<sizeof(UnorderedType)>::type& storage,
+    static UnorderedType& construct_container( UninitializedStorage<UnorderedType, 1>& storage,
                                                Iterator begin, Iterator end )
     {
         UnorderedType* ptr = reinterpret_cast<UnorderedType*>(&storage);
@@ -126,8 +126,8 @@ struct UnorderedMoveTraitsBase {
     }
 
     template <typename UnorderedType, typename Iterator, typename Allocator>
-    static UnorderedType& construct_container( typename std::aligned_storage<sizeof(UnorderedType)>::type& storage,
-                                                Iterator begin, Iterator end, const Allocator& alloc )
+    static UnorderedType& construct_container( UninitializedStorage<UnorderedType, 1>& storage,
+                                               Iterator begin, Iterator end, const Allocator& alloc )
     {
         UnorderedType* ptr = reinterpret_cast<UnorderedType*>(&storage);
         new (ptr) UnorderedType(begin, end, /*bucket_count = */4, alloc);

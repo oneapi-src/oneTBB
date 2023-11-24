@@ -26,6 +26,14 @@
 #include "custom_allocators.h"
 #include "state_trackable.h"
 
+template <typename T, std::size_t N>
+class UninitializedStorage {
+public:
+    T* operator&() { return reinterpret_cast<T*>(data); }
+private:
+    alignas(alignof(T)) std::uint8_t data[N * sizeof(T)];
+};
+
 namespace move_support_tests {
 
 std::atomic<std::size_t> foo_count;
@@ -359,7 +367,7 @@ struct ArenaAllocatorFixture {
     using allocator_type = ArenaAllocator<T, POCMA>;
     using arena_data_type = typename allocator_type::arena_data_type;
 
-    std::vector<typename std::aligned_storage<sizeof(T)>::type> storage;
+    std::vector<UninitializedStorage<T, 1>> storage;
     arena_data_type arena_data;
     allocator_type allocator;
 
@@ -427,7 +435,7 @@ struct MoveFixture {
     static constexpr std::size_t default_container_size = 100;
     const std::size_t container_size;
 
-    typename std::aligned_storage<sizeof(container_type)>::type source_storage;
+    UninitializedStorage<container_type, 1> source_storage;
     container_type& source;
 
     MemoryLocations locations;
