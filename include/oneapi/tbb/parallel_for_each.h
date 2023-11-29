@@ -414,7 +414,7 @@ struct move_iterator_dispatch_helper {
 };
 
 // Until C++23, std::move_iterator::iterator_concept always defines
-// to std::input_iterator tag and hence std::forward_iterator concept
+// to std::input_iterator_tag and hence std::forward_iterator concept
 // always evaluates to false, so std::move_iterator dispatch should be
 // made according to the base iterator type.
 template <typename It>
