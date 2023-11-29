@@ -242,9 +242,10 @@ inline void prolonged_pause() {
         std::uint64_t time_stamp = machine_time_stamp();
         // _tpause function directs the processor to enter an implementation-dependent optimized state
         // until the Time Stamp Counter reaches or exceeds the value specified in second parameter.
-        // Constant "700" is ticks to wait for.
+        // Constant "1000" is ticks to wait for.
+        // TODO : Modify this parameter based on empirical study of benchmarks.
         // First parameter 0 selects between a lower power (cleared) or faster wakeup (set) optimized state.
-        _tpause(0, time_stamp + 700);
+        _tpause(0, time_stamp + 1000);
     }
     else
 #endif

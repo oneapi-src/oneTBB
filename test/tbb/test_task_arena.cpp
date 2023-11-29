@@ -750,7 +750,7 @@ namespace TestIsolatedExecuteNS {
             for ( int i = 0; i <= max_repeats; ++i ) {
                 OuterParFor<OuterPartitioner, NestedPartitioner>( outer_isolation, is_stolen )();
             }
-            REQUIRE_MESSAGE( !is_stolen, "isolate() on nested levels should prevent stealing from outer leves" );
+            REQUIRE_MESSAGE( !is_stolen, "isolate() on nested levels should prevent stealing from outer levels" );
         }
     }
 
@@ -1125,7 +1125,7 @@ void TestMultipleWaits( int num_threads, int num_bunches, int bunch_size ) {
     for ( int repeats = 0; repeats<10; ++repeats ) {
         int idx = 0;
         for ( int bunch = 0; bunch < num_bunches-1; ++bunch ) {
-            // Sync with the previous bunch of waiters to prevent "false" nested dependicies (when a nested task waits for an outer task).
+            // Sync with the previous bunch of waiters to prevent "false" nested dependencies (when a nested task waits for an outer task).
             while ( processed < bunch*bunch_size ) utils::yield();
             // Run the bunch of threads/waiters that depend on the next bunch of threads/waiters.
             for ( int i = 0; i<bunch_size; ++i ) {
@@ -1493,7 +1493,7 @@ void TestAbilityToCreateWorkers(int thread_num) {
     // Checks only some part of reserved-external threads amount:
     // 0 and 1 reserved threads are important cases but it is also needed
     // to collect some statistic data with other amount and to not consume
-    // whole test sesion time checking each amount
+    // whole test session time checking each amount
     TestArenaConcurrency(thread_num - 1, 0, int(thread_num / 2.72));
     TestArenaConcurrency(thread_num, 1, int(thread_num / 3.14));
 }
@@ -1831,11 +1831,14 @@ TEST_CASE("Test for concurrent functionality") {
     TestConcurrentFunctionality();
 }
 
+#if !EMSCRIPTEN
+//! For emscripten, FPU control state has not been set correctly
 //! Test for arena entry consistency
 //! \brief \ref requirement \ref error_guessing
 TEST_CASE("Test for task arena entry consistency") {
     TestArenaEntryConsistency();
 }
+#endif
 
 //! Test for task arena attach functionality
 //! \brief \ref requirement \ref interface
@@ -1867,6 +1870,8 @@ TEST_CASE("Delegated spawn wait") {
     TestDelegatedSpawnWait();
 }
 
+#if !EMSCRIPTEN
+//! For emscripten, FPU control state has not been set correctly
 //! Test task arena isolation functionality
 //! \brief \ref requirement \ref interface
 TEST_CASE("Isolated execute") {
@@ -1875,6 +1880,7 @@ TEST_CASE("Isolated execute") {
         TestIsolatedExecute();
     }
 }
+#endif
 
 //! Test for TBB Workers creation limits
 //! \brief \ref requirement
@@ -1888,11 +1894,14 @@ TEST_CASE("Arena workers migration") {
     TestArenaWorkersMigration();
 }
 
+#if !EMSCRIPTEN
+//! For emscripten, FPU control state has not been set correctly
 //! Test for multiple waits, threads should not block each other
 //! \brief \ref requirement
 TEST_CASE("Multiple waits") {
     TestMultipleWaits();
 }
+#endif
 
 //! Test for small stack size settings and arena initialization
 //! \brief \ref error_guessing
@@ -1983,6 +1992,8 @@ TEST_CASE("Empty task_handle cannot be scheduled"
 }
 #endif
 
+#if !EMSCRIPTEN
+//! For emscripten, FPU control state has not been set correctly
 //! \brief \ref error_guessing
 TEST_CASE("Test threads sleep") {
     for (auto concurrency_level : utils::concurrency_range()) {
@@ -1993,6 +2004,7 @@ TEST_CASE("Test threads sleep") {
         test_threads_sleep(conc, conc);
     }
 }
+#endif
 
 #if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
 

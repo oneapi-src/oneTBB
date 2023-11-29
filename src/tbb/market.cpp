@@ -28,6 +28,10 @@ class tbb_permit_manager_client : public pm_client {
 public:
     tbb_permit_manager_client(arena& a) : pm_client(a) {}
 
+    void register_thread() override {}
+
+    void unregister_thread() override {}
+
     void set_allotment(unsigned allotment) {
         my_arena.set_allotment(allotment);
     }
@@ -45,7 +49,7 @@ pm_client* market::create_client(arena& a) {
     return new (cache_aligned_allocate(sizeof(tbb_permit_manager_client))) tbb_permit_manager_client(a);
 }
 
-void market::register_client(pm_client* c) {
+void market::register_client(pm_client* c, d1::constraints&) {
     mutex_type::scoped_lock lock(my_mutex);
     my_clients[c->priority_level()].push_back(c);
 }

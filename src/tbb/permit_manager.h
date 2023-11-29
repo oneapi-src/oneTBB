@@ -17,6 +17,7 @@
 #ifndef _TBB_permit_manager_H
 #define _TBB_permit_manager_H
 
+#include "oneapi/tbb/info.h"
 #include "oneapi/tbb/detail/_utils.h"
 #include "thread_request_serializer.h"
 
@@ -31,7 +32,7 @@ class permit_manager : no_copy {
 public:
     virtual ~permit_manager() {}
     virtual pm_client* create_client(arena& a) = 0;
-    virtual void register_client(pm_client* client) = 0;
+    virtual void register_client(pm_client* client, d1::constraints& constraints) = 0;
     virtual void unregister_and_destroy_client(pm_client& c) = 0;
 
     virtual void set_active_num_workers(int soft_limit) = 0;

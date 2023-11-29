@@ -98,6 +98,10 @@ struct RegisterProcessShutdownNotification {
         // MALLOC_ASSERT(ret, "Allocator can't load itself.");
         dlopen(MALLOCLIB_NAME, RTLD_NOW);
     }
+
+    RegisterProcessShutdownNotification(RegisterProcessShutdownNotification&) = delete;
+    RegisterProcessShutdownNotification& operator=(const RegisterProcessShutdownNotification&) = delete;
+
     ~RegisterProcessShutdownNotification() {
         __TBB_mallocProcessShutdownNotification(false);
     }

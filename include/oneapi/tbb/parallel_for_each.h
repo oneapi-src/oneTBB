@@ -407,6 +407,15 @@ public:
 template<typename It>
 using tag = typename std::iterator_traits<It>::iterator_category;
 
+#if __TBB_CPP20_PRESENT
+template <typename It>
+using iterator_tag_dispatch =
+    std::conditional_t<std::random_access_iterator<It>,
+                       std::random_access_iterator_tag,
+                       std::conditional_t<std::forward_iterator<It>,
+                                          std::forward_iterator_tag,
+                                          std::input_iterator_tag>>;
+#else
 template<typename It>
 using iterator_tag_dispatch = typename
     std::conditional<
@@ -418,6 +427,7 @@ using iterator_tag_dispatch = typename
             std::input_iterator_tag
         >::type
     >::type;
+#endif // __TBB_CPP20_PRESENT
 
 template <typename Body, typename Iterator, typename Item>
 using feeder_is_required = tbb::detail::void_t<decltype(tbb::detail::invoke(std::declval<const Body>(),

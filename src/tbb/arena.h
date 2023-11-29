@@ -174,9 +174,6 @@ public:
         }
         return false;
     }
-    void clear() {
-        my_state.store(UNSET, std::memory_order_release);
-    }
     bool test(std::memory_order order = std::memory_order_acquire) {
         return my_state.load(order) != UNSET;
     }
@@ -235,7 +232,7 @@ struct arena_base : padded<intrusive_list_node> {
 
 #if __TBB_ARENA_BINDING
     //! Pointer to internal observer that allows to bind threads in arena to certain NUMA node.
-    numa_binding_observer* my_numa_binding_observer;
+    numa_binding_observer* my_numa_binding_observer{nullptr};
 #endif /*__TBB_ARENA_BINDING*/
 
     // Below are rarely modified members
@@ -290,7 +287,7 @@ public:
     static arena& allocate_arena(threading_control* control, unsigned num_slots, unsigned num_reserved_slots,
                                   unsigned priority_level);
 
-    static arena& create(threading_control* control, unsigned num_slots, unsigned num_reserved_slots, unsigned arena_priority_level);
+    static arena& create(threading_control* control, unsigned num_slots, unsigned num_reserved_slots, unsigned arena_priority_level, d1::constraints constraints = d1::constraints{});
 
     static int unsigned num_arena_slots ( unsigned num_slots, unsigned num_reserved_slots ) {
         return num_reserved_slots == 0 ? num_slots : max(2u, num_slots);
@@ -392,6 +389,8 @@ public:
 
     void set_allotment(unsigned allotment);
 
+    int update_concurrency(unsigned concurrency);
+
     std::pair</*min workers = */ int, /*max workers = */ int> update_request(int mandatory_delta, int workers_delta);
 
     /** Must be the last data field */
@@ -430,8 +429,7 @@ void arena::advertise_new_work() {
             workers_delta = 1;
         }
 
-        bool wakeup_workers = is_mandatory_needed || are_workers_needed;
-        request_workers(mandatory_delta, workers_delta, wakeup_workers);
+        request_workers(mandatory_delta, workers_delta, /* wakeup_threads = */ true);
     }
 }
 

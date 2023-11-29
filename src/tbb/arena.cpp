@@ -196,6 +196,8 @@ void arena::process(thread_data& tls) {
         return;
     }
 
+    my_tc_client.get_pm_client()->register_thread();
+
     __TBB_ASSERT( index >= my_num_reserved_slots, "Workers cannot occupy reserved slots" );
     tls.attach_arena(*this, index);
     // worker thread enters the dispatch loop to look for a work
@@ -234,6 +236,8 @@ void arena::process(thread_data& tls) {
     tls.my_inbox.detach();
     __TBB_ASSERT(tls.my_inbox.is_idle_state(true), nullptr);
     __TBB_ASSERT(is_alive(my_guard), nullptr);
+
+    my_tc_client.get_pm_client()->unregister_thread();
 
     // In contrast to earlier versions of TBB (before 3.0 U5) now it is possible
     // that arena may be temporarily left unpopulated by threads. See comments in
@@ -405,6 +409,14 @@ void arena::set_allotment(unsigned allotment) {
     }
 }
 
+int arena::update_concurrency(unsigned allotment) {
+    int delta = allotment - my_num_workers_allotted.load(std::memory_order_relaxed);
+    if (delta != 0) {
+        my_num_workers_allotted.store(allotment, std::memory_order_relaxed);
+    }
+    return delta;
+}
+
 std::pair<int, int> arena::update_request(int mandatory_delta, int workers_delta) {
     __TBB_ASSERT(-1 <= mandatory_delta && mandatory_delta <= 1, nullptr);
 
@@ -436,15 +448,14 @@ void arena::enqueue_task(d1::task& t, d1::task_group_context& ctx, thread_data& 
     advertise_new_work<work_enqueued>();
 }
 
-arena& arena::create(threading_control* control, unsigned num_slots, unsigned num_reserved_slots, unsigned arena_priority_level)
-{
+arena& arena::create(threading_control* control, unsigned num_slots, unsigned num_reserved_slots, unsigned arena_priority_level, d1::constraints constraints) {
     __TBB_ASSERT(num_slots > 0, NULL);
     __TBB_ASSERT(num_reserved_slots <= num_slots, NULL);
     // Add public market reference for an external thread/task_arena (that adds an internal reference in exchange).
     arena& a = arena::allocate_arena(control, num_slots, num_reserved_slots, arena_priority_level);
     a.my_tc_client = control->create_client(a);
     // We should not publish arena until all fields are initialized
-    control->publish_client(a.my_tc_client);
+    control->publish_client(a.my_tc_client, constraints);
     return a;
 }
 
@@ -526,12 +537,17 @@ void __TBB_EXPORTED_FUNC enqueue(d1::task& t, d1::task_group_context& ctx, d1::t
 void task_arena_impl::initialize(d1::task_arena_base& ta) {
     // Enforce global market initialization to properly initialize soft limit
     (void)governor::get_thread_data();
+    d1::constraints arena_constraints;
+
+#if __TBB_ARENA_BINDING
+    arena_constraints = d1::constraints{}
+        .set_core_type(ta.core_type())
+        .set_max_threads_per_core(ta.max_threads_per_core())
+        .set_numa_id(ta.my_numa_id);
+#endif /*__TBB_ARENA_BINDING*/
+    
     if (ta.my_max_concurrency < 1) {
 #if __TBB_ARENA_BINDING
-        d1::constraints arena_constraints = d1::constraints{}
-            .set_core_type(ta.core_type())
-            .set_max_threads_per_core(ta.max_threads_per_core())
-            .set_numa_id(ta.my_numa_id);
         ta.my_max_concurrency = (int)default_concurrency(arena_constraints);
 #else /*!__TBB_ARENA_BINDING*/
         ta.my_max_concurrency = (int)governor::default_num_threads();
@@ -541,12 +557,13 @@ void task_arena_impl::initialize(d1::task_arena_base& ta) {
     __TBB_ASSERT(ta.my_arena.load(std::memory_order_relaxed) == nullptr, "Arena already initialized");
     unsigned priority_level = arena_priority_level(ta.my_priority);
     threading_control* thr_control = threading_control::register_public_reference();
-    arena& a = arena::create(thr_control, unsigned(ta.my_max_concurrency), ta.my_num_reserved_slots, priority_level);
+    arena& a = arena::create(thr_control, unsigned(ta.my_max_concurrency), ta.my_num_reserved_slots, priority_level, arena_constraints);
+
     ta.my_arena.store(&a, std::memory_order_release);
-#if __TBB_ARENA_BINDING
+#if __TBB_CPUBIND_PRESENT
     a.my_numa_binding_observer = construct_binding_observer(
         static_cast<d1::task_arena*>(&ta), a.my_num_slots, ta.my_numa_id, ta.core_type(), ta.max_threads_per_core());
-#endif /*__TBB_ARENA_BINDING*/
+#endif /*__TBB_CPUBIND_PRESENT*/
 }
 
 void task_arena_impl::terminate(d1::task_arena_base& ta) {

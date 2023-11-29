@@ -47,57 +47,120 @@ class base_task {
 public:
     base_task() = default;
 
-    base_task(const base_task& t) : m_parent(t.m_parent), m_child_counter(t.m_child_counter.load())
+    base_task(const base_task& t) : m_type(t.m_type), m_parent(t.m_parent), m_child_counter(t.m_child_counter.load())
     {}
 
     virtual ~base_task() = default;
 
     void operator() () const {
-        base_task* parent_snapshot = m_parent;
-        const_cast<base_task*>(this)->execute();
-        if (m_parent && parent_snapshot == m_parent) {
-            m_parent->release();
+        task_type type_snapshot = m_type;
+
+        base_task* bypass = const_cast<base_task*>(this)->execute();
+
+        if (m_parent && m_type != task_type::recycled) {
+            if (m_parent->remove_child_reference() == 0) {
+                m_parent->operator()();
+            }
+        }
+
+        if (m_type == task_type::allocated) {
+            delete this;
+        }
+
+        if (bypass != nullptr) {
+            m_type = type_snapshot;
+
+            // Bypass is not supported by task_emulation and next_task executed directly.
+            // However, the old-TBB bypass behavior can be achieved with
+            // `return task_group::defer()` (check Migration Guide).
+            // Consider submit another task if recursion call is not acceptable
+            // i.e. instead of Direct Body call
+            // submit task_emulation::run_task();
+            bypass->operator()();
         }
     }
 
-    virtual void execute() = 0;
+    virtual base_task* execute() = 0;
 
     template <typename C, typename... Args>
-    C* create_continuation(std::uint64_t ref, Args&&... args) {
+    C* allocate_continuation(std::uint64_t ref, Args&&... args) {
         C* continuation = new C{std::forward<Args>(args)...};
+        continuation->m_type = task_type::allocated;
         continuation->reset_parent(reset_parent());
         continuation->m_child_counter = ref;
         return continuation;
     }
 
     template <typename F, typename... Args>
-    F create_child_of_continuation(Args&&... args) {
-        F obj{std::forward<Args>(args)...};
-        obj.reset_parent(this);
-        return obj;
+    F create_child(Args&&... args) {
+        return create_child_impl<F>(std::forward<Args>(args)...);
+    }
+
+    template <typename F, typename... Args>
+    F create_child_and_increment(Args&&... args) {
+        add_child_reference();
+        return create_child_impl<F>(std::forward<Args>(args)...);
+    }
+
+    template <typename F, typename... Args>
+    F* allocate_child(Args&&... args) {
+        return allocate_child_impl<F>(std::forward<Args>(args)...);
+    }
+
+    template <typename F, typename... Args>
+    F* allocate_child_and_increment(Args&&... args) {
+        add_child_reference();
+        return allocate_child_impl<F>(std::forward<Args>(args)...);
     }
 
     template <typename C>
-    void recycle_as_child_of_continuation(C& c) {
+    void recycle_as_child_of(C& c) {
+        m_type = task_type::recycled;
         reset_parent(&c);
     }
 
-protected:
-    void reserve() {
+    void recycle_as_continuation() {
+        m_type = task_type::recycled;
+    }
+
+    void add_child_reference() {
         ++m_child_counter;
     }
+
+    std::uint64_t remove_child_reference() {
+        return --m_child_counter;
+    }
+
+protected:
+    enum class task_type {
+        stack_based,
+        allocated,
+        recycled
+    };
+
+    mutable task_type m_type;
 
 private:
     template <typename F, typename... Args>
     friend F create_root_task(tbb::task_group& tg, Args&&... args);
 
+    template <typename F, typename... Args>
+    friend F* allocate_root_task(tbb::task_group& tg, Args&&... args);
 
-    void release() {
-        if (--m_child_counter == 0) {
-            operator()();
-            // Free will be called only for continuations
-            delete this;
-        }
+    template <typename F, typename... Args>
+    F create_child_impl(Args&&... args) {
+        F obj{std::forward<Args>(args)...};
+        obj.m_type = task_type::stack_based;
+        obj.reset_parent(this);
+        return obj;
+    }
+
+    template <typename F, typename... Args>
+    F* allocate_child_impl(Args&&... args) {
+        F* obj = new F{std::forward<Args>(args)...};
+        obj->m_type = task_type::allocated;
+        obj->reset_parent(this);
+        return obj;
     }
 
     base_task* reset_parent(base_task* ptr = nullptr) {
@@ -113,12 +176,14 @@ private:
 class root_task : public base_task {
 public:
     root_task(tbb::task_group& tg) : m_tg(tg), m_callback(m_tg.defer([] { /* Create empty callback to preserve reference for wait. */})) {
-        reserve();
+        add_child_reference();
+        m_type = base_task::task_type::allocated;
     }
 
 private:
-    void execute() override {
+    base_task* execute() override {
         m_tg.run(std::move(m_callback));
+        return nullptr;
     }
 
     tbb::task_group& m_tg;
@@ -128,13 +193,32 @@ private:
 template <typename F, typename... Args>
 F create_root_task(tbb::task_group& tg, Args&&... args) {
     F obj{std::forward<Args>(args)...};
+    obj.m_type = base_task::task_type::stack_based;
     obj.reset_parent(new root_task{tg});
+    return obj;
+}
+
+template <typename F, typename... Args>
+F* allocate_root_task(tbb::task_group& tg, Args&&... args) {
+    F* obj = new F{std::forward<Args>(args)...};
+    obj->m_type = base_task::task_type::allocated;
+    obj->reset_parent(new root_task{tg});
     return obj;
 }
 
 template <typename F>
 void run_task(F&& f) {
     tg_pool[tbb::this_task_arena::current_thread_index()].run(std::forward<F>(f));
+}
+
+template <typename F>
+void run_task(F* f) {
+    tg_pool[tbb::this_task_arena::current_thread_index()].run(std::ref(*f));
+}
+
+template <typename F>
+void run_and_wait(tbb::task_group& tg, F* f) {
+   tg.run_and_wait(std::ref(*f));
 }
 } // namespace task_emulation
 

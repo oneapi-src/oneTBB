@@ -186,6 +186,9 @@ class ThreadId {
 #endif
 public:
     ThreadId() : tid(GetMyTID()) {}
+    ThreadId(ThreadId &other) = delete;
+    ~ThreadId() = default;
+
 #if USE_PTHREAD
     bool isCurrentThreadId() const { return pthread_equal(pthread_self(), tid.load(std::memory_order_relaxed)); }
 #else
@@ -537,7 +540,6 @@ private:
     std::atomic<Block*> head;
     int         size;
     Backend    *backend;
-    bool        lastAccessMiss;
 public:
     static const int POOL_HIGH_MARK = 32;
     static const int POOL_LOW_MARK  = 8;
@@ -591,7 +593,7 @@ public:
 private:
     std::atomic<bool> unused;
 public:
-    TLSData(MemoryPool *mPool, Backend *bknd) : memPool(mPool), freeSlabBlocks(bknd) {}
+    TLSData(MemoryPool *mPool, Backend *bknd) : memPool(mPool), freeSlabBlocks(bknd), currCacheIdx(0) {}
     MemoryPool *getMemPool() const { return memPool; }
     Bin* getAllocationBin(size_t size);
     void release();
@@ -1646,6 +1648,7 @@ bool OrphanedBlocks::cleanup(Backend* backend)
 FreeBlockPool::ResOfGet FreeBlockPool::getBlock()
 {
     Block *b = head.exchange(nullptr);
+    bool lastAccessMiss;
 
     if (b) {
         size--;
@@ -3295,7 +3298,7 @@ extern "C" int scalable_allocation_command(int cmd, void *param)
             released = tls->externalCleanup(/*cleanOnlyUnused*/false, /*cleanBins=*/true);
         break;
     case TBBMALLOC_CLEAN_ALL_BUFFERS:
-        released = defaultMemPool->extMemPool.hardCachesCleanup();
+        released = defaultMemPool->extMemPool.hardCachesCleanup(true);
         break;
     default:
         return TBBMALLOC_INVALID_PARAM;

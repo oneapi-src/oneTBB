@@ -372,15 +372,18 @@ static void (*restore_affinity_ptr)( binding_handler* handler_ptr, int slot_num 
 int (*get_default_concurrency_ptr)( int numa_id, int core_type_id, int max_threads_per_core )
     = dummy_get_default_concurrency;
 
-#if _WIN32 || _WIN64 || __unix__
+#if _WIN32 || _WIN64 || __unix__ || __APPLE__
+
 // Table describing how to link the handlers.
 static const dynamic_link_descriptor TbbBindLinkTable[] = {
     DLD(__TBB_internal_initialize_system_topology, initialize_system_topology_ptr),
     DLD(__TBB_internal_destroy_system_topology, destroy_system_topology_ptr),
+#if __TBB_CPUBIND_PRESENT
     DLD(__TBB_internal_allocate_binding_handler, allocate_binding_handler_ptr),
     DLD(__TBB_internal_deallocate_binding_handler, deallocate_binding_handler_ptr),
     DLD(__TBB_internal_apply_affinity, apply_affinity_ptr),
     DLD(__TBB_internal_restore_affinity, restore_affinity_ptr),
+#endif
     DLD(__TBB_internal_get_default_concurrency, get_default_concurrency_ptr)
 };
 
@@ -395,6 +398,9 @@ static const unsigned LinkTableSize = sizeof(TbbBindLinkTable) / sizeof(dynamic_
 #if _WIN32 || _WIN64
 #define LIBRARY_EXTENSION ".dll"
 #define LIBRARY_PREFIX
+#elif __APPLE__
+#define LIBRARY_EXTENSION __TBB_STRING(.3.dylib)
+#define LIBRARY_PREFIX "lib"
 #elif __unix__
 #define LIBRARY_EXTENSION __TBB_STRING(.so.3)
 #define LIBRARY_PREFIX "lib"
@@ -423,7 +429,7 @@ int  core_types_count = 0;
 int* core_types_indexes = nullptr;
 
 const char* load_tbbbind_shared_object() {
-#if _WIN32 || _WIN64 || __unix__
+#if _WIN32 || _WIN64 || __unix__ || __APPLE__
 #if _WIN32 && !_WIN64
     // For 32-bit Windows applications, process affinity masks can only support up to 32 logical CPUs.
     SYSTEM_INFO si;
@@ -435,7 +441,7 @@ const char* load_tbbbind_shared_object() {
             return tbbbind_version;
         }
     }
-#endif /* _WIN32 || _WIN64 || __unix__ */
+#endif /* _WIN32 || _WIN64 || __unix__ || __APPLE__ */
     return nullptr;
 }
 
