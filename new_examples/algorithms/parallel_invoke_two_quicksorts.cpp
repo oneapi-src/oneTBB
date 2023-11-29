@@ -73,13 +73,15 @@ int main(int argc, char *argv[]) {
   double tbb_time = (tbb::tick_count::now() - t1).seconds();
 
   if (resultsAreValid(sv1, sv2, tv1, tv2)) {
-    std::cout << "serial_time == " << serial_time << " seconds" << std::endl
-              << "tbb_time == " << tbb_time << " seconds" << std::endl
-              << "speedup == " << serial_time/tbb_time << std::endl
-              << "NOTE: the maximum possible speedup is 2" << std::endl;
+    std::cout << "serial_time == " << serial_time << " seconds\n"
+              << "tbb_time == " << tbb_time << " seconds\n"
+              << "speedup == " << serial_time/tbb_time << "\n"
+              << "NOTE: the maximum possible speedup is 2\n";
     return 0;
-  }  
-  return 1;
+  } else {
+    std::cout << "ERROR: invalid results!\n";
+    return 1;
+  }
 }
 
 //

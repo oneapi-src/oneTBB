@@ -87,12 +87,14 @@ int main() {
   double tbb_time = (tbb::tick_count::now() - t1).seconds();
 
   if (resultsAreValid(sv, tv)) {
-    std::cout << "serial_time == " << serial_time << " seconds" << std::endl
-              << "tbb_time == " << tbb_time << " seconds" << std::endl
-              << "speedup == " << serial_time/tbb_time << std::endl;
+    std::cout << "serial_time == " << serial_time << " seconds\n"
+              << "tbb_time == " << tbb_time << " seconds\n"
+              << "speedup == " << serial_time/tbb_time << "\n";
     return 0;
+  } else {
+    std::cout << "ERROR: invalid results!\n";
+    return 1;
   }
-  return 1;
 }
 
 //
