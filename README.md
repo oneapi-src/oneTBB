@@ -40,7 +40,7 @@ See [Release Notes](RELEASE_NOTES.md) and [System Requirements](SYSTEM_REQUIREME
 See [Installation from Sources](INSTALL.md) to learn how to install oneTBB. 
 
 ## Support
-See our [documentation](./SUPPORT.md) to learn how to work with them.
+See our [documentation](./SUPPORT.md) to learn how to request help.
 
 ## How to Contribute
 We welcome community contributions, so check our [Contributing Guidelines](CONTRIBUTING.md)
