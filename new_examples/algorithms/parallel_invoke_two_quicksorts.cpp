@@ -14,26 +14,38 @@
     limitations under the License.
 */
 
-// avoid Windows macros
-#define NOMINMAX
-#include <iostream>
-#include <cfloat>
-#include <vector>
-#include <limits>
-#include <tbb/tbb.h>
-#include <random>
+//
+// The part that appears as an example in the book
+//
 
-//
-// The data type used in this example
-//
+#include <vector>
+#include <tbb/tbb.h>
+
 struct DataItem { int id; double value; };
 using QSVector = std::vector<DataItem>;
+
+template<typename Iterator> void serialQuicksort(Iterator b, Iterator e);
+
+void example(QSVector& v1, QSVector& v2) {
+  tbb::parallel_invoke(
+    [&]() { serialQuicksort(v1.begin(), v1.end()); },
+    [&]() { serialQuicksort(v2.begin(), v2.end()); }
+  );
+}
+
+//
+// End of the part that appears as an example in the book
+//
+
+#include <cfloat>
+#include <iostream>
+#include <limits>
+#include <random>
 
 //
 // Forward function declarations:
 //
 static QSVector makeQSData(int N);
-template<typename Iterator> void serialQuicksort(Iterator b, Iterator e);
 static void warmupTBB();
 static bool resultsAreValid(const QSVector&, const QSVector&, 
                             const QSVector&, const QSVector&);
@@ -66,10 +78,7 @@ int main(int argc, char *argv[]) {
 
   // Sort the other two vectors in parallel using parallel_invoke
   tbb::tick_count t1 = tbb::tick_count::now();
-  tbb::parallel_invoke(
-    [&tv1]() { serialQuicksort(tv1.begin(), tv1.end()); },
-    [&tv2]() { serialQuicksort(tv2.begin(), tv2.end()); }
-  );
+  example(tv1, tv2);
   double tbb_time = (tbb::tick_count::now() - t1).seconds();
 
   if (resultsAreValid(sv1, sv2, tv1, tv2)) {

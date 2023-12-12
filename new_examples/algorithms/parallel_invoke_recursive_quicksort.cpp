@@ -14,35 +14,16 @@
     limitations under the License.
 */
 
-// avoid Windows macros
-#define NOMINMAX
-#include <algorithm>
-#include <cfloat>
-#include <iostream>
-#include <random>
 #include <vector>
 #include <tbb/tbb.h>
 
 struct DataItem { int id; double value; };
 using QSVector = std::vector<DataItem>;
 
-//
-// Forward function declarations:
-//
-static QSVector makeQSData(int N);
 template<typename Iterator> void serialQuicksort(Iterator b, Iterator e);
-static void warmupTBB();
-static bool resultsAreValid(const QSVector&, const QSVector&);
-
-//
-// OVERVIEW
-//
-// This examples demonstrates that recursively calling a function
-// that uses parallel_invoke leads to more scalable solution.
-//
 
 template<typename Iterator>
-void parallelQuicksort(Iterator b, Iterator e) {
+void parallelQuickSort(Iterator b, Iterator e) {
   const int cutoff = 100;
 
   if (e - b < cutoff) {
@@ -60,11 +41,20 @@ void parallelQuicksort(Iterator b, Iterator e) {
 
     // recursive call
     tbb::parallel_invoke(
-      [=]() { parallelQuicksort(b, i); },
-      [=]() { parallelQuicksort(i + 1, e); }
+      [=]() { parallelQuickSort(b, i); },
+      [=]() { parallelQuickSort(i + 1, e); }
     );
   }
 }
+
+#include <algorithm>
+#include <cfloat>
+#include <iostream>
+#include <random>
+
+static QSVector makeQSData(int N);
+static void warmupTBB();
+static bool resultsAreValid(const QSVector&, const QSVector&);
 
 int main() {
   const int N = 1000000;
@@ -83,7 +73,7 @@ int main() {
   warmupTBB();
 
   tbb::tick_count t1 = tbb::tick_count::now();
-  parallelQuicksort(tv.begin(), tv.end());
+  parallelQuickSort(tv.begin(), tv.end());
   double tbb_time = (tbb::tick_count::now() - t1).seconds();
 
   if (resultsAreValid(sv, tv)) {
