@@ -409,12 +409,31 @@ using tag = typename std::iterator_traits<It>::iterator_category;
 
 #if __TBB_CPP20_PRESENT
 template <typename It>
-using iterator_tag_dispatch =
+struct move_iterator_dispatch_helper {
+    using type = It;
+};
+
+// Until C++23, std::move_iterator::iterator_concept always defines
+// to std::input_iterator_tag and hence std::forward_iterator concept
+// always evaluates to false, so std::move_iterator dispatch should be
+// made according to the base iterator type.
+template <typename It>
+struct move_iterator_dispatch_helper<std::move_iterator<It>> {
+    using type = It;
+};
+
+template <typename It>
+using iterator_tag_dispatch_impl =
     std::conditional_t<std::random_access_iterator<It>,
                        std::random_access_iterator_tag,
                        std::conditional_t<std::forward_iterator<It>,
                                           std::forward_iterator_tag,
                                           std::input_iterator_tag>>;
+
+template <typename It>
+using iterator_tag_dispatch =
+    iterator_tag_dispatch_impl<typename move_iterator_dispatch_helper<It>::type>;
+
 #else
 template<typename It>
 using iterator_tag_dispatch = typename

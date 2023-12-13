@@ -290,10 +290,10 @@ template <typename Category>
 void test_with_cpp20_iterator() {
     constexpr std::size_t n = 1'000'000;
 
-    no_copy_move elements[n];
+    std::vector<no_copy_move> elements(n);
 
-    cpp20_iterator<no_copy_move, Category> begin(elements);
-    cpp20_iterator<no_copy_move, Category> end(elements + n);
+    cpp20_iterator<no_copy_move, Category> begin(elements.data());
+    cpp20_iterator<no_copy_move, Category> end(elements.data() + n);
 
     oneapi::tbb::parallel_for_each(begin, end, [](no_copy_move& element) {
         element.item = 42;
