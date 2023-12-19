@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2021 Intel Corporation
+# Copyright (c) 2020-2023 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,6 +24,11 @@ function(tbbbind_build TBBBIND_NAME REQUIRED_HWLOC_TARGET)
         return()
     endif()
     add_library(${TBBBIND_NAME} tbb_bind.cpp)
+
+    if (WIN32)
+        target_sources(${TBBBIND_NAME} PRIVATE tbb_bind.rc)
+    endif()
+
     add_library(TBB::${TBBBIND_NAME} ALIAS ${TBBBIND_NAME})
 
     target_compile_definitions(${TBBBIND_NAME}
