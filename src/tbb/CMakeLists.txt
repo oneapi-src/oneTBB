@@ -16,6 +16,7 @@ add_library(tbb
     address_waiter.cpp
     allocator.cpp
     arena.cpp
+    arena_fixed_size.cpp
     arena_slot.cpp
     concurrent_bounded_queue.cpp
     dynamic_link.cpp

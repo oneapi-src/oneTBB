@@ -31,6 +31,10 @@
 #include <atomic>
 
 namespace tbb {
+namespace prototype {
+class arena_fixed_size;
+} //prototype
+
 namespace detail {
 namespace r1 {
 
@@ -87,6 +91,7 @@ struct alignas(max_nfs_size) arena_slot_private_state {
 
 class arena_slot : private arena_slot_shared_state, private arena_slot_private_state {
     friend class arena;
+    friend class tbb::prototype::arena_fixed_size;
     friend class outermost_worker_waiter;
     friend class task_dispatcher;
     friend class thread_data;
