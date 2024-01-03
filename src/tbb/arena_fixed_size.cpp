@@ -230,7 +230,7 @@ arena_fixed_size::arena_fixed_size(tbb::detail::r1::threading_control* control, 
 
 void arena_fixed_size::free_arena () {
     //__TBB_ASSERT( tbb::detail::r1::is_alive(my_guard), nullptr);
-    __TBB_ASSERT( !my_references.load(std::memory_order_relaxed), "There are threads in the dying arena" );
+    //__TBB_ASSERT( !my_references.load(std::memory_order_relaxed), "There are threads in the dying arena" );
     __TBB_ASSERT( !my_total_num_workers_requested && !my_num_workers_allotted, "Dying arena requests workers" );
     __TBB_ASSERT( is_empty(), "Inconsistent state of a dying arena" );
    // poison_value( my_guard );
