@@ -89,6 +89,10 @@ EXPORTS
 ?cancel_group_execution@r1@detail@tbb@@YA_NAEAVtask_group_context@d1@23@@Z
 ?capture_fp_settings@r1@detail@tbb@@YAXAEAVtask_group_context@d1@23@@Z
 
+;Task Fixed arena (arena_fixed_size.cpp)
+?initialize@r1@prototype@tbb@@YAXAEAVtask_arena_fixed_size_base@d1@23@@Z
+?terminate@r1@prototype@tbb@@YAXAEAVtask_arena_fixed_size_base@d1@23@@Z
+
 ; Task arena (arena.cpp)
 ?max_concurrency@r1@detail@tbb@@YAHPEBVtask_arena_base@d1@23@@Z
 ?initialize@r1@detail@tbb@@YAXAEAVtask_arena_base@d1@23@@Z

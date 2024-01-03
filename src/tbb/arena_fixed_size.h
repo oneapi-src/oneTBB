@@ -38,6 +38,7 @@
 
 namespace tbb {
 namespace prototype {
+namespace r1 {
 
 class task_dispatcher;
 class task_group_context;
@@ -63,6 +64,11 @@ public:
 
     //! Constructor
     arena_fixed_size(tbb::detail::r1::threading_control* control, unsigned max_num_workers, unsigned num_reserved_slots, unsigned priority_level);
+    //! Allocate an instance of arena.
+    static arena_fixed_size& allocate_arena(tbb::detail::r1::threading_control* control, unsigned num_slots, unsigned num_reserved_slots,
+        unsigned priority_level);
+
+    static arena_fixed_size& create(tbb::detail::r1::threading_control* control, unsigned num_slots, unsigned num_reserved_slots, unsigned arena_priority_level, tbb::detail::d1::constraints constraints = tbb::detail::d1::constraints{});
 
 
     static int unsigned num_arena_slots ( unsigned num_slots, unsigned num_reserved_slots ) {
@@ -248,6 +254,7 @@ inline tbb::detail::d1::task* arena_fixed_size::get_stream_task(tbb::detail::r1:
     return stream.pop(tbb::detail::r1::subsequent_lane_selector(hint));
 }
 
+} //namespace r1
 } // namespace prototype
 } // namespace tbb
 

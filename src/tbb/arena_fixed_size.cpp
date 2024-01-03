@@ -31,6 +31,7 @@
 
 namespace tbb {
 namespace prototype {
+namespace r1 {
 
 void arena_fixed_size::on_thread_leaving(unsigned ref_param) {
     //
@@ -195,7 +196,7 @@ arena_fixed_size::arena_fixed_size(tbb::detail::r1::threading_control* control, 
     //__TBB_ASSERT( !my_guard, "improperly allocated arena?" );
     //__TBB_ASSERT( sizeof(my_slots[0]) % cache_line_size()==0, "arena::slot size not multiple of cache line size" );
     //__TBB_ASSERT( is_aligned(this, cache_line_size()), "arena misaligned" );
-
+#if 0
     my_threading_control = control;
     my_limit = 1;
     // Two slots are mandatory: for the external thread, and for 1 worker (required to support starvation resistant tasks).
@@ -224,6 +225,7 @@ arena_fixed_size::arena_fixed_size(tbb::detail::r1::threading_control* control, 
     my_fifo_task_stream.initialize(my_num_slots);
     my_resume_task_stream.initialize(my_num_slots);
     my_mandatory_requests = 0;
+#endif
 }
 
 void arena_fixed_size::free_arena () {
@@ -357,6 +359,78 @@ tbb::detail::r1::thread_control_monitor& arena_fixed_size::get_waiting_threads_m
     return my_threading_control->get_waiting_threads_monitor();
 }
 
+arena_fixed_size& arena_fixed_size::allocate_arena(tbb::detail::r1::threading_control* control, unsigned num_slots, unsigned num_reserved_slots,
+    unsigned priority_level)
+{
+    //__TBB_ASSERT(sizeof(base_type) + sizeof(arena_slot) == sizeof(arena), "All arena data fields must go to arena_base");
+    //__TBB_ASSERT(sizeof(base_type) % cache_line_size() == 0, "arena slots area misaligned: wrong padding");
+    //__TBB_ASSERT(sizeof(mail_outbox) == max_nfs_size, "Mailbox padding is wrong");
+    std::size_t n = allocation_size(num_arena_slots(num_slots, num_reserved_slots));
+    unsigned char* storage = (unsigned char*)tbb::detail::r1::cache_aligned_allocate(n);
+    // Zero all slots to indicate that they are empty
+    std::memset(storage, 0, n);
+
+    return *new(storage + num_arena_slots(num_slots, num_reserved_slots) * sizeof(tbb::detail::r1::mail_outbox))
+        arena_fixed_size(control, num_slots, num_reserved_slots, priority_level);
+}
+
+arena_fixed_size& arena_fixed_size::create(tbb::detail::r1::threading_control* control, unsigned num_slots, unsigned num_reserved_slots, unsigned arena_priority_level, tbb::detail::d1::constraints constraints) {
+    __TBB_ASSERT(num_slots > 0, NULL);
+    __TBB_ASSERT(num_reserved_slots <= num_slots, NULL);
+    // Add public market reference for an external thread/task_arena (that adds an internal reference in exchange).
+    arena_fixed_size& a = arena_fixed_size::allocate_arena(control, num_slots, num_reserved_slots, arena_priority_level);
+    a.my_tc_client = control->create_client(a);
+    // We should not publish arena until all fields are initialized
+    control->publish_client(a.my_tc_client, constraints);
+    return a;
+}
+
+} // namespace r1
+} // namespace prototype
+} // namespace tbb
+
+// Enable task_arena_fixed_size.h
+#include "oneapi/tbb/task_arena_fixed_size.h" // task_arena_base
+
+
+namespace tbb {
+namespace prototype {
+namespace r1 {
+
+struct task_arena_fixed_size_impl {
+    static void initialize(d1::task_arena_fixed_size_base&);
+    static void terminate(d1::task_arena_fixed_size_base&);
+};
+void __TBB_EXPORTED_FUNC initialize(d1::task_arena_fixed_size_base& ta) {
+    task_arena_fixed_size_impl::initialize(ta);
+}
+void __TBB_EXPORTED_FUNC terminate(d1::task_arena_fixed_size_base& ta) {
+    task_arena_fixed_size_impl::terminate(ta);
+}
+
+void task_arena_fixed_size_impl::initialize(d1::task_arena_fixed_size_base& ta) {
+    // Enforce global market initialization to properly initialize soft limit
+    (void)tbb::detail::r1::governor::get_thread_data();
+    tbb::detail::d1::constraints arena_constraints;
+
+    //__TBB_ASSERT(ta.my_arena.load(std::memory_order_relaxed) == nullptr, "Arena already initialized");
+    //unsigned priority_level = arena_priority_level(ta.my_priority);
+    tbb::detail::r1::threading_control* thr_control = tbb::detail::r1::threading_control::register_public_reference();
+    arena_fixed_size& a = arena_fixed_size::create(thr_control, unsigned(ta.my_max_concurrency), ta.my_num_reserved_slots, unsigned(ta.my_priority), arena_constraints);
+
+    ta.my_arena.store(&a, std::memory_order_release);
+}
+
+void task_arena_fixed_size_impl::terminate(d1::task_arena_fixed_size_base& ta) {
+    arena_fixed_size* a = ta.my_arena.load(std::memory_order_relaxed);
+    tbb::detail::assert_pointer_valid(a);
+    tbb::detail::r1::threading_control::unregister_public_reference(/*blocking_terminate=*/false);
+    a->on_thread_leaving(arena_fixed_size::ref_external);
+    ta.my_arena.store(nullptr, std::memory_order_relaxed);
+}
+
+
+} // namespace r1
 } // namespace prototype
 } // namespace tbb
 
