@@ -1521,7 +1521,7 @@ bool Block::readyToShare()
     {
         MallocMutex::scoped_lock scoped_cs(publicFreeListLock);
         if ( (oldVal=publicFreeList)==nullptr )
-            (intptr_t&)(publicFreeList) = UNUSABLE;
+            publicFreeList = reinterpret_cast<FreeObject *>(UNUSABLE);
     }
 #endif
     return oldVal==nullptr;
