@@ -80,6 +80,7 @@ namespace r1 {
 struct task_arena_fixed_size_impl {
     static void initialize(d1::task_arena_fixed_size_base&);
     static void terminate(d1::task_arena_fixed_size_base&);
+    static void execute(d1::task_arena_fixed_size_base&, tbb::detail::d1::delegate_base&);
 };
 void __TBB_EXPORTED_FUNC initialize(d1::task_arena_fixed_size_base& ta) {
     task_arena_fixed_size_impl::initialize(ta);
@@ -87,6 +88,34 @@ void __TBB_EXPORTED_FUNC initialize(d1::task_arena_fixed_size_base& ta) {
 void __TBB_EXPORTED_FUNC terminate(d1::task_arena_fixed_size_base& ta) {
     task_arena_fixed_size_impl::terminate(ta);
 }
+void __TBB_EXPORTED_FUNC execute(d1::task_arena_fixed_size_base& ta, tbb::detail::d1::delegate_base& d) {
+    task_arena_fixed_size_impl::execute(ta, d);
+}
+
+void task_arena_fixed_size_impl::execute(d1::task_arena_fixed_size_base& ta, tbb::detail::d1::delegate_base& d) {
+    arena_fixed_size* a = ta.my_arena.load(std::memory_order_relaxed);
+    __TBB_ASSERT(a != nullptr, nullptr);
+    tbb::detail::r1::thread_data* td = tbb::detail::r1::governor::get_thread_data();
+
+    bool same_arena = td->my_arena == a;
+    std::size_t index1 = td->my_arena_index;
+    if (!same_arena) {
+        index1 = a->occupy_free_slot</*as_worker */false>(*td);
+        if (index1 == arena_fixed_size::out_of_arena) {
+            tbb::detail::r1::concurrent_monitor::thread_context waiter((std::uintptr_t)&d);
+            tbb::detail::d1::wait_context wo(1);
+            tbb::detail::d1::task_group_context exec_context(tbb::detail::d1::task_group_context::isolated);
+            tbb::detail::r1::task_group_context_impl::copy_fp_settings(exec_context, *a->my_default_ctx);
+
+            //tbb::detail::r1::delegated_task dt(d, a->my_exit_monitors, wo);
+            //a->enqueue_task( dt, exec_context, *td);
+            // process possible exception
+            return;
+        } // if (index1 == arena::out_of_arena)
+    } // if (!same_arena)
+
+}
+
 
 void task_arena_fixed_size_impl::initialize(d1::task_arena_fixed_size_base& ta) {
     // Enforce global market initialization to properly initialize soft limit
@@ -94,9 +123,10 @@ void task_arena_fixed_size_impl::initialize(d1::task_arena_fixed_size_base& ta) 
     tbb::detail::d1::constraints arena_constraints;
 
     __TBB_ASSERT(ta.my_arena.load(std::memory_order_relaxed) == nullptr, "Arena already initialized");
-    //unsigned priority_level = arena_priority_level(ta.my_priority);
+    unsigned priority_level = 1;
     tbb::detail::r1::threading_control* thr_control = tbb::detail::r1::threading_control::register_public_reference();
-    arena_fixed_size& a = arena_fixed_size::create(thr_control, unsigned(ta.my_max_concurrency), ta.my_num_reserved_slots, unsigned(ta.my_priority), arena_constraints);
+    arena_fixed_size& a = arena_fixed_size::create(thr_control, unsigned(ta.my_max_concurrency), ta.my_num_reserved_slots, priority_level, arena_constraints);
+    //arena& a = arena::create(thr_control, unsigned(ta.my_max_concurrency), ta.my_num_reserved_slots, priority_level, arena_constraints);
 
     ta.my_arena.store(&a, std::memory_order_release);
 }

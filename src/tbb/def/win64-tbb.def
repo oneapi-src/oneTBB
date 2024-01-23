@@ -98,6 +98,7 @@ EXPORTS
 ?initialize@r1@detail@tbb@@YAXAEAVtask_arena_base@d1@23@@Z
 ?terminate@r1@detail@tbb@@YAXAEAVtask_arena_base@d1@23@@Z
 ?execute@r1@detail@tbb@@YAXAEAVtask_arena_base@d1@23@AEAVdelegate_base@523@@Z
+?execute_with_fixed_threads@r1@detail@tbb@@YAXAEAVtask_arena_base@d1@23@AEAVdelegate_base@523@@Z
 ?wait@r1@detail@tbb@@YAXAEAVtask_arena_base@d1@23@@Z
 ?attach@r1@detail@tbb@@YA_NAEAVtask_arena_base@d1@23@@Z
 ?isolate_within_arena@r1@detail@tbb@@YAXAEAVdelegate_base@d1@23@_J@Z

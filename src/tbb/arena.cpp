@@ -501,6 +501,7 @@ struct task_arena_impl {
     static void terminate(d1::task_arena_base&);
     static bool attach(d1::task_arena_base&);
     static void execute(d1::task_arena_base&, d1::delegate_base&);
+    static void execute_with_fixed_threads(d1::task_arena_base&, d1::delegate_base&);
     static void wait(d1::task_arena_base&);
     static int max_concurrency(const d1::task_arena_base*);
     static void enqueue(d1::task&, d1::task_group_context*, d1::task_arena_base*);
@@ -517,6 +518,9 @@ bool __TBB_EXPORTED_FUNC attach(d1::task_arena_base& ta) {
 }
 void __TBB_EXPORTED_FUNC execute(d1::task_arena_base& ta, d1::delegate_base& d) {
     task_arena_impl::execute(ta, d);
+}
+void __TBB_EXPORTED_FUNC execute_with_fixed_threads(d1::task_arena_base& ta, d1::delegate_base& d) {
+    task_arena_impl::execute_with_fixed_threads(ta, d);
 }
 void __TBB_EXPORTED_FUNC wait(d1::task_arena_base& ta) {
     task_arena_impl::wait(ta);
@@ -784,6 +788,44 @@ void task_arena_impl::execute(d1::task_arena_base& ta, d1::delegate_base& d) {
             }
             __TBB_ASSERT(governor::is_thread_data_set(td), nullptr);
             return;
+        } // if (index1 == arena::out_of_arena)
+    } // if (!same_arena)
+
+    context_guard_helper</*report_tasks=*/false> context_guard;
+    context_guard.set_ctx(a->my_default_ctx);
+    nested_arena_context scope(*td, *a, index1);
+#if _WIN64
+    try {
+#endif
+        d();
+        __TBB_ASSERT(same_arena || governor::is_thread_data_set(td), nullptr);
+#if _WIN64
+    } catch (...) {
+        context_guard.restore_default();
+        throw;
+    }
+#endif
+}
+
+class myexception : public std::exception
+{
+    virtual const char* what() const throw()
+    {
+        return "Fixed Arena do not support enqueue_task";
+    }
+} myex;
+
+void task_arena_impl::execute_with_fixed_threads(d1::task_arena_base& ta, d1::delegate_base& d) {
+    arena* a = ta.my_arena.load(std::memory_order_relaxed);
+    __TBB_ASSERT(a != nullptr, nullptr);
+    thread_data* td = governor::get_thread_data();
+
+    bool same_arena = td->my_arena == a;
+    std::size_t index1 = td->my_arena_index;
+    if (!same_arena) {
+        index1 = a->occupy_free_slot</*as_worker */false>(*td);
+        if (index1 == arena::out_of_arena) {
+        throw myex;
         } // if (index1 == arena::out_of_arena)
     } // if (!same_arena)
 

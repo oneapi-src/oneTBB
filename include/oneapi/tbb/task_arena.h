@@ -88,6 +88,7 @@ TBB_EXPORT void __TBB_EXPORTED_FUNC initialize(d1::task_arena_base&);
 TBB_EXPORT void __TBB_EXPORTED_FUNC terminate(d1::task_arena_base&);
 TBB_EXPORT bool __TBB_EXPORTED_FUNC attach(d1::task_arena_base&);
 TBB_EXPORT void __TBB_EXPORTED_FUNC execute(d1::task_arena_base&, d1::delegate_base&);
+TBB_EXPORT void __TBB_EXPORTED_FUNC execute_with_fixed_threads(d1::task_arena_base&, d1::delegate_base&);
 TBB_EXPORT void __TBB_EXPORTED_FUNC wait(d1::task_arena_base&);
 TBB_EXPORT int  __TBB_EXPORTED_FUNC max_concurrency(const d1::task_arena_base*);
 TBB_EXPORT void __TBB_EXPORTED_FUNC isolate_within_arena(d1::delegate_base& d, std::intptr_t);
@@ -251,6 +252,15 @@ class task_arena : public task_arena_base {
         r1::execute(*this, func);
         return func.consume_result();
     }
+
+    template<typename R, typename F>
+    R execute_with_fixed_threads_impl(F& f) {
+        initialize();
+        task_arena_function<F, R> func(f);
+        r1::execute_with_fixed_threads(*this, func);
+        return func.consume_result();
+    }
+
 public:
     //! Creates task_arena with certain concurrency limits
     /** Sets up settings only, real construction is deferred till the first method invocation
@@ -393,6 +403,16 @@ public:
     void enqueue(d2::task_handle&& th) {
         initialize();
         d2::enqueue_impl(std::move(th), this);
+    }
+
+    //! Joins the arena and executes a mutable functor with fixed number of threads, then returns
+    //! If not possible to join, wraps the functor into a task, enqueues it and waits for task completion 
+    //  TODO - make sure the barrier is instantiated accordingly
+    //! Can decrement the arena demand for workers, causing a worker to leave and free a slot to the calling thread
+    //! Since C++11, the method returns the value returned by functor (prior to C++11 it returns void).
+    template<typename F>
+    auto execute_with_fixed_threads(F&& f) -> decltype(f()) {
+        return execute_with_fixed_threads_impl<decltype(f())>(f);
     }
 
     //! Joins the arena and executes a mutable functor, then returns

@@ -44,18 +44,12 @@ struct task_arena_fixed_size_impl;
 
 TBB_EXPORT void __TBB_EXPORTED_FUNC initialize(d1::task_arena_fixed_size_base&);
 TBB_EXPORT void __TBB_EXPORTED_FUNC terminate(d1::task_arena_fixed_size_base&);
+TBB_EXPORT void __TBB_EXPORTED_FUNC execute(d1::task_arena_fixed_size_base&, tbb::detail::d1::delegate_base&);
 
 } // namespace r1 
 
 namespace d1 {
 
-//! One-time initialization states
-enum class do_once_state {
-    uninitialized = 0,      ///< No execution attempts have been undertaken yet
-    pending,                ///< A thread is executing associated do-once routine
-    executed,               ///< Do-once routine has been executed
-    initialized = executed  ///< Convenience alias
-};
 
 using slot_id = unsigned short;
 static constexpr unsigned num_priority_levels = 3;
@@ -70,7 +64,7 @@ public:
     };
 protected:
 
-    std::atomic<do_once_state> my_initialization_state;
+    std::atomic<tbb::detail::do_once_state> my_initialization_state;
 
     //! nullptr if not currently initialized.
     std::atomic<r1::arena_fixed_size*> my_arena;
@@ -96,7 +90,7 @@ protected:
 
 
     task_arena_fixed_size_base(int max_concurrency, unsigned reserved_for_masters, priority a_priority)
-        : my_initialization_state(do_once_state::uninitialized)
+        : my_initialization_state(tbb::detail::do_once_state::uninitialized)
         , my_arena(nullptr)
         , my_max_concurrency(max_concurrency)
         , my_num_reserved_slots(reserved_for_masters)
@@ -117,14 +111,14 @@ class task_arena_fixed_size : public task_arena_fixed_size_base {
 
     void mark_initialized() {
         __TBB_ASSERT( my_arena.load(std::memory_order_relaxed), "task_arena_fixed_size initialization is incomplete" );
-        my_initialization_state.store(do_once_state::initialized, std::memory_order_release);
+        my_initialization_state.store(tbb::detail::do_once_state::initialized, std::memory_order_release);
     }
 
     template<typename R, typename F>
     R execute_impl(F& f) {
         initialize();
         tbb::detail::d1::task_arena_function<F, R> func(f);
-        //r1::execute(*this, func);
+        r1::execute(*this, func);
         std::cout << "Implement Arena Fixed size execute\n";
         return func.consume_result();
     }
@@ -143,8 +137,7 @@ public:
 
     //! Forces allocation of the resources for the task_arena_fixed_size as specified in constructor arguments
     void initialize() {
-        //tbb::detail::atomic_do_once([this]{ r1::initialize(*this); }, my_initialization_state);
-        std::cout << "Fix initialize \n";
+        tbb::detail::d0::atomic_do_once([this]{ r1::initialize(*this); }, my_initialization_state);
     }
 
     //! Overrides concurrency level and forces initialization of internal representation
@@ -168,7 +161,7 @@ public:
     void terminate() {
         if( is_active() ) {
             r1::terminate(*this);
-            my_initialization_state.store(do_once_state::uninitialized, std::memory_order_relaxed);
+            my_initialization_state.store(tbb::detail::do_once_state::uninitialized, std::memory_order_relaxed);
         }
     }
 
@@ -181,7 +174,7 @@ public:
     //! Returns true if the arena is active (initialized); false otherwise.
     //! The name was chosen to match a task_scheduler_init method with the same semantics.
     bool is_active() const {
-        return my_initialization_state.load(std::memory_order_acquire) == do_once_state::initialized;
+        return my_initialization_state.load(std::memory_order_acquire) == tbb::detail::do_once_state::initialized;
     }
 
     //! Enqueues a task into the arena to process a functor, and immediately returns.
