@@ -196,6 +196,9 @@ endif()
 #force -pthread during compilation for Emscripten
 if (EMSCRIPTEN)
    set(THREADS_HAVE_PTHREAD_ARG TRUE)
+   if(EMSCRIPTEN_NO_PTHREAD)
+       set(THREADS_HAVE_PTHREAD_ARG FALSE)
+   endif()
 endif()
 
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
