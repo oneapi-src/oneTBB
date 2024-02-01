@@ -19,6 +19,7 @@
 #include "common/test_invoke.h"
 
 #include "../tbb/test_partitioner.h"
+#include <vector>
 
 //! \file conformance_parallel_reduce.cpp
 //! \brief Test for [algorithms.parallel_reduce algorithms.parallel_deterministic_reduce] specification
@@ -55,6 +56,37 @@ struct ReduceBody {
         my_value = op.join(my_value, y.my_value);
     }
 };
+
+template <class T>
+struct vector_wrapper : std::vector<T> {
+    using base_vector = std::vector<T>;
+
+    struct non_empty_exception {};
+
+    using base_vector::base_vector;
+    vector_wrapper() = default;
+
+    vector_wrapper(vector_wrapper&&) = default;
+    vector_wrapper& operator=(vector_wrapper&&) = default;
+
+    vector_wrapper(const vector_wrapper& other)
+        : base_vector(other)
+    {
+        if (!other.empty()) {
+            throw non_empty_exception{};
+        }
+    }
+
+    vector_wrapper& operator=(const vector_wrapper& other) {
+        if (this != &other) {
+            if (!other.empty()) {
+                throw non_empty_exception{};
+            }
+            this->operator=(other);
+        }
+        return *this;
+    }
+}; // struct vector_wrapper
 
 template <class Partitioner>
 void TestDeterministicReductionFor() {
@@ -174,3 +206,42 @@ TEST_CASE("parallel_[deterministic_]reduce and std::invoke") {
 }
 
 #endif
+
+TEST_CASE("test rvalue optimization") {
+    constexpr std::size_t n_vectors = 10000;
+    std::vector<vector_wrapper<int>> vector_of_vectors;
+    auto init = {1, 2, 3, 4, 5};
+
+    vector_of_vectors.reserve(n_vectors);
+    for (std::size_t i = 0; i < n_vectors; ++i) {
+        vector_of_vectors.emplace_back(vector_wrapper<int>(init));
+    }
+
+    oneapi::tbb::blocked_range<std::size_t> range(0, n_vectors);
+
+    auto reduce_body = [&](const oneapi::tbb::blocked_range<std::size_t>& rng, vector_wrapper<int>&& x) {
+        vector_wrapper<int> new_vector = std::move(x);
+        for (std::size_t index = rng.begin(); index != rng.end(); ++index) {
+            new_vector.reserve(vector_of_vectors[index].size());
+            new_vector.insert(new_vector.end(), std::make_move_iterator(vector_of_vectors[index].begin()), std::make_move_iterator(vector_of_vectors[index].end()));
+        }
+        return new_vector;
+    };
+
+    auto join_body = [](vector_wrapper<int>&& x, vector_wrapper<int>&& y) {
+        vector_wrapper<int> new_vector = std::move(x);
+        new_vector.reserve(new_vector.size() + y.size());
+        new_vector.insert(new_vector.end(), std::make_move_iterator(y.begin()), std::make_move_iterator(y.end()));
+        return new_vector;
+    };
+
+    vector_wrapper<int> result = oneapi::tbb::parallel_reduce(range, vector_wrapper<int>{}, reduce_body, join_body);
+
+    vector_wrapper<int> expected_vector;
+    expected_vector.reserve(5 * n_vectors);
+    for (std::size_t i = 0; i < n_vectors; ++i) {
+        expected_vector.insert(expected_vector.end(), init);
+    }
+
+    REQUIRE_MESSAGE(expected_vector == result, "Incorrect reduce result");
+}
