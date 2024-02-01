@@ -137,11 +137,7 @@ public:
             // The permit has changed during the reading, so the callback will be invoked soon one more time and
             // we can just skip this renegotiation iteration.
             if (!new_permit.flags.stale) {
-                __TBB_ASSERT(
-                    new_permit.state != TCM_PERMIT_STATE_INACTIVE || new_concurrency == 0,
-                    "TCM did not nullify resources while deactivating the permit"
-                );
-                delta = update_concurrency(new_concurrency);
+                delta = update_concurrency(new_permit.state != TCM_PERMIT_STATE_INACTIVE ? new_concurrency : 0);
             }
         }
         if (delta) {
