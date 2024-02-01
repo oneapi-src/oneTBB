@@ -46,6 +46,7 @@ class delegate_base;
 class task_arena_base;
 class task_group_context;
 class task_group_base;
+class task_group_continuation;
 }
 
 namespace r1 {
@@ -68,6 +69,10 @@ TBB_EXPORT void __TBB_EXPORTED_FUNC reset(d1::task_group_context&);
 TBB_EXPORT bool __TBB_EXPORTED_FUNC cancel_group_execution(d1::task_group_context&);
 TBB_EXPORT bool __TBB_EXPORTED_FUNC is_group_execution_cancelled(d1::task_group_context&);
 TBB_EXPORT void __TBB_EXPORTED_FUNC capture_fp_settings(d1::task_group_context&);
+
+TBB_EXPORT void __TBB_EXPORTED_FUNC set_top_group_task(d1::task*);
+TBB_EXPORT d1::task* __TBB_EXPORTED_FUNC get_top_group_task();
+TBB_EXPORT void __TBB_EXPORTED_FUNC remove_top_group_task();
 
 struct task_group_context_impl;
 }
@@ -431,24 +436,119 @@ class structured_task_group;
 class isolated_task_group;
 #endif
 
-template<typename F>
-class function_task : public task {
-    const F m_func;
+class task_group_continuation {
+public:
+    task_group_continuation(task_group_continuation* parent, wait_context& wo, small_object_allocator& allocator)
+        : m_parent(parent)
+        , m_wait_ctx(wo)
+        , m_allocator(allocator)
+    {}
+
+    void add_ref() {
+        ++m_ref_counter;
+    }
+
+    void remove_ref() {
+        if (--m_ref_counter == 0) {
+            finalize();
+        }
+    }
+
+private:
+    void finalize() {
+        // Make a local reference not to access this after destruction.
+        auto& wo = m_wait_ctx;
+        task_group_continuation* parent = m_parent;
+
+        auto allocator = m_allocator;
+
+        this->~task_group_continuation();
+        allocator.deallocate(this);
+
+        if (parent) {
+            parent->remove_ref();
+        } else {
+            wo.release();
+        }
+    }
+
+    std::atomic<std::uint64_t> m_ref_counter{0};
+    task_group_continuation* m_parent{nullptr};
     wait_context& m_wait_ctx;
     small_object_allocator m_allocator;
+};
+
+class base_task_group_task : public task {
+public:
+    base_task_group_task(wait_context& wo, small_object_allocator& alloc, task_group_continuation* p = nullptr)
+        : m_wait_ctx(wo), m_allocator(alloc), m_parent(p)
+    {}
+
+    task_group_continuation* get_continuation() {
+        if (m_continuation == nullptr) {
+            m_continuation = m_allocator.new_object<task_group_continuation>(m_parent, m_wait_ctx, m_allocator);
+            // Original task holds implicit reference
+            m_continuation->add_ref();
+        }
+        return m_continuation;
+    }
+
+    bool is_same_task_group(wait_context* wo) {
+        return &m_wait_ctx == wo;
+    }
+protected:
+    wait_context& m_wait_ctx;
+    small_object_allocator m_allocator;
+    task_group_continuation* m_parent{nullptr};
+    task_group_continuation* m_continuation{nullptr};
+};
+
+template<typename F>
+class function_task : public base_task_group_task {
+    const F m_func;
 
     void finalize(const execution_data& ed) {
-        // Make a local reference not to access this after destruction.
-        wait_context& wo = m_wait_ctx;
-        // Copy allocator to the stack
-        auto allocator = m_allocator;
-        // Destroy user functor before release wait.
-        this->~function_task();
-        wo.release();
+        if (m_continuation == nullptr) {
+            // Make a local reference not to access this after destruction.
+            wait_context& wo = m_wait_ctx;
+            auto allocator = m_allocator;
+            auto parent = m_parent;
 
-        allocator.deallocate(this, ed);
+            // Destroy user functor before release wait.
+            this->~function_task();
+
+            allocator.deallocate(this, ed);
+
+            if (parent) {
+                parent->remove_ref();
+            } else {
+                wo.release();
+            }
+        } else {
+            auto continuation = m_continuation;
+            auto allocator = m_allocator;
+
+            // Destroy user functor before release wait.
+            this->~function_task();
+            allocator.deallocate(this, ed);
+
+            if (continuation) {
+                // Original task holds implicit reference on continuation
+                continuation->remove_ref();
+            }
+        }
     }
+
     task* execute(execution_data& ed) override {
+        struct top_task_guard_type {
+            top_task_guard_type(d1::task* t) {
+                r1::set_top_group_task(t);
+            }
+            ~top_task_guard_type() {
+                r1::remove_top_group_task();
+            }
+        } top_task_guard{this};
+
         task* res = d2::task_ptr_or_nullptr(m_func);
         finalize(ed);
         return res;
@@ -458,15 +558,13 @@ class function_task : public task {
         return nullptr;
     }
 public:
-    function_task(const F& f, wait_context& wo, small_object_allocator& alloc)
-        : m_func(f)
-        , m_wait_ctx(wo)
-        , m_allocator(alloc) {}
+    function_task(const F& f, wait_context& wo, small_object_allocator& alloc, task_group_continuation* p = nullptr)
+        : base_task_group_task(wo, alloc, p), m_func(f)
+    {}
 
-    function_task(F&& f, wait_context& wo, small_object_allocator& alloc)
-        : m_func(std::move(f))
-        , m_wait_ctx(wo)
-        , m_allocator(alloc) {}
+    function_task(F&& f, wait_context& wo, small_object_allocator& alloc, task_group_continuation* p = nullptr)
+        : base_task_group_task(wo, alloc, p), m_func(std::move(f))
+    {}
 };
 
 template <typename F>
@@ -529,9 +627,19 @@ protected:
 
     template<typename F>
     task* prepare_task(F&& f) {
-        m_wait_ctx.reserve();
+        base_task_group_task* parent_task = static_cast<base_task_group_task*>(r1::get_top_group_task());
+        task_group_continuation* continuation = nullptr;
+
+        /* && parent_task->task_group == this */
+        if (parent_task && parent_task->is_same_task_group(&m_wait_ctx)) {
+            continuation = parent_task->get_continuation();
+            continuation->add_ref();
+        } else {
+            m_wait_ctx.reserve();
+        }
+
         small_object_allocator alloc{};
-        return alloc.new_object<function_task<typename std::decay<F>::type>>(std::forward<F>(f), m_wait_ctx, alloc);
+        return alloc.new_object<function_task<typename std::decay<F>::type>>(std::forward<F>(f), m_wait_ctx, alloc, continuation);
     }
 
     task_group_context& context() noexcept {

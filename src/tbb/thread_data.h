@@ -19,6 +19,7 @@
 
 #include "oneapi/tbb/detail/_task.h"
 #include "oneapi/tbb/task.h"
+#include "oneapi/tbb/task_group.h"
 
 #include "rml_base.h" // rml::job
 
@@ -31,6 +32,7 @@
 #include "intrusive_list.h"
 
 #include <atomic>
+#include <stack>
 
 namespace tbb {
 namespace detail {
@@ -200,6 +202,8 @@ public:
     // TODO: consider using common default context because it is used only to simplify
     // cancellation check.
     d1::task_group_context my_default_context;
+
+    std::stack<d1::task*> my_task_group_tasks;
 };
 
 inline void thread_data::attach_arena(arena& a, std::size_t index) {
