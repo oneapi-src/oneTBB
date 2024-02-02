@@ -35,7 +35,7 @@ inline namespace d0 {
 
 template <typename Body, typename Range>
 concept parallel_reduce_body = splittable<Body> &&
-                               requires( Body& body, const Range& range, Body&& rhs ) {
+                               requires( Body& body, const Range& range, Body& rhs ) {
                                    body(range);
                                    body.join(rhs);
                                };
