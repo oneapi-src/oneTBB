@@ -137,8 +137,8 @@ public:
             // The permit has changed during the reading, so the callback will be invoked soon one more time and
             // we can just skip this renegotiation iteration.
             if (!new_permit.flags.stale) {
-                // If no other demand, the permit may still have granted concurrency but deactivated state and
-                // thus we need to enforce 0 allotment for arena so threads won't be trapped in it.
+                // If there is no other demand in TCM, the permit may still have granted concurrency but
+                // be in the deactivated state thus we enforce 0 allotment to preserve arena invariants.
                 delta = update_concurrency(new_permit.state != TCM_PERMIT_STATE_INACTIVE ? new_concurrency : 0);
             }
         }
