@@ -37,7 +37,7 @@ emcmake cmake .. -DCMAKE_CXX_COMPILER=em++ -DCMAKE_C_COMPILER=emcc -DTBB_STRICT=
 cmake --build . <options>
 cmake --install . <options>
 ```
-
+To compile oneTBB without pthreads, please pass the flag "-DEMSCRIPTEN_WITHOUT_PTHREAD=true" in the emcmake command,. By default, oneTBB uses the pthreads.
 Where:
 
 * ``emcmake`` - a tool that sets up the environment for Emscripten*. 
