@@ -522,7 +522,7 @@ enum ACTIONS {
     num_actions
 };
 
-void global_actor(size_t arena_idx);
+void global_actor(size_t arenaAfterStealing);
 
 template <ACTIONS action>
 struct actor;
