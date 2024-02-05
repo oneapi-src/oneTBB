@@ -551,7 +551,7 @@ struct actor<arena_action> {
         arenaLevel = std::max(arenaLevel, arenaAfterStealing);
 
         ArenaTable::ScopedLock lock;
-        std::pair<tbb::task_arena*, std::size_t> entry = arenaTable.acquire(r, lock);
+        auto entry = arenaTable.acquire(r, lock);
         if (entry.first) {
             enum arena_actions {
                 arena_execute,
