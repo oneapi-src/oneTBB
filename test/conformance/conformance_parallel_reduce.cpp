@@ -102,15 +102,15 @@ public:
         return *this;
     }
 
-    std::list<T>::iterator insert(std::list<T>::const_iterator pos, T&& item) {
+    typename std::list<T>::iterator insert(typename std::list<T>::const_iterator pos, T&& item) {
         return my_list.insert(pos, std::move(item));
     }
 
-    void splice(std::list<T>::const_iterator pos, EmptyCopyList&& other) {
+    void splice(typename std::list<T>::const_iterator pos, EmptyCopyList&& other) {
         my_list.splice(pos, std::move(other.my_list));
     }
 
-    std::list<T>::const_iterator end() const { return my_list.end(); }
+    typename std::list<T>::const_iterator end() const { return my_list.end(); }
 
     bool operator==(const EmptyCopyList& other) const { return my_list == other.my_list; }
 
