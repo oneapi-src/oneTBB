@@ -412,7 +412,7 @@ public:
     - \code Body::~Body(); \endcode                     Destructor
     - \code void Body::operator()( Range& r ); \endcode Function call operator applying body to range \c r
                                                         and accumulating the result
-    - \code void Body::join( Body&& b ); \endcode        Join results.
+    - \code void Body::join( Body& b ); \endcode        Join results.
                                                         The result in \c b should be merged into the result of \c this
 **/
 
