@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2023 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 #include "common/test_invoke.h"
 
 #include "../tbb/test_partitioner.h"
-#include <vector>
+#include <list>
 
 //! \file conformance_parallel_reduce.cpp
 //! \brief Test for [algorithms.parallel_reduce algorithms.parallel_deterministic_reduce] specification
@@ -57,36 +57,66 @@ struct ReduceBody {
     }
 };
 
-template <class T>
-struct vector_wrapper : std::vector<T> {
-    using base_vector = std::vector<T>;
+// The type that is copyable and can be stored in the container
+// that would be copied only in the empty state.
+template <typename T>
+class NeverCopyWrapper {
+public:
+    NeverCopyWrapper() = default;
+    NeverCopyWrapper(const T& obj) : my_obj(obj) {}
 
-    struct non_empty_exception {};
+    NeverCopyWrapper(NeverCopyWrapper&&) = default;
+    NeverCopyWrapper& operator=(NeverCopyWrapper&&) = default;
 
-    using base_vector::base_vector;
-    vector_wrapper() = default;
-
-    vector_wrapper(vector_wrapper&&) = default;
-    vector_wrapper& operator=(vector_wrapper&&) = default;
-
-    vector_wrapper(const vector_wrapper& other)
-        : base_vector(other)
-    {
-        if (!other.empty()) {
-            throw non_empty_exception{};
-        }
+    NeverCopyWrapper(const NeverCopyWrapper&) {
+        REQUIRE_MESSAGE(false, "Copy constructor of NeverCopyWrapper should never be called");
     }
 
-    vector_wrapper& operator=(const vector_wrapper& other) {
-        if (this != &other) {
-            if (!other.empty()) {
-                throw non_empty_exception{};
-            }
-            this->operator=(other);
-        }
+    NeverCopyWrapper& operator=(const NeverCopyWrapper&) {
+        REQUIRE_MESSAGE(false, "Copy assignment of NeverCopyWrapper should never be called");
         return *this;
     }
-}; // struct vector_wrapper
+
+    bool operator==(const NeverCopyWrapper& other) const { return my_obj == other.my_obj; }
+private:
+    T my_obj;
+}; // class NeverCopyWrapper
+
+// The container wrapper that is copyable but the copy constructor fails if the source container is non-empty
+// If such an empty container is provided as an identity into parallel reduce algorithm with rvalue-friendly body,
+// it should only call the copy constructor while broadcasting the identity element into the leafs
+// and the identity element is an empty container for the further test
+template <typename T>
+class EmptyCopyList {
+public:
+    EmptyCopyList() = default;
+
+    EmptyCopyList(EmptyCopyList&&) = default;
+    EmptyCopyList& operator=(EmptyCopyList&&) = default;
+
+    EmptyCopyList(const EmptyCopyList& other) {
+        REQUIRE_MESSAGE(other.my_list.empty(), "reduce copied non-identity list");
+    }
+    EmptyCopyList& operator=(const EmptyCopyList& other) {
+        REQUIRE_MESSAGE(other.my_list.empty(), "reduce copied non-identity list");
+        return *this;
+    }
+
+    std::list<T>::iterator insert(std::list<T>::const_iterator pos, T&& item) {
+        return my_list.insert(pos, std::move(item));
+    }
+
+    void splice(std::list<T>::const_iterator pos, EmptyCopyList&& other) {
+        my_list.splice(pos, std::move(other.my_list));
+    }
+
+    std::list<T>::const_iterator end() const { return my_list.end(); }
+
+    bool operator==(const EmptyCopyList& other) const { return my_list == other.my_list; }
+
+private:
+    std::list<T> my_list;
+}; // class EmptyCopyList
 
 template <class Partitioner>
 void TestDeterministicReductionFor() {
@@ -207,41 +237,107 @@ TEST_CASE("parallel_[deterministic_]reduce and std::invoke") {
 
 #endif
 
-TEST_CASE("test rvalue optimization") {
-    constexpr std::size_t n_vectors = 10000;
-    std::vector<vector_wrapper<int>> vector_of_vectors;
-    auto init = {1, 2, 3, 4, 5};
+template <typename Runner, typename... PartitionerContext>
+void test_vector_of_lists_rvalue_reduce_basic(const Runner& runner, PartitionerContext&&... args) {
+    constexpr std::size_t n_vectors = 10'000;
 
-    vector_of_vectors.reserve(n_vectors);
+    using inner_type = NeverCopyWrapper<int>;
+    using list_type = EmptyCopyList<inner_type>;
+    using vector_of_lists_type = std::vector<list_type>;
+
+    vector_of_lists_type vector_of_lists;
+
+    vector_of_lists.reserve(n_vectors);
     for (std::size_t i = 0; i < n_vectors; ++i) {
-        vector_of_vectors.emplace_back(vector_wrapper<int>(init));
+        list_type list;
+
+        list.insert(list.end(), inner_type{1});
+        list.insert(list.end(), inner_type{2});
+        list.insert(list.end(), inner_type{3});
+        list.insert(list.end(), inner_type{4});
+        list.insert(list.end(), inner_type{5});
+        vector_of_lists.emplace_back(std::move(list));
     }
 
-    oneapi::tbb::blocked_range<std::size_t> range(0, n_vectors);
+    oneapi::tbb::blocked_range<std::size_t> range(0, n_vectors, n_vectors * 2);
 
-    auto reduce_body = [&](const oneapi::tbb::blocked_range<std::size_t>& rng, vector_wrapper<int>&& x) {
-        vector_wrapper<int> new_vector = std::move(x);
-        for (std::size_t index = rng.begin(); index != rng.end(); ++index) {
-            new_vector.reserve(vector_of_vectors[index].size());
-            new_vector.insert(new_vector.end(), std::make_move_iterator(vector_of_vectors[index].begin()), std::make_move_iterator(vector_of_vectors[index].end()));
+    auto reduce_body = [&](const decltype(range)& range_obj, list_type&& x) {
+        list_type new_list = std::move(x);
+
+        for (std::size_t index = range_obj.begin(); index != range_obj.end(); ++index) {
+            new_list.splice(new_list.end(), std::move(vector_of_lists[index]));
         }
-        return new_vector;
+        return new_list;
     };
 
-    auto join_body = [](vector_wrapper<int>&& x, vector_wrapper<int>&& y) {
-        vector_wrapper<int> new_vector = std::move(x);
-        new_vector.reserve(new_vector.size() + y.size());
-        new_vector.insert(new_vector.end(), std::make_move_iterator(y.begin()), std::make_move_iterator(y.end()));
-        return new_vector;
+    auto join_body = [&](list_type&& x, list_type&& y) {
+        list_type new_list = std::move(x);
+
+        new_list.splice(new_list.end(), std::move(y));
+        return new_list;
     };
 
-    vector_wrapper<int> result = oneapi::tbb::parallel_reduce(range, vector_wrapper<int>{}, reduce_body, join_body);
+    list_type result = runner(range, list_type{}, reduce_body, join_body, std::forward<PartitionerContext>(args)...);
 
-    vector_wrapper<int> expected_vector;
-    expected_vector.reserve(5 * n_vectors);
+    list_type expected_result;
+
     for (std::size_t i = 0; i < n_vectors; ++i) {
-        expected_vector.insert(expected_vector.end(), init);
+        expected_result.insert(expected_result.end(), inner_type{1});
+        expected_result.insert(expected_result.end(), inner_type{2});
+        expected_result.insert(expected_result.end(), inner_type{3});
+        expected_result.insert(expected_result.end(), inner_type{4});
+        expected_result.insert(expected_result.end(), inner_type{5});
     }
 
-    REQUIRE_MESSAGE(expected_vector == result, "Incorrect reduce result");
+    REQUIRE_MESSAGE(expected_result == result, "Incorrect reduce result");
+}
+
+struct ReduceRunner {
+    template <typename... Args>
+    auto operator()(Args&&... args) const -> decltype(oneapi::tbb::parallel_reduce(std::forward<Args>(args)...)) {
+        return oneapi::tbb::parallel_reduce(std::forward<Args>(args)...);
+    }
+};
+
+struct DeterministicReduceRunner {
+    template <typename... Args>
+    auto operator()(Args&&... args) const -> decltype(oneapi::tbb::parallel_deterministic_reduce(std::forward<Args>(args)...)) {
+        return oneapi::tbb::parallel_deterministic_reduce(std::forward<Args>(args)...);
+    }
+};
+
+void test_vector_of_lists_rvalue_reduce() {
+    ReduceRunner runner;
+    oneapi::tbb::affinity_partitioner af_partitioner;
+    oneapi::tbb::task_group_context context;
+
+    test_vector_of_lists_rvalue_reduce_basic(runner);
+    test_vector_of_lists_rvalue_reduce_basic(runner, oneapi::tbb::auto_partitioner{});
+    test_vector_of_lists_rvalue_reduce_basic(runner, oneapi::tbb::simple_partitioner{});
+    test_vector_of_lists_rvalue_reduce_basic(runner, oneapi::tbb::static_partitioner{});
+    test_vector_of_lists_rvalue_reduce_basic(runner, af_partitioner);
+
+    test_vector_of_lists_rvalue_reduce_basic(runner, context);
+    test_vector_of_lists_rvalue_reduce_basic(runner, oneapi::tbb::auto_partitioner{}, context);
+    test_vector_of_lists_rvalue_reduce_basic(runner, oneapi::tbb::simple_partitioner{}, context);
+    test_vector_of_lists_rvalue_reduce_basic(runner, oneapi::tbb::static_partitioner{}, context);
+    test_vector_of_lists_rvalue_reduce_basic(runner, af_partitioner, context);
+}
+
+void test_vector_of_lists_rvalue_deterministic_reduce() {
+    DeterministicReduceRunner runner;
+    oneapi::tbb::task_group_context context;
+
+    test_vector_of_lists_rvalue_reduce_basic(runner);
+    test_vector_of_lists_rvalue_reduce_basic(runner, oneapi::tbb::simple_partitioner{});
+    test_vector_of_lists_rvalue_reduce_basic(runner, oneapi::tbb::static_partitioner{});
+
+    test_vector_of_lists_rvalue_reduce_basic(runner, context);
+    test_vector_of_lists_rvalue_reduce_basic(runner, oneapi::tbb::simple_partitioner{}, context);
+    test_vector_of_lists_rvalue_reduce_basic(runner, oneapi::tbb::static_partitioner{}, context);
+}
+
+TEST_CASE("test rvalue optimization") {
+    test_vector_of_lists_rvalue_reduce();
+    test_vector_of_lists_rvalue_deterministic_reduce();
 }
