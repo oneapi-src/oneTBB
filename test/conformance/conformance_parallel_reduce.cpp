@@ -57,30 +57,23 @@ struct ReduceBody {
     }
 };
 
-// The type that is copyable and can be stored in the container
-// that would be copied only in the empty state.
 template <typename T>
-class NeverCopyWrapper {
+class MoveOnlyWrapper {
 public:
-    NeverCopyWrapper() = default;
-    NeverCopyWrapper(const T& obj) : my_obj(obj) {}
+    MoveOnlyWrapper() = default;
+    MoveOnlyWrapper(const T& obj) : my_obj(obj) {}
 
-    NeverCopyWrapper(NeverCopyWrapper&&) = default;
-    NeverCopyWrapper& operator=(NeverCopyWrapper&&) = default;
+    MoveOnlyWrapper(MoveOnlyWrapper&&) = default;
+    MoveOnlyWrapper& operator=(MoveOnlyWrapper&&) = default;
 
-    NeverCopyWrapper(const NeverCopyWrapper&) {
-        REQUIRE_MESSAGE(false, "Copy constructor of NeverCopyWrapper should never be called");
-    }
+    MoveOnlyWrapper(const MoveOnlyWrapper&) = delete;
+    MoveOnlyWrapper& operator=(const MoveOnlyWrapper&) = delete;
 
-    NeverCopyWrapper& operator=(const NeverCopyWrapper&) {
-        REQUIRE_MESSAGE(false, "Copy assignment of NeverCopyWrapper should never be called");
-        return *this;
-    }
 
-    bool operator==(const NeverCopyWrapper& other) const { return my_obj == other.my_obj; }
+    bool operator==(const MoveOnlyWrapper& other) const { return my_obj == other.my_obj; }
 private:
     T my_obj;
-}; // class NeverCopyWrapper
+}; // class MoveOnlyWrapper
 
 // The container wrapper that is copyable but the copy constructor fails if the source container is non-empty
 // If such an empty container is provided as an identity into parallel reduce algorithm with rvalue-friendly body,
@@ -241,7 +234,7 @@ template <typename Runner, typename... PartitionerContext>
 void test_vector_of_lists_rvalue_reduce_basic(const Runner& runner, PartitionerContext&&... args) {
     constexpr std::size_t n_vectors = 10'000;
 
-    using inner_type = NeverCopyWrapper<int>;
+    using inner_type = MoveOnlyWrapper<int>;
     using list_type = EmptyCopyList<inner_type>;
     using vector_of_lists_type = std::vector<list_type>;
 
