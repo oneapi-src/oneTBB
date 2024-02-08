@@ -69,7 +69,6 @@ public:
     MoveOnlyWrapper(const MoveOnlyWrapper&) = delete;
     MoveOnlyWrapper& operator=(const MoveOnlyWrapper&) = delete;
 
-
     bool operator==(const MoveOnlyWrapper& other) const { return my_obj == other.my_obj; }
 private:
     T my_obj;
