@@ -26,8 +26,6 @@ namespace detail {
 namespace r1 {
 
 void __TBB_EXPORTED_FUNC set_top_group_task(d1::task* t) {
-    // Increase continuation ref while it's in tls
-    // if (continuation) continuation->add_ref();
     governor::get_thread_data()->my_task_group_tasks.push(t);
 }
 
@@ -37,13 +35,6 @@ d1::task* __TBB_EXPORTED_FUNC get_top_group_task() {
 }
 
 void __TBB_EXPORTED_FUNC remove_top_group_task() {
-    // auto td = governor::get_thread_data();
-
-    // auto task = td->my_task_group_tasks.top();
-
-    // Could be the last reference
-    // if (continuation) continuation->remove_ref();
-
     governor::get_thread_data()->my_task_group_tasks.pop();
 }
 

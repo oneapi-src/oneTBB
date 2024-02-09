@@ -449,7 +449,9 @@ public:
     }
 
     void remove_ref() {
-        if (--m_ref_counter == 0) {
+        auto ref = --m_ref_counter;
+        __TBB_ASSERT(ref >= 0, nullptr);
+        if (ref == 0) {
             finalize();
         }
     }
@@ -463,13 +465,14 @@ private:
         auto allocator = m_allocator;
 
         this->~task_group_continuation();
-        allocator.deallocate(this);
 
         if (parent) {
             parent->remove_ref();
         } else {
             wo.release();
         }
+
+        allocator.deallocate(this);
     }
 
     std::atomic<std::uint64_t> m_ref_counter{0};
@@ -486,7 +489,8 @@ public:
 
     task_group_continuation* get_continuation() {
         if (m_continuation == nullptr) {
-            m_continuation = m_allocator.new_object<task_group_continuation>(m_parent, m_wait_ctx, m_allocator);
+            small_object_allocator alloc{};
+            m_continuation = alloc.new_object<task_group_continuation>(m_parent, m_wait_ctx, alloc);
             // Original task holds implicit reference
             m_continuation->add_ref();
         }
@@ -517,25 +521,26 @@ class function_task : public base_task_group_task {
             // Destroy user functor before release wait.
             this->~function_task();
 
-            allocator.deallocate(this, ed);
-
             if (parent) {
                 parent->remove_ref();
             } else {
                 wo.release();
             }
+
+            allocator.deallocate(this, ed);
         } else {
             auto continuation = m_continuation;
             auto allocator = m_allocator;
 
             // Destroy user functor before release wait.
             this->~function_task();
-            allocator.deallocate(this, ed);
 
             if (continuation) {
                 // Original task holds implicit reference on continuation
                 continuation->remove_ref();
             }
+
+            allocator.deallocate(this, ed);
         }
     }
 
