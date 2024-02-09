@@ -32,7 +32,6 @@
 #include "intrusive_list.h"
 
 #include <atomic>
-#include <stack>
 
 namespace tbb {
 namespace detail {
@@ -141,6 +140,10 @@ public:
     void leave_task_dispatcher();
     void propagate_task_group_state(std::atomic<uint32_t> d1::task_group_context::* mptr_state, d1::task_group_context& src, uint32_t new_state);
 
+    void set_top_group_task(d1::task* t);
+    d1::task* get_top_group_task();
+    void remove_top_group_task();
+
     //! Index of the arena slot the scheduler occupies now, or occupied last time
     unsigned short my_arena_index;
 
@@ -202,8 +205,6 @@ public:
     // TODO: consider using common default context because it is used only to simplify
     // cancellation check.
     d1::task_group_context my_default_context;
-
-    std::stack<d1::task*> my_task_group_tasks;
 };
 
 inline void thread_data::attach_arena(arena& a, std::size_t index) {
@@ -253,6 +254,18 @@ inline void thread_data::propagate_task_group_state(std::atomic<std::uint32_t> d
     // Sync up local propagation epoch with the global one. Release fence prevents
     // reordering of possible store to *mptr_state after the sync point.
     my_context_list->epoch.store(the_context_state_propagation_epoch.load(std::memory_order_relaxed), std::memory_order_release);
+}
+
+inline void thread_data::set_top_group_task(d1::task* t) {
+    my_task_dispatcher->my_task_group_tasks.push(t);
+}
+
+inline d1::task* thread_data::get_top_group_task() {
+    return my_task_dispatcher->my_task_group_tasks.empty() ? nullptr : my_task_dispatcher->my_task_group_tasks.top();
+}
+
+inline void thread_data::remove_top_group_task() {
+    my_task_dispatcher->my_task_group_tasks.pop();
 }
 
 } // namespace r1

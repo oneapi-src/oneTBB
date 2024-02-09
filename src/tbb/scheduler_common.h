@@ -41,6 +41,7 @@
 
 #include <cstdint>
 #include <exception>
+#include <stack>
 #include <memory> // unique_ptr
 
 //! Mutex type for global locks in the scheduler
@@ -478,6 +479,9 @@ public:
 
     //! Suspend point (null if this task dispatcher has been never suspended)
     suspend_point_type* m_suspend_point{ nullptr };
+
+    //! Used to build tree-like structure in task_group
+    std::stack<d1::task*> my_task_group_tasks;
 
     //! Attempt to get a task from the mailbox.
     /** Gets a task only if it has not been executed by its sender or a thief

@@ -40,7 +40,6 @@ add_library(tbb
     task.cpp
     task_dispatcher.cpp
     task_group_context.cpp
-    task_group.cpp
     thread_dispatcher.cpp
     thread_request_serializer.cpp
     threading_control.cpp
