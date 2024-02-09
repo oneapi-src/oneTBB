@@ -89,6 +89,11 @@ EXPORTS
 ?cancel_group_execution@r1@detail@tbb@@YA_NAEAVtask_group_context@d1@23@@Z
 ?capture_fp_settings@r1@detail@tbb@@YAXAEAVtask_group_context@d1@23@@Z
 
+; Task group (task_group_context.cpp)
+?set_top_group_task@r1@detail@tbb@@YAXPEAVtask@d1@23@@Z
+?get_top_group_task@r1@detail@tbb@@YAPEAVtask@d1@23@XZ
+?remove_top_group_task@r1@detail@tbb@@YAXXZ
+
 ; Task arena (arena.cpp)
 ?max_concurrency@r1@detail@tbb@@YAHPEBVtask_arena_base@d1@23@@Z
 ?initialize@r1@detail@tbb@@YAXAEAVtask_arena_base@d1@23@@Z

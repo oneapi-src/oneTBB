@@ -95,7 +95,7 @@ _ZN3tbb6detail2r15resetERNS0_2d118task_group_contextE;
 _ZN3tbb6detail2r17destroyERNS0_2d118task_group_contextE;
 _ZN3tbb6detail2r119capture_fp_settingsERNS0_2d118task_group_contextE;
 
-/* Task group */
+/* Task group (task_group_context.cpp) */
 _ZN3tbb6detail2r118set_top_group_taskEPNS0_2d14taskE;
 _ZN3tbb6detail2r118get_top_group_taskEv;
 _ZN3tbb6detail2r121remove_top_group_taskEv;

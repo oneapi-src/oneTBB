@@ -19,7 +19,6 @@
 
 #include "oneapi/tbb/detail/_task.h"
 #include "oneapi/tbb/task.h"
-#include "oneapi/tbb/task_group.h"
 
 #include "rml_base.h" // rml::job
 

@@ -46,7 +46,6 @@ class delegate_base;
 class task_arena_base;
 class task_group_context;
 class task_group_base;
-class task_group_continuation;
 }
 
 namespace r1 {
@@ -449,9 +448,7 @@ public:
     }
 
     void remove_ref() {
-        auto ref = --m_ref_counter;
-        __TBB_ASSERT(ref >= 0, nullptr);
-        if (ref == 0) {
+        if (--m_ref_counter == 0) {
             finalize();
         }
     }
