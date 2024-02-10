@@ -399,7 +399,9 @@ TEST_CASE("Flog test") {
     Flog<parallel_tag, 10>();
     Flog<parallel_tag, 100>();
     Flog<parallel_tag, 1000>();
+#if !EMSCRIPTEN    
     Flog<parallel_tag, 10000>();
+#endif
 }
 
 //! Testing parallel for with different types and step

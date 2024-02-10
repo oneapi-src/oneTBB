@@ -1224,6 +1224,7 @@ void TestCancelation2_parallel_for_each () {
     RunCancellationTest<ParForEachWorker<body_to_cancel, Iterator>, Cancellator2>();
 }
 
+#if !EMSCRIPTEN
 //! Testing parallel_for_each cancellation test
 //! \brief \ref error_guessing
 TEST_CASE("parallel_for_each cancellation test #1") {
@@ -1244,7 +1245,6 @@ TEST_CASE("parallel_for_each cancellation test #1") {
     }
 }
 
-#if !EMSCRIPTEN
 //! Testing parallel_for_each cancellation test
 //! \brief \ref error_guessing
 TEST_CASE("parallel_for_each cancellation test #2") {
@@ -1266,6 +1266,7 @@ TEST_CASE("parallel_for_each cancellation test #2") {
     }
 }
 #endif
+
 ////////////////////////////////////////////////////////////////////////////////
 // Tests for tbb::parallel_pipeline
 ////////////////////////////////////////////////////////////////////////////////
