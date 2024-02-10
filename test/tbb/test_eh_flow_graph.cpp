@@ -2017,6 +2017,7 @@ void TestOneThreadNum(int nThread) {
     );
 }
 
+#if !EMSCRIPTEN
 //! Test exceptions with parallelism
 //! \brief \ref error_guessing
 TEST_CASE("Testing several threads"){
@@ -2026,5 +2027,5 @@ TEST_CASE("Testing several threads"){
         TestOneThreadNum(nThread);
     }
 }
-
+#endif
 #endif // TBB_USE_EXCEPTIONS

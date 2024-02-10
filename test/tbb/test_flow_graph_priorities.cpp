@@ -842,6 +842,7 @@ TEST_CASE("Priority nodes take precedence"){
     }
 }
 
+#if !EMSCRIPTEN
 //! Test thread eager reaction
 //! \brief \ref error_guessing
 TEST_CASE("Thread eager reaction"){
@@ -849,6 +850,7 @@ TEST_CASE("Thread eager reaction"){
         ThreadsEagerReaction::test( static_cast<int>(p) );
     }
 }
+#endif
 
 //! Test prioritization under concurrency limits
 //! \brief \ref error_guessing
@@ -888,3 +890,4 @@ TEST_CASE("Exceptions") {
     Exceptions::test();
 }
 #endif
+

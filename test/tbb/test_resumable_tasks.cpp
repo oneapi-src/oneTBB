@@ -423,6 +423,7 @@ public:
 
 thread_local bool TestCaseGuard::m_local = false;
 
+#if !EMSCRIPTEN
 //! Nested test for suspend and resume
 //! \brief \ref error_guessing
 TEST_CASE("Nested test for suspend and resume") {
@@ -436,6 +437,7 @@ TEST_CASE("Nested arena") {
     TestCaseGuard guard;
     TestNestedArena();
 }
+#endif
 
 //! Test with external threads
 //! \brief \ref error_guessing
@@ -443,11 +445,13 @@ TEST_CASE("External threads") {
     TestNativeThread();
 }
 
+#if !EMSCRIPTEN
 //! Stress test with external threads
 //! \brief \ref stress
 TEST_CASE("Stress test with external threads") {
     TestCleanupMaster();
 }
+#endif
 
 //! Test with an arena observer
 //! \brief \ref error_guessing
