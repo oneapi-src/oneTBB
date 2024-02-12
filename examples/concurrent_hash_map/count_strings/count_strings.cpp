@@ -42,7 +42,7 @@ private:
         (sizeof(std::size_t) == sizeof(unsigned)) ? 2654435769U : 11400714819323198485ULL);
 
     std::hash<CharT> char_hash;
-}; // strunt hash<std::basic_string>
+}; // struct hash<std::basic_string>
 
 } // namespace std
 
