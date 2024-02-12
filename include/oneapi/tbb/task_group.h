@@ -488,7 +488,8 @@ public:
         if (m_continuation == nullptr) {
             small_object_allocator alloc{};
             m_continuation = alloc.new_object<task_group_continuation>(m_parent, m_wait_ctx, alloc);
-            // Original task holds implicit reference
+            // Original task holds implicit reference to ensure the continuation would not be destroyed
+            // after completing one or several nested stolen tasks.
             m_continuation->add_ref();
             m_parent = m_continuation;
         }
