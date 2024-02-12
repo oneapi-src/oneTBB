@@ -401,7 +401,7 @@ TEST_CASE("parallel_for and parallel_reduce exception handling test #0") {
         }
     }
 }
-
+#if !EMSCRIPTEN
 //! Testing parallel_for and parallel_reduce exception handling
 //! \brief \ref error_guessing
 TEST_CASE("parallel_for and parallel_reduce exception handling test #1") {
@@ -487,7 +487,7 @@ TEST_CASE("parallel_for and parallel_reduce exception handling test #4") {
 }
 
 #endif /* TBB_USE_EXCEPTIONS */
-
+#endif
 class ParForBodyToCancel {
 public:
     void operator()( const range_type& ) const {
