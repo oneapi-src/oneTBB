@@ -490,6 +490,7 @@ public:
             m_continuation = alloc.new_object<task_group_continuation>(m_parent, m_wait_ctx, alloc);
             // Original task holds implicit reference
             m_continuation->add_ref();
+            m_parent = m_continuation;
         }
         return m_continuation;
     }
@@ -509,36 +510,19 @@ class function_task : public base_task_group_task {
     const F m_func;
 
     void finalize(const execution_data& ed) {
-        if (m_continuation == nullptr) {
-            // Make a local reference not to access this after destruction.
-            wait_context& wo = m_wait_ctx;
-            auto allocator = m_allocator;
-            auto parent = m_parent;
+        auto allocator = m_allocator;
+        wait_context& wo = m_wait_ctx;
+        auto parent = m_parent;
 
-            // Destroy user functor before release wait.
-            this->~function_task();
+        this->~function_task();
 
-            if (parent) {
-                parent->remove_ref();
-            } else {
-                wo.release();
-            }
-
-            allocator.deallocate(this, ed);
+        if (parent) {
+            parent->remove_ref();
         } else {
-            auto continuation = m_continuation;
-            auto allocator = m_allocator;
-
-            // Destroy user functor before release wait.
-            this->~function_task();
-
-            if (continuation) {
-                // Original task holds implicit reference on continuation
-                continuation->remove_ref();
-            }
-
-            allocator.deallocate(this, ed);
+            wo.release();
         }
+
+        allocator.deallocate(this, ed);
     }
 
     task* execute(execution_data& ed) override {
