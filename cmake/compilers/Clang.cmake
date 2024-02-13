@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2023 Intel Corporation
+# Copyright (c) 2020-2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@ if (EMSCRIPTEN)
   set(TBB_EMSCRIPTEN 1)
   set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -fexceptions)
   set(TBB_TEST_LINK_FLAGS  ${TBB_COMMON_LINK_FLAGS} -fexceptions -sINITIAL_MEMORY=65536000 -sALLOW_MEMORY_GROWTH=1 -sEXIT_RUNTIME=1)
-  set_property(TARGET Threads::Threads PROPERTY INTERFACE_LINK_LIBRARIES "-pthread")
+  if (NOT EMSCRIPTEN_WITHOUT_PTHREAD)
+      set_property(TARGET Threads::Threads PROPERTY INTERFACE_LINK_LIBRARIES "-pthread")
+  endif()
 endif()
 
 if (MINGW)

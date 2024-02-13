@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2023 Intel Corporation
+# Copyright (c) 2020-2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -194,7 +194,7 @@ endif()
 # -------------------------------------------------------------------
 # Common dependencies
 #force -pthread during compilation for Emscripten
-if (EMSCRIPTEN)
+if (EMSCRIPTEN AND NOT EMSCRIPTEN_WITHOUT_PTHREAD)
    set(THREADS_HAVE_PTHREAD_ARG TRUE)
 endif()
 
