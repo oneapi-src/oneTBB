@@ -617,7 +617,6 @@ protected:
         base_task_group_task* parent_task = static_cast<base_task_group_task*>(r1::get_top_group_task());
         task_group_continuation* continuation = nullptr;
 
-        /* && parent_task->task_group == this */
         if (parent_task && parent_task->is_same_task_group(&m_wait_ctx)) {
             continuation = parent_task->get_continuation();
             continuation->add_ref();
