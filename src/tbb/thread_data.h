@@ -141,7 +141,7 @@ public:
 
     void set_top_group_task(d1::task* t);
     d1::task* get_top_group_task();
-    void remove_top_group_task();
+    void unset_top_group_task();
 
     //! Index of the arena slot the scheduler occupies now, or occupied last time
     unsigned short my_arena_index;
