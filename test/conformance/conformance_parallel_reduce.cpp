@@ -231,7 +231,7 @@ TEST_CASE("parallel_[deterministic_]reduce and std::invoke") {
 
 template <typename Runner, typename... PartitionerContext>
 void test_vector_of_lists_rvalue_reduce_basic(const Runner& runner, PartitionerContext&&... args) {
-    constexpr std::size_t n_vectors = 10'000;
+    constexpr std::size_t n_vectors = 10000;
 
     using inner_type = MoveOnlyWrapper<int>;
     using list_type = EmptyCopyList<inner_type>;
