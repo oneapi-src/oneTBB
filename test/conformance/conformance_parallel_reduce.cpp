@@ -329,6 +329,7 @@ void test_vector_of_lists_rvalue_deterministic_reduce() {
     test_vector_of_lists_rvalue_reduce_basic(runner, oneapi::tbb::static_partitioner{}, context);
 }
 
+//! \brief \ref interface \ref requirement
 TEST_CASE("test rvalue optimization") {
     test_vector_of_lists_rvalue_reduce();
     test_vector_of_lists_rvalue_deterministic_reduce();
