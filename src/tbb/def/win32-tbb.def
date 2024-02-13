@@ -92,7 +92,7 @@ EXPORTS
 ; Task group (task_group_context.cpp)
 ?set_top_group_task@r1@detail@tbb@@YAXPAVtask@d1@23@@Z
 ?get_top_group_task@r1@detail@tbb@@YAPAVtask@d1@23@XZ
-?remove_top_group_task@r1@detail@tbb@@YAXXZ
+?unset_top_group_task@r1@detail@tbb@@YAXXZ
 
 ; Task arena (arena.cpp)
 ?attach@r1@detail@tbb@@YA_NAAVtask_arena_base@d1@23@@Z

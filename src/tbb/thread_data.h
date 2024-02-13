@@ -263,7 +263,7 @@ inline d1::task* thread_data::get_top_group_task() {
     return my_task_dispatcher->my_task_group_tasks.empty() ? nullptr : my_task_dispatcher->my_task_group_tasks.top();
 }
 
-inline void thread_data::remove_top_group_task() {
+inline void thread_data::unset_top_group_task() {
     __TBB_ASSERT(!my_task_dispatcher->my_task_group_tasks.empty(), nullptr);
     my_task_dispatcher->my_task_group_tasks.pop();
 }

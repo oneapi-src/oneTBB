@@ -71,7 +71,7 @@ TBB_EXPORT void __TBB_EXPORTED_FUNC capture_fp_settings(d1::task_group_context&)
 
 TBB_EXPORT void __TBB_EXPORTED_FUNC set_top_group_task(d1::task*);
 TBB_EXPORT d1::task* __TBB_EXPORTED_FUNC get_top_group_task();
-TBB_EXPORT void __TBB_EXPORTED_FUNC remove_top_group_task();
+TBB_EXPORT void __TBB_EXPORTED_FUNC unset_top_group_task();
 
 struct task_group_context_impl;
 }
@@ -532,7 +532,7 @@ class function_task : public base_task_group_task {
                 r1::set_top_group_task(t);
             }
             ~top_task_guard_type() {
-                r1::remove_top_group_task();
+                r1::unset_top_group_task();
             }
         } top_task_guard{this};
 

@@ -98,7 +98,7 @@ _ZN3tbb6detail2r119capture_fp_settingsERNS0_2d118task_group_contextE;
 /* Task group (task_group_context.cpp) */
 _ZN3tbb6detail2r118set_top_group_taskEPNS0_2d14taskE;
 _ZN3tbb6detail2r118get_top_group_taskEv;
-_ZN3tbb6detail2r121remove_top_group_taskEv;
+_ZN3tbb6detail2r120unset_top_group_taskEv;
 
 /* Task arena (arena.cpp) */
 _ZN3tbb6detail2r115max_concurrencyEPKNS0_2d115task_arena_baseE;

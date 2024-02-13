@@ -345,8 +345,8 @@ d1::task* __TBB_EXPORTED_FUNC get_top_group_task() {
     return governor::get_thread_data()->get_top_group_task();
 }
 
-void __TBB_EXPORTED_FUNC remove_top_group_task() {
-    governor::get_thread_data()->remove_top_group_task();
+void __TBB_EXPORTED_FUNC unset_top_group_task() {
+    governor::get_thread_data()->unset_top_group_task();
 }
 
 //------------------------------------------------------------------------
