@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2023 Intel Corporation
+# Copyright (c) 2020-2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -593,7 +593,7 @@ if (TARGET TBB::tbbmalloc)
         endif()
         # ----------------------------------------------------------------------------------------
         # Whitebox testing
-	if (NOT TBB_EMSCRIPTEN)
+        if (NOT TBB_EMSCRIPTEN)
 	    add_executable(test_malloc_whitebox tbbmalloc/test_malloc_whitebox.cpp)
 
             target_include_directories(test_malloc_whitebox
@@ -625,7 +625,7 @@ if (TARGET TBB::tbbmalloc)
                 target_link_libraries(test_malloc_whitebox PRIVATE ${TBB_COMMON_LINK_FLAGS})
             endif()
             target_link_libraries(test_malloc_whitebox PRIVATE Threads::Threads ${TBB_COMMON_LINK_LIBS})
-	endif()
+        endif()
         # ------------------------------------------------------------------------------------------
 
         # Define TBB malloc conformance tests
