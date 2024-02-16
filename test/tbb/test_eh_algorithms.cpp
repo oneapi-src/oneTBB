@@ -486,8 +486,8 @@ TEST_CASE("parallel_for and parallel_reduce exception handling test #4") {
     }
 }
 
-#endif /* TBB_USE_EXCEPTIONS */
 #endif
+#endif /* TBB_USE_EXCEPTIONS */
 class ParForBodyToCancel {
 public:
     void operator()( const range_type& ) const {
