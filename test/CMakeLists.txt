@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2023 Intel Corporation
+# Copyright (c) 2020-2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -593,39 +593,39 @@ if (TARGET TBB::tbbmalloc)
         endif()
         # ----------------------------------------------------------------------------------------
         # Whitebox testing
+        if (NOT TBB_EMSCRIPTEN)
+	    add_executable(test_malloc_whitebox tbbmalloc/test_malloc_whitebox.cpp)
 
-        add_executable(test_malloc_whitebox tbbmalloc/test_malloc_whitebox.cpp)
-
-        target_include_directories(test_malloc_whitebox
-            PRIVATE
-            ${CMAKE_CURRENT_SOURCE_DIR}/../include
-            ${CMAKE_CURRENT_SOURCE_DIR}/..
-            ${CMAKE_CURRENT_SOURCE_DIR})
-        target_compile_definitions(test_malloc_whitebox PRIVATE __TBBMALLOC_BUILD)
-        target_compile_options(test_malloc_whitebox
-            PRIVATE
-            ${TBB_CXX_STD_FLAG}
-            ${TBB_WARNING_SUPPRESS}
-            ${TBB_TEST_COMPILE_FLAGS}
-            ${TBB_COMMON_COMPILE_FLAGS}
-            ${TBBMALLOC_LIB_COMPILE_FLAGS}
-        )
-        if (ANDROID_PLATFORM)
-            add_test(NAME test_malloc_whitebox
-                    COMMAND ${CMAKE_COMMAND}
-                            -DBINARIES_PATH=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
-                            -DTEST_NAME=test_malloc_whitebox
-                            -P ${PROJECT_SOURCE_DIR}/cmake/android/test_launcher.cmake)
-        else()
-            add_test(NAME test_malloc_whitebox COMMAND test_malloc_whitebox --force-colors=1)
+            target_include_directories(test_malloc_whitebox
+                PRIVATE
+                ${CMAKE_CURRENT_SOURCE_DIR}/../include
+                ${CMAKE_CURRENT_SOURCE_DIR}/..
+                ${CMAKE_CURRENT_SOURCE_DIR})
+            target_compile_definitions(test_malloc_whitebox PRIVATE __TBBMALLOC_BUILD)
+            target_compile_options(test_malloc_whitebox
+                PRIVATE
+                ${TBB_CXX_STD_FLAG}
+                ${TBB_WARNING_SUPPRESS}
+                ${TBB_TEST_COMPILE_FLAGS}
+                ${TBB_COMMON_COMPILE_FLAGS}
+                ${TBBMALLOC_LIB_COMPILE_FLAGS}
+            )
+            if (ANDROID_PLATFORM)
+                add_test(NAME test_malloc_whitebox
+                        COMMAND ${CMAKE_COMMAND}
+                                -DBINARIES_PATH=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
+                                -DTEST_NAME=test_malloc_whitebox
+                                -P ${PROJECT_SOURCE_DIR}/cmake/android/test_launcher.cmake)
+            else()
+                add_test(NAME test_malloc_whitebox COMMAND test_malloc_whitebox --force-colors=1)
+            endif()
+            if (COMMAND target_link_options)
+                target_link_options(test_malloc_whitebox PRIVATE ${TBB_COMMON_LINK_FLAGS})
+            else()
+                target_link_libraries(test_malloc_whitebox PRIVATE ${TBB_COMMON_LINK_FLAGS})
+            endif()
+            target_link_libraries(test_malloc_whitebox PRIVATE Threads::Threads ${TBB_COMMON_LINK_LIBS})
         endif()
-        if (COMMAND target_link_options)
-            target_link_options(test_malloc_whitebox PRIVATE ${TBB_COMMON_LINK_FLAGS})
-        else()
-            target_link_libraries(test_malloc_whitebox PRIVATE ${TBB_COMMON_LINK_FLAGS})
-        endif()
-        target_link_libraries(test_malloc_whitebox PRIVATE Threads::Threads ${TBB_COMMON_LINK_LIBS})
-
         # ------------------------------------------------------------------------------------------
 
         # Define TBB malloc conformance tests
