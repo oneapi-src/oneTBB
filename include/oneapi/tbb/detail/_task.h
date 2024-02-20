@@ -61,7 +61,9 @@ using suspend_callback_type = void(*)(void*, suspend_point_type*);
 TBB_EXPORT void __TBB_EXPORTED_FUNC suspend(suspend_callback_type suspend_callback, void* user_callback);
 TBB_EXPORT void __TBB_EXPORTED_FUNC resume(suspend_point_type* tag);
 TBB_EXPORT suspend_point_type* __TBB_EXPORTED_FUNC current_suspend_point();
+
 TBB_EXPORT void __TBB_EXPORTED_FUNC notify_waiters(std::uintptr_t wait_ctx_addr);
+TBB_EXPORT d1::task* __TBB_EXPORTED_FUNC current_task();
 
 class thread_data;
 class task_dispatcher;
@@ -197,6 +199,10 @@ inline void wait(wait_context& wait_ctx, task_group_context& ctx) {
     r1::wait(wait_ctx, ctx);
     call_itt_task_notify(acquired, &wait_ctx);
     call_itt_task_notify(destroy, &wait_ctx);
+}
+
+inline d1::task* current_task() {
+    return r1::current_task();
 }
 
 using r1::current_context;

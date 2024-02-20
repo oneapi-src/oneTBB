@@ -69,10 +69,6 @@ TBB_EXPORT bool __TBB_EXPORTED_FUNC cancel_group_execution(d1::task_group_contex
 TBB_EXPORT bool __TBB_EXPORTED_FUNC is_group_execution_cancelled(d1::task_group_context&);
 TBB_EXPORT void __TBB_EXPORTED_FUNC capture_fp_settings(d1::task_group_context&);
 
-TBB_EXPORT void __TBB_EXPORTED_FUNC set_top_group_task(d1::task*);
-TBB_EXPORT d1::task* __TBB_EXPORTED_FUNC get_top_group_task();
-TBB_EXPORT void __TBB_EXPORTED_FUNC unset_top_group_task();
-
 struct task_group_context_impl;
 }
 
@@ -527,15 +523,6 @@ class function_task : public base_task_group_task {
     }
 
     task* execute(execution_data& ed) override {
-        struct top_task_guard_type {
-            top_task_guard_type(d1::task* t) {
-                r1::set_top_group_task(t);
-            }
-            ~top_task_guard_type() {
-                r1::unset_top_group_task();
-            }
-        } top_task_guard{this};
-
         task* res = d2::task_ptr_or_nullptr(m_func);
         finalize(ed);
         return res;
@@ -614,7 +601,7 @@ protected:
 
     template<typename F>
     task* prepare_task(F&& f) {
-        base_task_group_task* parent_task = static_cast<base_task_group_task*>(r1::get_top_group_task());
+        base_task_group_task* parent_task = dynamic_cast<base_task_group_task*>(current_task());
         task_group_continuation* continuation = nullptr;
 
         if (parent_task && parent_task->is_same_task_group(&m_wait_ctx)) {

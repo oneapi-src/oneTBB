@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2024 Intel Corporation
+    Copyright (c) 2005-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -332,26 +332,6 @@ void task_group_context_impl::copy_fp_settings(d1::task_group_context& ctx, cons
 
     However this version of the algorithm requires more analysis and verification.
 */
-
-//------------------------------------------------------------------------
-// task_group
-//------------------------------------------------------------------------
-
-void __TBB_EXPORTED_FUNC set_top_group_task(d1::task* t) {
-    governor::get_thread_data()->set_top_group_task(t);
-}
-
-d1::task* __TBB_EXPORTED_FUNC get_top_group_task() {
-    return governor::get_thread_data()->get_top_group_task();
-}
-
-void __TBB_EXPORTED_FUNC unset_top_group_task() {
-    governor::get_thread_data()->unset_top_group_task();
-}
-
-//------------------------------------------------------------------------
-// task_group_context
-//------------------------------------------------------------------------
 
 void __TBB_EXPORTED_FUNC initialize(d1::task_group_context& ctx) {
     task_group_context_impl::initialize(ctx);

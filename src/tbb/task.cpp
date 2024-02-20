@@ -221,6 +221,10 @@ void notify_waiters(std::uintptr_t wait_ctx_addr) {
     governor::get_thread_data()->my_arena->get_waiting_threads_monitor().notify(is_related_wait_ctx);
 }
 
+d1::task* current_task() {
+    return governor::get_thread_data()->get_current_task();
+}
+
 } // namespace r1
 } // namespace detail
 } // namespace tbb
