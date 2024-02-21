@@ -53,6 +53,7 @@ TBB_EXPORT void __TBB_EXPORTED_FUNC execute_and_wait(d1::task& t, d1::task_group
 TBB_EXPORT void __TBB_EXPORTED_FUNC wait(d1::wait_context&, d1::task_group_context& ctx);
 TBB_EXPORT d1::slot_id __TBB_EXPORTED_FUNC execution_slot(const d1::execution_data*);
 TBB_EXPORT d1::task_group_context* __TBB_EXPORTED_FUNC current_context();
+TBB_EXPORT d1::task* __TBB_EXPORTED_FUNC current_task();
 
 // Do not place under __TBB_RESUMABLE_TASKS. It is a stub for unsupported platforms.
 struct suspend_point_type;
@@ -61,9 +62,7 @@ using suspend_callback_type = void(*)(void*, suspend_point_type*);
 TBB_EXPORT void __TBB_EXPORTED_FUNC suspend(suspend_callback_type suspend_callback, void* user_callback);
 TBB_EXPORT void __TBB_EXPORTED_FUNC resume(suspend_point_type* tag);
 TBB_EXPORT suspend_point_type* __TBB_EXPORTED_FUNC current_suspend_point();
-
 TBB_EXPORT void __TBB_EXPORTED_FUNC notify_waiters(std::uintptr_t wait_ctx_addr);
-TBB_EXPORT d1::task* __TBB_EXPORTED_FUNC current_task();
 
 class thread_data;
 class task_dispatcher;
@@ -201,10 +200,7 @@ inline void wait(wait_context& wait_ctx, task_group_context& ctx) {
     call_itt_task_notify(destroy, &wait_ctx);
 }
 
-inline d1::task* current_task() {
-    return r1::current_task();
-}
-
+using r1::current_task;
 using r1::current_context;
 
 class task_traits {
