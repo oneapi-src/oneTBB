@@ -185,12 +185,6 @@ protected:
         }
     }
 
-    void destroy() {
-        auto allocator = m_allocator;
-        this->~distributed_reference_counter();
-        allocator.deallocate(this);
-    }
-
     // Add ability to create new behaviors by overriding logic of this method
     // e.g., add invocation of user's callback once counter reached 0 (formally continuation)
     virtual void add_reference(std::int64_t delta) {
@@ -200,11 +194,13 @@ protected:
 
         if (!r) {
             release_parent();
-            destroy();
+
+            auto allocator = m_allocator;
+            this->~distributed_reference_counter();
+            allocator.deallocate(this);
         }
     }
 
-private:
     std::uint64_t m_version_and_traits{};
 
     static constexpr std::uint64_t overflow_mask = ~((1LLU << 32) - 1);
