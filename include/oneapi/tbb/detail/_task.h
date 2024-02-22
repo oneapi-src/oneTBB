@@ -164,7 +164,7 @@ public:
 
     distributed_reference_counter(const distributed_reference_counter&) = delete;
 
-    ~distributed_reference_counter() {
+    virtual ~distributed_reference_counter() {
         __TBB_ASSERT(m_ref_count.load(std::memory_order_relaxed) == 0, nullptr);
     }
 
@@ -176,25 +176,35 @@ public:
         add_reference(-std::int64_t(delta));
     }
 
-private:
-    void add_reference(std::int64_t delta) {
+protected:
+    void release_parent() {
+        if (m_parent_ref) {
+            m_parent_ref->release();
+        } else {
+            m_wait_ctx.release();
+        }
+    }
+
+    void destroy() {
+        auto allocator = m_allocator;
+        this->~distributed_reference_counter();
+        allocator.deallocate(this);
+    }
+
+    // Add ability to create new behaviors by overriding logic of this method
+    // e.g., add call to user_body once zero is reached (formally continuation)
+    virtual void add_reference(std::int64_t delta) {
         std::uint64_t r = m_ref_count.fetch_add(static_cast<std::uint64_t>(delta)) + static_cast<std::uint64_t>(delta);
 
         __TBB_ASSERT_EX((r & overflow_mask) == 0, "Overflow is detected");
 
         if (!r) {
-            if (m_parent_ref) {
-                m_parent_ref->release();
-            } else {
-                m_wait_ctx.release();
-            }
-
-            auto allocator = m_allocator;
-            this->~distributed_reference_counter();
-            allocator.deallocate(this);
+            release_parent();
+            destroy();
         }
     }
 
+private:
     std::uint64_t m_version_and_traits{};
 
     static constexpr std::uint64_t overflow_mask = ~((1LLU << 32) - 1);

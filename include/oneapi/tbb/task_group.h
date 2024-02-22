@@ -440,7 +440,7 @@ public:
     distributed_reference_counter* get_ref_counter() {
         if (m_ref_counter == nullptr) {
             small_object_allocator alloc{};
-            // Original task holds implicit reference to ensure the continuation would not be destroyed
+            // Original task holds implicit reference to ensure the reference_counter would not be destroyed
             // after completing one or several nested stolen tasks.
             m_ref_counter = alloc.new_object<distributed_reference_counter>(1, m_parent, m_wait_ctx, alloc);
             m_parent = m_ref_counter;
@@ -558,17 +558,17 @@ protected:
     template<typename F>
     task* prepare_task(F&& f) {
         base_task_group_task* parent_task = dynamic_cast<base_task_group_task*>(current_task());
-        distributed_reference_counter* continuation = nullptr;
+        distributed_reference_counter* ref_counter = nullptr;
 
         if (parent_task && parent_task->is_same_task_group(&m_wait_ctx)) {
-            continuation = parent_task->get_ref_counter();
-            continuation->reserve();
+            ref_counter = parent_task->get_ref_counter();
+            ref_counter->reserve();
         } else {
             m_wait_ctx.reserve();
         }
 
         small_object_allocator alloc{};
-        return alloc.new_object<function_task<typename std::decay<F>::type>>(std::forward<F>(f), m_wait_ctx, alloc, continuation);
+        return alloc.new_object<function_task<typename std::decay<F>::type>>(std::forward<F>(f), m_wait_ctx, alloc, ref_counter);
     }
 
     task_group_context& context() noexcept {
