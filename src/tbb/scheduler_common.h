@@ -42,6 +42,7 @@
 #include <cstdint>
 #include <exception>
 #include <memory> // unique_ptr
+#include <map>
 
 //! Mutex type for global locks in the scheduler
 using scheduler_mutex_type = __TBB_SCHEDULER_MUTEX_TYPE;
@@ -481,6 +482,8 @@ public:
 
     //! Innermost task whose task::execute() is running. A nullptr on the outermost level.
     d1::task* m_innermost_running_task{ nullptr };
+
+    std::map<d1::wait_context*, d1::distributed_reference_counter*> m_tg_map;
 
     //! Attempt to get a task from the mailbox.
     /** Gets a task only if it has not been executed by its sender or a thief

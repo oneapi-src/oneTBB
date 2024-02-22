@@ -562,10 +562,10 @@ protected:
 
         if (parent_task && parent_task->is_same_task_group(&m_wait_ctx)) {
             ref_counter = parent_task->get_ref_counter();
-            ref_counter->reserve();
         } else {
-            m_wait_ctx.reserve();
+            ref_counter = r1::get_thread_continuation(m_wait_ctx);
         }
+        ref_counter->reserve();
 
         small_object_allocator alloc{};
         return alloc.new_object<function_task<typename std::decay<F>::type>>(std::forward<F>(f), m_wait_ctx, alloc, ref_counter);

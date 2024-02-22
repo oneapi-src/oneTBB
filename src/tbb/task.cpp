@@ -225,6 +225,21 @@ d1::task* current_task() {
     return governor::get_thread_data()->get_current_task();
 }
 
+d1::distributed_reference_counter* get_thread_continuation(d1::wait_context& wc) {
+    auto& dispatcher = *governor::get_thread_data()->my_task_dispatcher;
+
+    d1::distributed_reference_counter* continuation{nullptr};
+    auto it = dispatcher.m_tg_map.find(&wc);
+    if (it != dispatcher.m_tg_map.end()) {
+        continuation = it->second;
+    } else {
+        d1::small_object_allocator alloc{};
+        dispatcher.m_tg_map[&wc] = continuation = alloc.new_object<d1::distributed_reference_counter>(0, nullptr, wc, alloc, true);
+    }
+
+    return continuation;
+}
+
 } // namespace r1
 } // namespace detail
 } // namespace tbb

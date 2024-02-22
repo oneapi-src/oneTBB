@@ -43,6 +43,7 @@ class task;
 class wait_context;
 class task_group_context;
 struct execution_data;
+class distributed_reference_counter;
 }
 
 namespace r1 {
@@ -54,6 +55,7 @@ TBB_EXPORT void __TBB_EXPORTED_FUNC wait(d1::wait_context&, d1::task_group_conte
 TBB_EXPORT d1::slot_id __TBB_EXPORTED_FUNC execution_slot(const d1::execution_data*);
 TBB_EXPORT d1::task_group_context* __TBB_EXPORTED_FUNC current_context();
 TBB_EXPORT d1::task* __TBB_EXPORTED_FUNC current_task();
+TBB_EXPORT d1::distributed_reference_counter* get_thread_continuation(d1::wait_context& wc);
 
 // Do not place under __TBB_RESUMABLE_TASKS. It is a stub for unsupported platforms.
 struct suspend_point_type;
@@ -153,11 +155,13 @@ public:
     // Despite the internal reference count is uin64_t we limit the user interface with uint32_t
     // to preserve a part of the internal reference count for special needs.
     distributed_reference_counter(std::uint32_t ref_count, distributed_reference_counter* parent,
-                                  wait_context& wo, small_object_allocator& allocator)
+                                  wait_context& wo, small_object_allocator& allocator,
+                                  bool is_manually_destroyed = false)
         : m_ref_count{ref_count}
         , m_parent_ref(parent)
         , m_wait_ctx(wo)
         , m_allocator(allocator)
+        , m_is_manually_destroyed(is_manually_destroyed)
     {
         suppress_unused_warning(m_version_and_traits);
     }
@@ -190,7 +194,7 @@ protected:
     virtual void add_reference(std::int64_t delta) {
         std::uint64_t r = m_ref_count.fetch_add(static_cast<std::uint64_t>(delta)) + static_cast<std::uint64_t>(delta);
 
-        __TBB_ASSERT_EX((r & overflow_mask) == 0, "Overflow is detected");
+        __TBB_ASSERT_EX(((r + static_cast<std::uint64_t>(delta)) & overflow_mask) == 0, "Overflow is detected");
 
         if (!r) {
             release_parent();
@@ -208,6 +212,7 @@ protected:
     distributed_reference_counter* m_parent_ref{nullptr};
     wait_context& m_wait_ctx;
     small_object_allocator m_allocator;
+    bool m_is_manually_destroyed;
 };
 
 struct execution_data {
