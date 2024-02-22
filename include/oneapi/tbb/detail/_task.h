@@ -155,13 +155,11 @@ public:
     // Despite the internal reference count is uin64_t we limit the user interface with uint32_t
     // to preserve a part of the internal reference count for special needs.
     distributed_reference_counter(std::uint32_t ref_count, distributed_reference_counter* parent,
-                                  wait_context& wo, small_object_allocator& allocator,
-                                  bool is_manually_destroyed = false)
+                                  wait_context& wo, small_object_allocator& allocator)
         : m_ref_count{ref_count}
         , m_parent_ref(parent)
         , m_wait_ctx(wo)
         , m_allocator(allocator)
-        , m_is_manually_destroyed(is_manually_destroyed)
     {
         suppress_unused_warning(m_version_and_traits);
     }
@@ -181,6 +179,10 @@ public:
     }
 
 protected:
+    static constexpr std::uint64_t overflow_mask = ~((1LLU << 32) - 1);
+    std::atomic<std::uint64_t> m_ref_count;
+    wait_context& m_wait_ctx;
+
     void release_parent() {
         if (m_parent_ref) {
             m_parent_ref->release();
@@ -194,7 +196,7 @@ protected:
     virtual void add_reference(std::int64_t delta) {
         std::uint64_t r = m_ref_count.fetch_add(static_cast<std::uint64_t>(delta)) + static_cast<std::uint64_t>(delta);
 
-        __TBB_ASSERT_EX(((r + static_cast<std::uint64_t>(delta)) & overflow_mask) == 0, "Overflow is detected");
+        __TBB_ASSERT_EX((r & overflow_mask) == 0, "Overflow is detected");
 
         if (!r) {
             release_parent();
@@ -207,12 +209,32 @@ protected:
 
     std::uint64_t m_version_and_traits{};
 
-    static constexpr std::uint64_t overflow_mask = ~((1LLU << 32) - 1);
-    std::atomic<std::uint64_t> m_ref_count;
     distributed_reference_counter* m_parent_ref{nullptr};
-    wait_context& m_wait_ctx;
     small_object_allocator m_allocator;
-    bool m_is_manually_destroyed;
+};
+
+class manual_distributed_reference_counter : public distributed_reference_counter {
+public:
+    manual_distributed_reference_counter(std::uint32_t ref_count, distributed_reference_counter* parent,
+                                         wait_context& wo, small_object_allocator& allocator,
+        : distributed_reference_counter(ref_count, parent, wo, allocator)
+    {}
+private:
+    friend class r1::task_dispatcher;
+
+    virtual void add_reference(std::int64_t delta) {
+        std::uint64_t r = m_ref_count.fetch_add(static_cast<std::uint64_t>(delta));
+
+        __TBB_ASSERT_EX(((r + static_cast<std::uint64_t>(delta)) & overflow_mask) == 0, "Overflow is detected");
+
+        if (r == 0) {
+
+        }
+
+        if (r + static_cast<std::uint64_t>(delta) == 0) {
+            release_parent();
+        }
+    }
 };
 
 struct execution_data {
