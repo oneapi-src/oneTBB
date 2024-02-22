@@ -431,65 +431,21 @@ class structured_task_group;
 class isolated_task_group;
 #endif
 
-class task_group_continuation {
-public:
-    task_group_continuation(task_group_continuation* parent, wait_context& wo, small_object_allocator& allocator)
-        : m_parent(parent)
-        , m_wait_ctx(wo)
-        , m_allocator(allocator)
-    {}
-
-    void add_ref() {
-        ++m_ref_counter;
-    }
-
-    void remove_ref() {
-        if (--m_ref_counter == 0) {
-            finalize();
-        }
-    }
-
-private:
-    void finalize() {
-        // Make a local reference not to access this after destruction.
-        auto& wo = m_wait_ctx;
-        task_group_continuation* parent = m_parent;
-
-        auto allocator = m_allocator;
-
-        this->~task_group_continuation();
-
-        if (parent) {
-            parent->remove_ref();
-        } else {
-            wo.release();
-        }
-
-        allocator.deallocate(this);
-    }
-
-    std::atomic<std::uint64_t> m_ref_counter{0};
-    task_group_continuation* m_parent{nullptr};
-    wait_context& m_wait_ctx;
-    small_object_allocator m_allocator;
-};
-
 class base_task_group_task : public task {
 public:
-    base_task_group_task(wait_context& wo, small_object_allocator& alloc, task_group_continuation* p = nullptr)
+    base_task_group_task(wait_context& wo, small_object_allocator& alloc, distributed_reference_counter* p = nullptr)
         : m_wait_ctx(wo), m_allocator(alloc), m_parent(p)
     {}
 
-    task_group_continuation* get_continuation() {
-        if (m_continuation == nullptr) {
+    distributed_reference_counter* get_ref_counter() {
+        if (m_ref_counter == nullptr) {
             small_object_allocator alloc{};
-            m_continuation = alloc.new_object<task_group_continuation>(m_parent, m_wait_ctx, alloc);
             // Original task holds implicit reference to ensure the continuation would not be destroyed
             // after completing one or several nested stolen tasks.
-            m_continuation->add_ref();
-            m_parent = m_continuation;
+            m_ref_counter = alloc.new_object<distributed_reference_counter>(1, m_parent, m_wait_ctx, alloc);
+            m_parent = m_ref_counter;
         }
-        return m_continuation;
+        return m_ref_counter;
     }
 
     bool is_same_task_group(wait_context* wo) {
@@ -498,8 +454,8 @@ public:
 protected:
     wait_context& m_wait_ctx;
     small_object_allocator m_allocator;
-    task_group_continuation* m_parent{nullptr};
-    task_group_continuation* m_continuation{nullptr};
+    distributed_reference_counter* m_parent{nullptr};
+    distributed_reference_counter* m_ref_counter{nullptr};
 };
 
 template<typename F>
@@ -514,7 +470,7 @@ class function_task : public base_task_group_task {
         this->~function_task();
 
         if (parent) {
-            parent->remove_ref();
+            parent->release();
         } else {
             wo.release();
         }
@@ -532,11 +488,11 @@ class function_task : public base_task_group_task {
         return nullptr;
     }
 public:
-    function_task(const F& f, wait_context& wo, small_object_allocator& alloc, task_group_continuation* p = nullptr)
+    function_task(const F& f, wait_context& wo, small_object_allocator& alloc, distributed_reference_counter* p = nullptr)
         : base_task_group_task(wo, alloc, p), m_func(f)
     {}
 
-    function_task(F&& f, wait_context& wo, small_object_allocator& alloc, task_group_continuation* p = nullptr)
+    function_task(F&& f, wait_context& wo, small_object_allocator& alloc, distributed_reference_counter* p = nullptr)
         : base_task_group_task(wo, alloc, p), m_func(std::move(f))
     {}
 };
@@ -602,11 +558,11 @@ protected:
     template<typename F>
     task* prepare_task(F&& f) {
         base_task_group_task* parent_task = dynamic_cast<base_task_group_task*>(current_task());
-        task_group_continuation* continuation = nullptr;
+        distributed_reference_counter* continuation = nullptr;
 
         if (parent_task && parent_task->is_same_task_group(&m_wait_ctx)) {
-            continuation = parent_task->get_continuation();
-            continuation->add_ref();
+            continuation = parent_task->get_ref_counter();
+            continuation->reserve();
         } else {
             m_wait_ctx.reserve();
         }

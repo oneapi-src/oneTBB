@@ -148,6 +148,62 @@ public:
     }
 };
 
+class alignas(max_nfs_size) distributed_reference_counter {
+public:
+    // Despite the internal reference count is uin64_t we limit the user interface with uint32_t
+    // to preserve a part of the internal reference count for special needs.
+    distributed_reference_counter(std::uint32_t ref_count, distributed_reference_counter* parent,
+                                  wait_context& wo, small_object_allocator& allocator)
+        : m_ref_count{ref_count}
+        , m_parent_ref(parent)
+        , m_wait_ctx(wo)
+        , m_allocator(allocator)
+    {
+        suppress_unused_warning(m_version_and_traits);
+    }
+
+    distributed_reference_counter(const distributed_reference_counter&) = delete;
+
+    ~distributed_reference_counter() {
+        __TBB_ASSERT(m_ref_count.load(std::memory_order_relaxed) == 0, nullptr);
+    }
+
+    void reserve(std::uint32_t delta = 1) {
+        add_reference(delta);
+    }
+
+    void release(std::uint32_t delta = 1) {
+        add_reference(-std::int64_t(delta));
+    }
+
+private:
+    void add_reference(std::int64_t delta) {
+        std::uint64_t r = m_ref_count.fetch_add(static_cast<std::uint64_t>(delta)) + static_cast<std::uint64_t>(delta);
+
+        __TBB_ASSERT_EX((r & overflow_mask) == 0, "Overflow is detected");
+
+        if (!r) {
+            if (m_parent_ref) {
+                m_parent_ref->release();
+            } else {
+                m_wait_ctx.release();
+            }
+
+            auto allocator = m_allocator;
+            this->~distributed_reference_counter();
+            allocator.deallocate(this);
+        }
+    }
+
+    std::uint64_t m_version_and_traits{1};
+
+    static constexpr std::uint64_t overflow_mask = ~((1LLU << 32) - 1);
+    std::atomic<std::uint64_t> m_ref_count;
+    distributed_reference_counter* m_parent_ref{nullptr};
+    wait_context& m_wait_ctx;
+    small_object_allocator m_allocator;
+};
+
 struct execution_data {
     task_group_context* context{};
     slot_id original_slot{};
