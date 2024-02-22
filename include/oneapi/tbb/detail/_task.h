@@ -192,7 +192,7 @@ protected:
     }
 
     // Add ability to create new behaviors by overriding logic of this method
-    // e.g., add call to user_body once zero is reached (formally continuation)
+    // e.g., add invocation of user's callback once counter reached 0 (formally continuation)
     virtual void add_reference(std::int64_t delta) {
         std::uint64_t r = m_ref_count.fetch_add(static_cast<std::uint64_t>(delta)) + static_cast<std::uint64_t>(delta);
 
