@@ -55,7 +55,7 @@ TBB_EXPORT void __TBB_EXPORTED_FUNC wait(d1::wait_context&, d1::task_group_conte
 TBB_EXPORT d1::slot_id __TBB_EXPORTED_FUNC execution_slot(const d1::execution_data*);
 TBB_EXPORT d1::task_group_context* __TBB_EXPORTED_FUNC current_context();
 TBB_EXPORT d1::task* __TBB_EXPORTED_FUNC current_task();
-TBB_EXPORT d1::distributed_reference_counter* get_thread_continuation(d1::wait_context& wc);
+TBB_EXPORT d1::distributed_reference_counter* get_thread_distributed_reference_counter(d1::wait_context& wc);
 
 // Do not place under __TBB_RESUMABLE_TASKS. It is a stub for unsupported platforms.
 struct suspend_point_type;
@@ -179,9 +179,6 @@ public:
     }
 
 protected:
-    static constexpr std::uint64_t overflow_mask = ~((1LLU << 32) - 1);
-    std::atomic<std::uint64_t> m_ref_count;
-    wait_context& m_wait_ctx;
 
     void release_parent() {
         if (m_parent_ref) {
@@ -209,18 +206,27 @@ protected:
 
     std::uint64_t m_version_and_traits{};
 
+    static constexpr std::uint64_t overflow_mask = ~((1LLU << 32) - 1);
+    std::atomic<std::uint64_t> m_ref_count;
     distributed_reference_counter* m_parent_ref{nullptr};
+    wait_context& m_wait_ctx;
     small_object_allocator m_allocator;
 };
 
 class manual_distributed_reference_counter : public distributed_reference_counter {
 public:
     manual_distributed_reference_counter(std::uint32_t ref_count, distributed_reference_counter* parent,
-                                         wait_context& wo, small_object_allocator& allocator,
+                                         wait_context& wo, small_object_allocator& allocator)
         : distributed_reference_counter(ref_count, parent, wo, allocator)
     {}
 private:
     friend class r1::task_dispatcher;
+
+    void destroy() {
+        auto allocator = m_allocator;
+        this->~manual_distributed_reference_counter();
+        allocator.deallocate(this);
+    }
 
     virtual void add_reference(std::int64_t delta) {
         std::uint64_t r = m_ref_count.fetch_add(static_cast<std::uint64_t>(delta));
@@ -228,7 +234,7 @@ private:
         __TBB_ASSERT_EX(((r + static_cast<std::uint64_t>(delta)) & overflow_mask) == 0, "Overflow is detected");
 
         if (r == 0) {
-
+            m_wait_ctx.reserve();
         }
 
         if (r + static_cast<std::uint64_t>(delta) == 0) {

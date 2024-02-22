@@ -225,19 +225,19 @@ d1::task* current_task() {
     return governor::get_thread_data()->get_current_task();
 }
 
-d1::distributed_reference_counter* get_thread_continuation(d1::wait_context& wc) {
+d1::distributed_reference_counter* get_thread_distributed_reference_counter(d1::wait_context& wc) {
     auto& dispatcher = *governor::get_thread_data()->my_task_dispatcher;
 
-    d1::distributed_reference_counter* continuation{nullptr};
-    auto it = dispatcher.m_tg_map.find(&wc);
-    if (it != dispatcher.m_tg_map.end()) {
-        continuation = it->second;
+    d1::manual_distributed_reference_counter* ref_counter{nullptr};
+    auto it = dispatcher.m_distributed_reference_map.find(&wc);
+    if (it != dispatcher.m_distributed_reference_map.end()) {
+        ref_counter = it->second;
     } else {
         d1::small_object_allocator alloc{};
-        dispatcher.m_tg_map[&wc] = continuation = alloc.new_object<d1::distributed_reference_counter>(0, nullptr, wc, alloc, true);
+        dispatcher.m_distributed_reference_map[&wc] = ref_counter = alloc.new_object<d1::manual_distributed_reference_counter>(0, nullptr, wc, alloc);
     }
 
-    return continuation;
+    return ref_counter;
 }
 
 } // namespace r1

@@ -563,7 +563,7 @@ protected:
         if (parent_task && parent_task->is_same_task_group(&m_wait_ctx)) {
             ref_counter = parent_task->get_ref_counter();
         } else {
-            ref_counter = r1::get_thread_continuation(m_wait_ctx);
+            ref_counter = r1::get_thread_distributed_reference_counter(m_wait_ctx);
         }
         ref_counter->reserve();
 

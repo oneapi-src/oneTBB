@@ -483,7 +483,8 @@ public:
     //! Innermost task whose task::execute() is running. A nullptr on the outermost level.
     d1::task* m_innermost_running_task{ nullptr };
 
-    std::map<d1::wait_context*, d1::distributed_reference_counter*> m_tg_map;
+    //! Used to improve scalability of d1::wait_context by using per thread distributed_reference_counter
+    std::map<d1::wait_context*, d1::manual_distributed_reference_counter*> m_distributed_reference_map;
 
     //! Attempt to get a task from the mailbox.
     /** Gets a task only if it has not been executed by its sender or a thief
