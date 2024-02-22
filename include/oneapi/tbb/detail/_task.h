@@ -195,7 +195,7 @@ private:
         }
     }
 
-    std::uint64_t m_version_and_traits{1};
+    std::uint64_t m_version_and_traits{};
 
     static constexpr std::uint64_t overflow_mask = ~((1LLU << 32) - 1);
     std::atomic<std::uint64_t> m_ref_count;
