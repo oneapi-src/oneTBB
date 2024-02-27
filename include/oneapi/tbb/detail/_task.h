@@ -147,6 +147,80 @@ public:
     }
 };
 
+class wait_tree_node_interface {
+public:
+    virtual void reserve(std::uint32_t delta = 1) = 0;
+    virtual void release(std::uint32_t delta = 1) = 0;
+    virtual void release(std::uint32_t delta, const d1::execution_data&) { release(delta); }
+
+protected:
+    virtual ~wait_tree_node_interface() = default;
+};
+
+class wait_context_node : public wait_tree_node_interface {
+public:
+    wait_context_node(std::uint32_t ref = 0) : m_wait(ref) {}
+
+    void reserve(std::uint32_t delta = 1) override {
+        m_wait.reserve(delta);
+    }
+
+    void release(std::uint32_t delta = 1) override {
+        m_wait.release(delta);
+    }
+
+    wait_context& get_context() {
+        return m_wait;
+    }
+private:
+    wait_context m_wait;
+};
+
+class reference_node : public wait_tree_node_interface {
+public:
+    reference_node(reference_node* parent, std::uint32_t ref_count) : my_parent{parent}, m_ref_count{ref_count}
+    {}
+
+    void reserve(std::uint32_t delta = 1) override {
+        if (m_ref_count.fetch_add(static_cast<std::uint64_t>(delta)) == 0) {
+            my_parent->reserve();
+        }
+    }
+
+    void release(std::uint32_t delta = 1) override {
+        std::uint64_t ref = m_ref_count.fetch_sub(static_cast<std::uint64_t>(delta)) - static_cast<std::uint64_t>(delta);
+        if (ref == 0) {
+            auto parent = my_parent;
+            execute_continuation();
+            destroy();
+            parent->release();
+        }
+    }
+
+    void release(std::uint32_t delta, const d1::execution_data& ed) override {
+        std::uint64_t ref = m_ref_count.fetch_sub(static_cast<std::uint64_t>(delta)) - static_cast<std::uint64_t>(delta);
+        if (ref == 0) {
+            auto parent = my_parent;
+            execute_continuation();
+            destroy(ed);
+            parent->release(1, ed);
+        }
+    }
+
+    std::uint32_t get_num_child() {
+        return m_ref_count.load(std::memory_order_acquire);
+    }
+
+protected:
+    virtual void execute_continuation() {}
+    virtual void destroy() {}
+    virtual void destroy(const d1::execution_data&) {}
+
+private:
+    reference_node* my_parent{};
+    std::atomic<std::uint64_t> m_ref_count{};
+};
+
 struct execution_data {
     task_group_context* context{};
     slot_id original_slot{};

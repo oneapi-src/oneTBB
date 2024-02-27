@@ -63,19 +63,25 @@ namespace d1 {
 //TODO: consider folding tree via bypass execution(instead of manual folding)
 // for better cancellation and critical tasks handling (performance measurements required).
 template<typename Body>
-struct reduction_tree_node : public tree_node {
+struct reduction_tree_node : public partitioner_node {
     tbb::detail::aligned_space<Body> zombie_space;
     Body& left_body;
     bool has_right_zombie{false};
+    task_group_context* context;
 
-    reduction_tree_node(node* parent, int ref_count, Body& input_left_body, small_object_allocator& alloc) :
-        tree_node{parent, ref_count, alloc},
-        left_body(input_left_body) /* gcc4.8 bug - braced-initialization doesn't work for class members of reference type */
+    reduction_tree_node(wait_tree_node_interface* parent, std::uint32_t ref_count, Body& input_left_body, small_object_allocator& alloc, task_group_context* c) :
+        partitioner_node{parent, ref_count, alloc},
+        left_body{input_left_body},
+        context{c}
     {}
 
-    void join(task_group_context* context) {
+    void execute_continuation() override {
         if (has_right_zombie && !context->is_group_execution_cancelled())
             left_body.join(*zombie_space.begin());
+    }
+
+    void destroy(const d1::execution_data& ed) override {
+        m_allocator.delete_object(this, ed);
     }
 
     ~reduction_tree_node() {
@@ -89,7 +95,7 @@ template<typename Range, typename Body, typename Partitioner>
 struct start_reduce : public task {
     Range my_range;
     Body* my_body;
-    node* my_parent;
+    wait_tree_node_interface* my_wait_tree_node;
 
     typename Partitioner::task_partition_type my_partition;
     small_object_allocator my_allocator;
@@ -105,7 +111,7 @@ struct start_reduce : public task {
     start_reduce( const Range& range, Body& body, Partitioner& partitioner, small_object_allocator& alloc ) :
         my_range(range),
         my_body(&body),
-        my_parent(nullptr),
+        my_wait_tree_node(nullptr),
         my_partition(partitioner),
         my_allocator(alloc),
         is_right_child(false) {}
@@ -114,7 +120,7 @@ struct start_reduce : public task {
     start_reduce( start_reduce& parent_, typename Partitioner::split_type& split_obj, small_object_allocator& alloc ) :
         my_range(parent_.my_range, get_range_split_object<Range>(split_obj)),
         my_body(parent_.my_body),
-        my_parent(nullptr),
+        my_wait_tree_node(nullptr),
         my_partition(parent_.my_partition, split_obj),
         my_allocator(alloc),
         is_right_child(true)
@@ -126,7 +132,7 @@ struct start_reduce : public task {
     start_reduce( start_reduce& parent_, const Range& r, depth_t d, small_object_allocator& alloc ) :
         my_range(r),
         my_body(parent_.my_body),
-        my_parent(nullptr),
+        my_wait_tree_node(nullptr),
         my_partition(parent_.my_partition, split()),
         my_allocator(alloc),
         is_right_child(true)
@@ -136,11 +142,12 @@ struct start_reduce : public task {
     }
     static void run(const Range& range, Body& body, Partitioner& partitioner, task_group_context& context) {
         if ( !range.empty() ) {
-            wait_node wn;
+            wait_context_node wn{1};
             small_object_allocator alloc{};
+
             auto reduce_task = alloc.new_object<start_reduce>(range, body, partitioner, alloc);
-            reduce_task->my_parent = &wn;
-            execute_and_wait(*reduce_task, context, wn.m_wait, context);
+            reduce_task->my_wait_tree_node = &wn;
+            execute_and_wait(*reduce_task, context, wn.get_context(), context);
         }
     }
     static void run(const Range& range, Body& body, Partitioner& partitioner) {
@@ -171,7 +178,7 @@ private:
         auto right_child = alloc.new_object<start_reduce>(ed, std::forward<Args>(args)..., alloc);
 
         // New root node as a continuation and ref count. Left and right child attach to the new parent.
-        right_child->my_parent = my_parent = alloc.new_object<tree_node_type>(ed, my_parent, 2, *my_body, alloc);
+        right_child->my_wait_tree_node = my_wait_tree_node = alloc.new_object<tree_node_type>(ed, my_wait_tree_node, 2, *my_body, alloc, ed.context);
 
         // Spawn the right sibling
         right_child->spawn_self(ed);
@@ -186,12 +193,12 @@ private:
 template<typename Range, typename Body, typename Partitioner>
 void start_reduce<Range, Body, Partitioner>::finalize(const execution_data& ed) {
     // Get the current parent and wait object before an object destruction
-    node* parent = my_parent;
+    wait_tree_node_interface* wait_tree_node = my_wait_tree_node;
     auto allocator = my_allocator;
     // Task execution finished - destroy it
     this->~start_reduce();
     // Unwind the tree decrementing the parent`s reference count
-    fold_tree<tree_node_type>(parent, ed);
+    wait_tree_node->release(1, ed);
     allocator.deallocate(this, ed);
 }
 
@@ -205,11 +212,11 @@ task* start_reduce<Range,Body,Partitioner>::execute(execution_data& ed) {
 
     // The acquire barrier synchronizes the data pointed with my_body if the left
     // task has already finished.
-    __TBB_ASSERT(my_parent, nullptr);
-    if( is_right_child && my_parent->m_ref_count.load(std::memory_order_acquire) == 2 ) {
-        tree_node_type* parent_ptr = static_cast<tree_node_type*>(my_parent);
-        my_body = static_cast<Body*>(new( parent_ptr->zombie_space.begin() ) Body(*my_body, split()));
-        parent_ptr->has_right_zombie = true;
+    __TBB_ASSERT(my_wait_tree_node, nullptr);
+    tree_node_type* tree_node_ptr = static_cast<tree_node_type*>(my_wait_tree_node);
+    if( is_right_child && tree_node_ptr->get_num_child() == 2 ) {
+        my_body = static_cast<Body*>(new( tree_node_ptr->zombie_space.begin() ) Body(*my_body, split()));
+        tree_node_ptr->has_right_zombie = true;
     }
     __TBB_ASSERT(my_body != nullptr, "Incorrect body value");
 
@@ -229,19 +236,25 @@ task* start_reduce<Range, Body, Partitioner>::cancel(execution_data& ed) {
 //! Tree node type for parallel_deterministic_reduce.
 /** @ingroup algorithms */
 template<typename Body>
-struct deterministic_reduction_tree_node : public tree_node {
+struct deterministic_reduction_tree_node : public partitioner_node {
     Body right_body;
     Body& left_body;
+    task_group_context* context;
 
-    deterministic_reduction_tree_node(node* parent, int ref_count, Body& input_left_body, small_object_allocator& alloc) :
-        tree_node{parent, ref_count, alloc},
+    deterministic_reduction_tree_node(wait_tree_node_interface* parent, std::uint32_t ref_count, Body& input_left_body, small_object_allocator& alloc, task_group_context* c) :
+        partitioner_node{parent, ref_count, alloc},
         right_body{input_left_body, detail::split()},
-        left_body(input_left_body)
+        left_body(input_left_body),
+        context(c)
     {}
 
-    void join(task_group_context* context) {
+    void execute_continuation() override {
         if (!context->is_group_execution_cancelled())
             left_body.join(right_body);
+    }
+
+    void destroy(const d1::execution_data& ed) override {
+        m_allocator.delete_object(this, ed);
     }
 };
 
@@ -251,7 +264,7 @@ template<typename Range, typename Body, typename Partitioner>
 struct start_deterministic_reduce : public task {
     Range my_range;
     Body& my_body;
-    node* my_parent;
+    wait_tree_node_interface* my_wait_tree_node;
 
     typename Partitioner::task_partition_type my_partition;
     small_object_allocator my_allocator;
@@ -266,7 +279,7 @@ struct start_deterministic_reduce : public task {
     start_deterministic_reduce( const Range& range, Partitioner& partitioner, Body& body, small_object_allocator& alloc ) :
         my_range(range),
         my_body(body),
-        my_parent(nullptr),
+        my_wait_tree_node(nullptr),
         my_partition(partitioner),
         my_allocator(alloc) {}
     //! Splitting constructor used to generate children.
@@ -275,19 +288,21 @@ struct start_deterministic_reduce : public task {
                                 small_object_allocator& alloc ) :
         my_range(parent_.my_range, get_range_split_object<Range>(split_obj)),
         my_body(body),
-        my_parent(nullptr),
+        my_wait_tree_node(nullptr),
         my_partition(parent_.my_partition, split_obj),
         my_allocator(alloc) {}
+
     static void run(const Range& range, Body& body, Partitioner& partitioner, task_group_context& context) {
         if ( !range.empty() ) {
-            wait_node wn;
+            wait_context_node wn{1};
             small_object_allocator alloc{};
             auto deterministic_reduce_task =
                 alloc.new_object<start_deterministic_reduce>(range, partitioner, body, alloc);
-            deterministic_reduce_task->my_parent = &wn;
-            execute_and_wait(*deterministic_reduce_task, context, wn.m_wait, context);
+            deterministic_reduce_task->my_wait_tree_node = &wn;
+            execute_and_wait(*deterministic_reduce_task, context, wn.get_context(), context);
         }
     }
+
     static void run(const Range& range, Body& body, Partitioner& partitioner) {
         // Bound context prevents exceptions from body to affect nesting or sibling algorithms,
         // and allows users to handle exceptions safely by wrapping parallel_deterministic_reduce
@@ -299,21 +314,23 @@ struct start_deterministic_reduce : public task {
     void run_body( Range &r ) {
         tbb::detail::invoke(my_body, r);
     }
+
     //! Spawn right task, serves as callback for partitioner
     void offer_work(typename Partitioner::split_type& split_obj, execution_data& ed) {
         offer_work_impl(ed, *this, split_obj);
     }
+
 private:
     template <typename... Args>
     void offer_work_impl(execution_data& ed, Args&&... args) {
         small_object_allocator alloc{};
         // New root node as a continuation and ref count. Left and right child attach to the new parent. Split the body.
-        auto new_tree_node = alloc.new_object<tree_node_type>(ed, my_parent, 2, my_body, alloc);
+        auto new_tree_node = alloc.new_object<tree_node_type>(ed, my_wait_tree_node, 2, my_body, alloc, ed.context);
 
         // New right child
         auto right_child = alloc.new_object<start_deterministic_reduce>(ed, std::forward<Args>(args)..., new_tree_node->right_body, alloc);
 
-        right_child->my_parent = my_parent = new_tree_node;
+        right_child->my_wait_tree_node = my_wait_tree_node = new_tree_node;
 
         // Spawn the right sibling
         right_child->spawn_self(ed);
@@ -328,13 +345,13 @@ private:
 template<typename Range, typename Body, typename Partitioner>
 void start_deterministic_reduce<Range, Body, Partitioner>::finalize(const execution_data& ed) {
     // Get the current parent and wait object before an object destruction
-    node* parent = my_parent;
+    wait_tree_node_interface* wait_tree_node = my_wait_tree_node;
 
     auto allocator = my_allocator;
     // Task execution finished - destroy it
     this->~start_deterministic_reduce();
     // Unwind the tree decrementing the parent`s reference count
-    fold_tree<tree_node_type>(parent, ed);
+    wait_tree_node->release(1, ed);
     allocator.deallocate(this, ed);
 }
 
