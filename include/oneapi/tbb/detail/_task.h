@@ -151,7 +151,7 @@ class wait_tree_node_interface {
 public:
     virtual void reserve(std::uint32_t delta = 1) = 0;
     virtual void release(std::uint32_t delta = 1) = 0;
-    virtual void release(std::uint32_t delta, const d1::execution_data&) { release(delta); }
+    virtual void release(std::uint32_t delta, const d1::execution_data&) = 0;
 
 protected:
     virtual ~wait_tree_node_interface() = default;
@@ -173,6 +173,8 @@ public:
         return m_wait;
     }
 private:
+    void release(std::uint32_t delta, const d1::execution_data&) override { release(delta); }
+
     wait_context m_wait;
 };
 
