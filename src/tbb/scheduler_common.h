@@ -481,7 +481,7 @@ public:
     suspend_point_type* m_suspend_point{ nullptr };
 
     //! Used to improve scalability of d1::wait_context by using per thread reference_counter
-    std::map<d1::wait_context_node*, d1::reference_node*> m_reference_node_map;
+    std::map<d1::wait_tree_node_interface*, d1::reference_node*> m_reference_node_map;
 
     //! Attempt to get a task from the mailbox.
     /** Gets a task only if it has not been executed by its sender or a thief

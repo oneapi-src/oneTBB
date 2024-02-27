@@ -43,6 +43,7 @@ class task;
 class wait_context;
 class task_group_context;
 struct execution_data;
+class wait_tree_node_interface;
 }
 
 namespace r1 {
@@ -53,6 +54,7 @@ TBB_EXPORT void __TBB_EXPORTED_FUNC execute_and_wait(d1::task& t, d1::task_group
 TBB_EXPORT void __TBB_EXPORTED_FUNC wait(d1::wait_context&, d1::task_group_context& ctx);
 TBB_EXPORT d1::slot_id __TBB_EXPORTED_FUNC execution_slot(const d1::execution_data*);
 TBB_EXPORT d1::task_group_context* __TBB_EXPORTED_FUNC current_context();
+TBB_EXPORT d1::wait_tree_node_interface* get_thread_reference_node(d1::wait_tree_node_interface* wc);
 
 // Do not place under __TBB_RESUMABLE_TASKS. It is a stub for unsupported platforms.
 struct suspend_point_type;
