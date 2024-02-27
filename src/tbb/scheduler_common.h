@@ -42,6 +42,7 @@
 #include <cstdint>
 #include <exception>
 #include <memory> // unique_ptr
+#include <map>
 
 //! Mutex type for global locks in the scheduler
 using scheduler_mutex_type = __TBB_SCHEDULER_MUTEX_TYPE;
@@ -478,6 +479,9 @@ public:
 
     //! Suspend point (null if this task dispatcher has been never suspended)
     suspend_point_type* m_suspend_point{ nullptr };
+
+    //! Used to improve scalability of d1::wait_context by using per thread reference_counter
+    std::map<d1::wait_context_node*, d1::reference_node*> m_reference_node_map;
 
     //! Attempt to get a task from the mailbox.
     /** Gets a task only if it has not been executed by its sender or a thief
