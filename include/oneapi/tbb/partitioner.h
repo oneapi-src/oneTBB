@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2023 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -116,7 +116,7 @@ template<typename Range, typename Body, typename Partitioner> struct start_deter
 class partitioner_node : public reference_node {
 public:
     partitioner_node(wait_tree_node_interface* parent, std::uint32_t ref_count, small_object_allocator& alloc)
-        : reference_node{static_cast<reference_node*>(parent), ref_count}
+        : reference_node{parent, ref_count}
         , m_allocator{alloc} {}
 
     template <typename Task>
