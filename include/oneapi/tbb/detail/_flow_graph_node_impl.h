@@ -86,11 +86,11 @@ public:
         my_queue = nullptr;
     }
 
-    graph_task* try_put_task( const input_type& t) override {
+    graph_task* try_put_task( const input_type& t, msg_waiters waiters) override {
         if ( my_is_no_throw )
-            return try_put_task_impl(t, has_policy<lightweight, Policy>());
+            return try_put_task_impl(t, has_policy<lightweight, Policy>(), waiters);
         else
-            return try_put_task_impl(t, std::false_type());
+            return try_put_task_impl(t, std::false_type(), waiters);
     }
 
     //! Adds src to the list of cached predecessors.
@@ -267,9 +267,9 @@ private:
         return nullptr;
     }
 
-    graph_task* try_put_task_impl( const input_type& t, /*lightweight=*/std::true_type ) {
+    graph_task* try_put_task_impl( const input_type& t, /*lightweight=*/std::true_type, msg_waiters& waiters ) {
         if( my_max_concurrency == 0 ) {
-            return apply_body_bypass(t);
+            return apply_body_bypass(t, waiters);
         } else {
             operation_type check_op(t, occupy_concurrency);
             my_aggregator.execute(&check_op);
@@ -290,8 +290,8 @@ private:
 
     //! Applies the body to the provided input
     //  then decides if more work is available
-    graph_task* apply_body_bypass( const input_type &i ) {
-        return static_cast<ImplType *>(this)->apply_body_impl_bypass(i);
+    graph_task* apply_body_bypass( const input_type &i, msg_waiters& waiters) {
+        return static_cast<ImplType *>(this)->apply_body_impl_bypass(i, waiters);
     }
 
     //! allocates a task to apply a body
@@ -398,7 +398,7 @@ public:
     }
 
     //TODO: consider moving into the base class
-    graph_task* apply_body_impl_bypass( const input_type &i) {
+    graph_task* apply_body_impl_bypass( const input_type &i, msg_waiters& waiters ) {
         output_type v = apply_body_impl(i);
         graph_task* postponed_task = nullptr;
         if( base_type::my_max_concurrency != 0 ) {
@@ -410,7 +410,7 @@ public:
             // execution policy
             spawn_in_graph_arena(base_type::graph_reference(), *postponed_task);
         }
-        graph_task* successor_task = successors().try_put_task(v);
+        graph_task* successor_task = successors().try_put_task(v, waiters);
 #if _MSC_VER && !__INTEL_COMPILER
 #pragma warning (push)
 #pragma warning (disable: 4127)  /* suppress conditional expression is constant */

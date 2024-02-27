@@ -38,6 +38,7 @@
 #include "detail/_utils.h"
 #include "profiling.h"
 #include "task_arena.h"
+#include "task.h"
 
 #if TBB_USE_PROFILING_TOOLS && ( __unix__ || __APPLE__ )
    #if __INTEL_COMPILER
@@ -53,6 +54,7 @@
 #include <tuple>
 #include <list>
 #include <queue>
+#include <memory>
 #if __TBB_CPP20_CONCEPTS_PRESENT
 #include <concepts>
 #endif
@@ -130,6 +132,39 @@ concept async_node_body = std::copy_constructible<Body> &&
 #endif // __TBB_CPP20_CONCEPTS_PRESENT
 
 namespace d1 {
+
+class msg_waiters {
+public:
+    msg_waiters() = default;
+
+    msg_waiters(tbb::task::suspend_point sp) {
+        my_waiters_list.emplace_back(std::make_shared<single_message_tag>(sp));
+    }
+
+    msg_waiters(const msg_waiters&) = default;
+    msg_waiters(msg_waiters&&) = default;
+
+    void merge(msg_waiters& other) {
+        // TODO: avoid duplications?
+        my_waiters_list.splice(my_waiters_list.end(), other.my_waiters_list);
+    }
+private:
+    class single_message_tag {
+    public:
+        single_message_tag(tbb::task::suspend_point sp) : my_wait_tag(sp) {}
+
+        ~single_message_tag() {
+            tbb::task::resume(my_wait_tag);
+        }
+
+    private:
+        tbb::task::suspend_point my_wait_tag;
+    };
+
+    using single_waiter = std::shared_ptr<single_message_tag>;
+
+    std::list<single_waiter> my_waiters_list;
+}; // struct msg_waiters
 
 //! Forward declaration section
 template< typename T > class sender;
@@ -250,6 +285,19 @@ public:
         return true;
     }
 
+    bool try_put_and_wait( const T& t ) {
+        graph_task* res = nullptr;
+        tbb::task::suspend([&](tbb::task::suspend_point sp) {
+            res = try_put_task(t, msg_waiters{sp});
+            if (!res) {
+                tbb::task::resume(sp);
+                return;
+            }
+            if (res != SUCCESSFULLY_ENQUEUED) spawn_in_graph_arena(graph_reference(), *res);
+        });
+        return res == nullptr;
+    }
+
     //! put item to successor; return task to run the successor if possible.
 protected:
     //! The input type of this receiver
@@ -261,7 +309,12 @@ protected:
     template< typename R, typename B > friend class run_and_put_task;
     template< typename X, typename Y > friend class broadcast_cache;
     template< typename X, typename Y > friend class round_robin_cache;
-    virtual graph_task *try_put_task(const T& t) = 0;
+
+    virtual graph_task *try_put_task(const T& t, msg_waiters waiters) = 0;
+
+    virtual graph_task *try_put_task(const T& t) {
+        return try_put_task(t, msg_waiters{});
+    }
     virtual graph& graph_reference() const = 0;
 
     template<typename TT, typename M> friend class successor_cache;

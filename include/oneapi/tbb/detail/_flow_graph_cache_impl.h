@@ -267,7 +267,7 @@ public:
         my_successors.clear();
     }
 
-    virtual graph_task* try_put_task( const T& t ) = 0;
+    virtual graph_task* try_put_task( const T& t, msg_waiters& waiters ) = 0;
 };  // successor_cache<T>
 
 //! An abstract cache of successors, specialized to continue_msg
@@ -326,7 +326,7 @@ public:
         my_successors.clear();
     }
 
-    virtual graph_task* try_put_task( const continue_msg& t ) = 0;
+    virtual graph_task* try_put_task( const continue_msg& t, msg_waiters& ) = 0;
 };  // successor_cache< continue_msg >
 
 //! A cache of successors that are broadcast to
@@ -343,12 +343,12 @@ public:
     }
 
     // as above, but call try_put_task instead, and return the last task we received (if any)
-    graph_task* try_put_task( const T &t ) override {
+    graph_task* try_put_task( const T &t, msg_waiters& waiters ) override {
         graph_task * last_task = nullptr;
         typename mutex_type::scoped_lock l(this->my_mutex, /*write=*/true);
         typename successors_type::iterator i = this->my_successors.begin();
         while ( i != this->my_successors.end() ) {
-            graph_task *new_task = (*i)->try_put_task(t);
+            graph_task *new_task = (*i)->try_put_task(t, std::next(i) == this->my_successors.end() ? std::move(waiters) : waiters);
             // workaround for icc bug
             graph& graph_ref = (*i)->graph_reference();
             last_task = combine_tasks(graph_ref, last_task, new_task);  // enqueue if necessary
