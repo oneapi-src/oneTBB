@@ -424,7 +424,8 @@ void graph_iterator<C,N>::internal_forward() {
 }
 
 //! Constructs a graph with isolated task_group_context
-inline graph::graph() : my_wait_context(0), my_nodes(nullptr), my_nodes_last(nullptr), my_task_arena(nullptr) {
+// inline graph::graph() : my_wait_context(0), my_nodes(nullptr), my_nodes_last(nullptr), my_task_arena(nullptr) {
+inline graph::graph() : my_wait_context_node(0), my_nodes(nullptr), my_nodes_last(nullptr), my_task_arena(nullptr) {
     prepare_task_arena();
     own_context = true;
     cancelled = false;
@@ -435,7 +436,8 @@ inline graph::graph() : my_wait_context(0), my_nodes(nullptr), my_nodes_last(nul
 }
 
 inline graph::graph(task_group_context& use_this_context) :
-    my_wait_context(0), my_context(&use_this_context), my_nodes(nullptr), my_nodes_last(nullptr), my_task_arena(nullptr) {
+    // my_wait_context(0), my_context(&use_this_context), my_nodes(nullptr), my_nodes_last(nullptr), my_task_arena(nullptr) {
+    my_wait_context_node(0), my_context(&use_this_context), my_nodes(nullptr), my_nodes_last(nullptr), my_task_arena(nullptr) {
     prepare_task_arena();
     own_context = false;
     cancelled = false;
@@ -454,13 +456,13 @@ inline graph::~graph() {
 }
 
 inline void graph::reserve_wait() {
-    my_wait_context.reserve();
+    my_wait_context_node.reserve();
     fgt_reserve_wait(this);
 }
 
 inline void graph::release_wait() {
     fgt_release_wait(this);
-    my_wait_context.release();
+    my_wait_context_node.release();
 }
 
 inline void graph::register_node(graph_node *n) {
@@ -725,7 +727,8 @@ private:
         small_object_allocator allocator{};
         typedef input_node_task_bypass< input_node<output_type> > task_type;
         graph_task* t = allocator.new_object<task_type>(my_graph, allocator, *this);
-        my_graph.reserve_wait();
+        t->reserve_on_reference_node();
+        // my_graph.reserve_wait();
         return t;
     }
 
@@ -1220,7 +1223,8 @@ protected:
                 typedef forward_task_bypass<class_type> task_type;
                 small_object_allocator allocator{};
                 graph_task* new_task = allocator.new_object<task_type>(graph_reference(), allocator, *this);
-                my_graph.reserve_wait();
+                new_task->reserve_on_reference_node();
+                // my_graph.reserve_wait();
                 // tmp should point to the last item handled by the aggregator.  This is the operation
                 // the handling thread enqueued.  So modifying that record will be okay.
                 // TODO revamp: check that the issue is still present
@@ -1967,7 +1971,8 @@ private:
                             typedef forward_task_bypass<limiter_node<T, DecrementType>> task_type;
                             small_object_allocator allocator{};
                             graph_task* rtask = allocator.new_object<task_type>( my_graph, allocator, *this );
-                            my_graph.reserve_wait();
+                            rtask->reserve_on_reference_node();
+                            // my_graph.reserve_wait();
                             spawn_in_graph_arena(graph_reference(), *rtask);
                         }
                     }
@@ -1987,7 +1992,8 @@ private:
                     small_object_allocator allocator{};
                     typedef forward_task_bypass<limiter_node<T, DecrementType>> task_type;
                     graph_task* t = allocator.new_object<task_type>(my_graph, allocator, *this);
-                    my_graph.reserve_wait();
+                    t->reserve_on_reference_node();
+                    // my_graph.reserve_wait();
                     __TBB_ASSERT(!rval, "Have two tasks to handle");
                     return t;
                 }
@@ -2038,7 +2044,8 @@ public:
                 small_object_allocator allocator{};
                 typedef forward_task_bypass<limiter_node<T, DecrementType>> task_type;
                 graph_task* t = allocator.new_object<task_type>(my_graph, allocator, *this);
-                my_graph.reserve_wait();
+                t->reserve_on_reference_node();
+                // my_graph.reserve_wait();
                 spawn_in_graph_arena(graph_reference(), *t);
             }
         }
@@ -2062,7 +2069,8 @@ public:
             small_object_allocator allocator{};
             typedef forward_task_bypass<limiter_node<T, DecrementType>> task_type;
             graph_task* t = allocator.new_object<task_type>(my_graph, allocator, *this);
-            my_graph.reserve_wait();
+            t->reserve_on_reference_node();
+            // my_graph.reserve_wait();
             spawn_in_graph_arena(graph_reference(), *t);
         }
         return true;
@@ -2097,7 +2105,8 @@ protected:
                 small_object_allocator allocator{};
                 typedef forward_task_bypass<limiter_node<T, DecrementType>> task_type;
                 rtask = allocator.new_object<task_type>(my_graph, allocator, *this);
-                my_graph.reserve_wait();
+                rtask->reserve_on_reference_node();
+                // my_graph.reserve_wait();
             }
         }
         else {
@@ -3057,7 +3066,8 @@ public:
                 small_object_allocator allocator{};
                 typedef register_predecessor_task task_type;
                 graph_task* t = allocator.new_object<task_type>(graph_reference(), allocator, *this, s);
-                graph_reference().reserve_wait();
+                t->reserve_on_reference_node();
+                // graph_reference().reserve_wait();
                 spawn_in_graph_arena( my_graph, *t );
             }
         } else {
