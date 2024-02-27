@@ -698,7 +698,8 @@
                     small_object_allocator allocator{};
                     typedef forward_task_bypass<base_node_type> task_type;
                     graph_task* t = allocator.new_object<task_type>(graph_ref, allocator, *my_node);
-                    graph_ref.reserve_wait();
+                    t->reserve_on_reference_node();
+                    // graph_ref.reserve_wait();
                     spawn_in_graph_arena(this->graph_ref, *t);
                 }
             }
@@ -771,7 +772,8 @@
                     small_object_allocator allocator{};
                     typedef forward_task_bypass<base_node_type> task_type;
                     graph_task* t = allocator.new_object<task_type>(graph_ref, allocator, *my_node);
-                    graph_ref.reserve_wait();
+                    // graph_ref.reserve_wait();
+                    t->reserve_on_reference_node();
                     if( !handle_task )
                         return t;
                     spawn_in_graph_arena(this->graph_ref, *t);
@@ -887,7 +889,8 @@
                     small_object_allocator allocator{};
                     typedef forward_task_bypass<base_node_type> task_type;
                     rtask = allocator.new_object<task_type>(this->graph_ref, allocator, *my_node);
-                    this->graph_ref.reserve_wait();
+                    rtask->reserve_on_reference_node();
+                    // this->graph_ref.reserve_wait();
                     do_fwd = false;
                 }
                 // retire the input values
@@ -1076,7 +1079,8 @@
                             small_object_allocator allocator{};
                             typedef forward_task_bypass< join_node_base<JP, InputTuple, OutputTuple> > task_type;
                             graph_task* t = allocator.new_object<task_type>(my_graph, allocator, *this);
-                            my_graph.reserve_wait();
+                            t->reserve_on_reference_node();
+                            // my_graph.reserve_wait();
                             spawn_in_graph_arena(my_graph, *t);
                             forwarder_busy = true;
                         }
