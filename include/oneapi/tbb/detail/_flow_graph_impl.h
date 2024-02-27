@@ -126,17 +126,22 @@ class graph;
 class graph_task : public task {
 public:
     graph_task(graph& g, small_object_allocator& allocator
-               , node_priority_t node_priority = no_priority
-    )
-        : my_graph(g)
-        , priority(node_priority)
-        , my_allocator(allocator)
-    {}
+               , node_priority_t node_priority = no_priority);
+    // graph_task(graph& g, small_object_allocator& allocator
+    //            , node_priority_t node_priority = no_priority
+    // )
+    //     : my_graph(g)
+    //     , priority(node_priority)
+    //     , my_allocator(allocator)
+    //     , my_reference_node(r1::get_thread_reference_node(&my_graph.get_wait_context_node()))
+    // {}
     graph& my_graph; // graph instance the task belongs to
     // TODO revamp: rename to my_priority
     node_priority_t priority;
     template <typename DerivedType>
     void destruct_and_deallocate(const execution_data& ed);
+
+    void reserve_on_reference_node() { my_reference_node->reserve(); }
 protected:
     template <typename DerivedType>
     void finalize(const execution_data& ed);
@@ -144,6 +149,7 @@ private:
     // To organize task_list
     graph_task* my_next{ nullptr };
     small_object_allocator my_allocator;
+    wait_tree_node_interface* my_reference_node;
     // TODO revamp: elaborate internal interfaces to avoid friends declarations
     friend class graph_task_list;
     friend graph_task* prioritize_task(graph& g, graph_task& gt);
@@ -281,7 +287,8 @@ public:
         caught_exception = false;
         try_call([this] {
             my_task_arena->execute([this] {
-                wait(my_wait_context, *my_context);
+                // wait(my_wait_context, *my_context);
+                wait(my_wait_context_node.get_context(), *my_context);
             });
             cancelled = my_context->is_group_execution_cancelled();
         }).on_exception([this] {
@@ -332,7 +339,8 @@ public:
     bool exception_thrown() { return caught_exception; }
 
 private:
-    wait_context my_wait_context;
+    wait_context_node my_wait_context_node;
+    // wait_context my_wait_context;
     task_group_context *my_context;
     bool own_context;
     bool cancelled;
@@ -349,6 +357,8 @@ private:
 
     graph_task_priority_queue_t my_priority_queue;
 
+    wait_context_node& get_wait_context_node() { return my_wait_context_node; }
+
     friend void activate_graph(graph& g);
     friend void deactivate_graph(graph& g);
     friend bool is_graph_active(graph& g);
@@ -357,7 +367,7 @@ private:
     friend void enqueue_in_graph_arena(graph &g, graph_task& arena_task);
 
     friend class task_arena_base;
-
+    friend class graph_task;
 };  // class graph
 
 template<typename DerivedType>
@@ -370,10 +380,19 @@ inline void graph_task::destruct_and_deallocate(const execution_data& ed) {
 
 template<typename DerivedType>
 inline void graph_task::finalize(const execution_data& ed) {
-    graph& g = my_graph;
+    // graph& g = my_graph;
+    wait_tree_node_interface* ref_node = my_reference_node;
     destruct_and_deallocate<DerivedType>(ed);
-    g.release_wait();
+    ref_node->release(1, ed);
+    // g.release_wait();
 }
+
+inline graph_task::graph_task(graph& g, small_object_allocator& allocator
+                       , node_priority_t node_priority)
+    : my_graph(g)
+    , priority(node_priority)
+    , my_allocator(allocator)
+    , my_reference_node(r1::get_thread_reference_node(&my_graph.get_wait_context_node())) {}
 
 //********************************************************************************
 // end of graph tasks helpers

@@ -303,7 +303,8 @@ private:
         small_object_allocator allocator{};
         typedef apply_body_task_bypass<class_type, input_type> task_type;
         graph_task* t = allocator.new_object<task_type>( my_graph_ref, allocator, *this, input, my_priority );
-        graph_reference().reserve_wait();
+        t->reserve_on_reference_node();
+        // graph_reference().reserve_wait();
         return t;
     }
 
@@ -330,7 +331,8 @@ private:
         small_object_allocator allocator{};
         typedef forward_task_bypass<class_type> task_type;
         graph_task* t = allocator.new_object<task_type>( graph_reference(), allocator, *this, my_priority );
-        graph_reference().reserve_wait();
+        t->reserve_on_reference_node();
+        // graph_reference().reserve_wait();
         return t;
     }
 
@@ -683,7 +685,8 @@ protected:
             small_object_allocator allocator{};
             typedef apply_body_task_bypass<class_type, continue_msg> task_type;
             graph_task* t = allocator.new_object<task_type>( graph_reference(), allocator, *this, continue_msg(), my_priority );
-            graph_reference().reserve_wait();
+            t->reserve_on_reference_node();
+            // graph_reference().reserve_wait();
             return t;
         }
     }
