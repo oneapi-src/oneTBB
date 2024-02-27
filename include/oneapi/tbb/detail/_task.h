@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020-2023 Intel Corporation
+    Copyright (c) 2020-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -178,7 +178,7 @@ private:
 
 class reference_node : public wait_tree_node_interface {
 public:
-    reference_node(reference_node* parent, std::uint32_t ref_count) : my_parent{parent}, m_ref_count{ref_count}
+    reference_node(wait_tree_node_interface* parent, std::uint32_t ref_count) : my_parent{parent}, m_ref_count{ref_count}
     {}
 
     void reserve(std::uint32_t delta = 1) override {
@@ -217,7 +217,7 @@ protected:
     virtual void destroy(const d1::execution_data&) {}
 
 private:
-    reference_node* my_parent{};
+    wait_tree_node_interface* my_parent{};
     std::atomic<std::uint64_t> m_ref_count{};
 };
 
