@@ -221,6 +221,7 @@ void notify_waiters(std::uintptr_t wait_ctx_addr) {
     governor::get_thread_data()->my_arena->get_waiting_threads_monitor().notify(is_related_wait_ctx);
 }
 
+<<<<<<< HEAD
 d1::wait_tree_vertex_interface* get_thread_reference_vertex(d1::wait_tree_vertex_interface* wc) {
     __TBB_ASSERT(wc, nullptr);
     auto& dispatcher = *governor::get_thread_data()->my_task_dispatcher;
@@ -244,6 +245,17 @@ d1::wait_tree_vertex_interface* get_thread_reference_vertex(d1::wait_tree_vertex
         }
 
         dispatcher.m_reference_vertex_map[wc] = ref_counter = new (cache_aligned_allocate(sizeof(d1::reference_vertex))) d1::reference_vertex(wc, 0);
+=======
+d1::wait_tree_node_interface* get_thread_reference_node(d1::wait_tree_node_interface* wc) {
+    auto& dispatcher = *governor::get_thread_data()->my_task_dispatcher;
+
+    d1::reference_node* ref_counter{nullptr};
+    auto it = dispatcher.m_reference_node_map.find(wc);
+    if (it != dispatcher.m_reference_node_map.end()) {
+        ref_counter = it->second;
+    } else {
+        dispatcher.m_reference_node_map[wc] = ref_counter = new (cache_aligned_allocate(sizeof(d1::reference_node))) d1::reference_node(wc, 0);
+>>>>>>> 9f988cd8 (Add entry point)
     }
 
     return ref_counter;
