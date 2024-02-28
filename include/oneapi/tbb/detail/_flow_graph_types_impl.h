@@ -21,7 +21,7 @@
 #error Do not #include this internal file directly; use public TBB headers instead.
 #endif
 
-// included in namespace tbb::detail::d1
+// included in namespace tbb::detail::d2
 
 // the change to key_matching (adding a K and KHash template parameter, making it a class)
 // means we have to pass this data to the key_matching_port.  All the ports have only one

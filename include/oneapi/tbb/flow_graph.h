@@ -70,7 +70,7 @@
 namespace tbb {
 namespace detail {
 
-namespace d1 {
+namespace d2 {
 
 //! An enumeration the provides the two most common concurrency levels: unlimited and serial
 enum concurrency { unlimited = 0, serial = 1 };
@@ -81,19 +81,19 @@ struct null_type {};
 //! An empty class used for messages that mean "I'm done"
 class continue_msg {};
 
-} // namespace d1
+} // namespace d2
 
 #if __TBB_CPP20_CONCEPTS_PRESENT
 namespace d0 {
 
 template <typename ReturnType, typename OutputType>
-concept node_body_return_type = std::same_as<OutputType, tbb::detail::d1::continue_msg> ||
+concept node_body_return_type = std::same_as<OutputType, tbb::detail::d2::continue_msg> ||
                                 std::convertible_to<OutputType, ReturnType>;
 
 // TODO: consider using std::invocable here
 template <typename Body, typename Output>
 concept continue_node_body = std::copy_constructible<Body> &&
-                             requires( Body& body, const tbb::detail::d1::continue_msg& v ) {
+                             requires( Body& body, const tbb::detail::d2::continue_msg& v ) {
                                  { body(v) } -> node_body_return_type<Output>;
                              };
 
@@ -109,7 +109,7 @@ concept join_node_function_object = std::copy_constructible<FunctionObject> &&
 
 template <typename Body, typename Output>
 concept input_node_body = std::copy_constructible<Body> &&
-                          requires( Body& body, tbb::detail::d1::flow_control& fc ) {
+                          requires( Body& body, tbb::detail::d2::flow_control& fc ) {
                               { body(fc) } -> adaptive_same_as<Output>;
                           };
 
@@ -129,7 +129,7 @@ concept async_node_body = std::copy_constructible<Body> &&
 } // namespace d0
 #endif // __TBB_CPP20_CONCEPTS_PRESENT
 
-namespace d1 {
+namespace d2 {
 
 //! Forward declaration section
 template< typename T > class sender;
@@ -153,7 +153,7 @@ template<typename Order, typename... Args> struct node_set;
 #endif
 
 
-} // namespace d1
+} // namespace d2
 } // namespace detail
 } // namespace tbb
 
@@ -162,7 +162,7 @@ template<typename Order, typename... Args> struct node_set;
 
 namespace tbb {
 namespace detail {
-namespace d1 {
+namespace d2 {
 
 static inline std::pair<graph_task*, graph_task*> order_tasks(graph_task* first, graph_task* second) {
     if (second->priority > first->priority)
@@ -392,7 +392,7 @@ protected:
 
 namespace tbb {
 namespace detail {
-namespace d1 {
+namespace d2 {
 
 #include "detail/_flow_graph_body_impl.h"
 #include "detail/_flow_graph_cache_impl.h"
@@ -424,7 +424,6 @@ void graph_iterator<C,N>::internal_forward() {
 }
 
 //! Constructs a graph with isolated task_group_context
-// inline graph::graph() : my_wait_context(0), my_nodes(nullptr), my_nodes_last(nullptr), my_task_arena(nullptr) {
 inline graph::graph() : my_wait_context_node(0), my_nodes(nullptr), my_nodes_last(nullptr), my_task_arena(nullptr) {
     prepare_task_arena();
     own_context = true;
@@ -436,7 +435,6 @@ inline graph::graph() : my_wait_context_node(0), my_nodes(nullptr), my_nodes_las
 }
 
 inline graph::graph(task_group_context& use_this_context) :
-    // my_wait_context(0), my_context(&use_this_context), my_nodes(nullptr), my_nodes_last(nullptr), my_task_arena(nullptr) {
     my_wait_context_node(0), my_context(&use_this_context), my_nodes(nullptr), my_nodes_last(nullptr), my_task_arena(nullptr) {
     prepare_task_arena();
     own_context = false;
@@ -727,8 +725,6 @@ private:
         small_object_allocator allocator{};
         typedef input_node_task_bypass< input_node<output_type> > task_type;
         graph_task* t = allocator.new_object<task_type>(my_graph, allocator, *this);
-        t->reserve_on_reference_node();
-        // my_graph.reserve_wait();
         return t;
     }
 
@@ -1223,8 +1219,6 @@ protected:
                 typedef forward_task_bypass<class_type> task_type;
                 small_object_allocator allocator{};
                 graph_task* new_task = allocator.new_object<task_type>(graph_reference(), allocator, *this);
-                new_task->reserve_on_reference_node();
-                // my_graph.reserve_wait();
                 // tmp should point to the last item handled by the aggregator.  This is the operation
                 // the handling thread enqueued.  So modifying that record will be okay.
                 // TODO revamp: check that the issue is still present
@@ -1407,7 +1401,7 @@ public:
         It also calls r.remove_predecessor(*this) to remove this node as a predecessor. */
     bool remove_successor( successor_type &r ) override {
         // TODO revamp: investigate why full qualification is necessary here
-        tbb::detail::d1::remove_predecessor(r, *this);
+        tbb::detail::d2::remove_predecessor(r, *this);
         buffer_operation op_data(rem_succ);
         op_data.r = &r;
         my_aggregator.execute(&op_data);
@@ -1971,8 +1965,6 @@ private:
                             typedef forward_task_bypass<limiter_node<T, DecrementType>> task_type;
                             small_object_allocator allocator{};
                             graph_task* rtask = allocator.new_object<task_type>( my_graph, allocator, *this );
-                            rtask->reserve_on_reference_node();
-                            // my_graph.reserve_wait();
                             spawn_in_graph_arena(graph_reference(), *rtask);
                         }
                     }
@@ -1992,8 +1984,6 @@ private:
                     small_object_allocator allocator{};
                     typedef forward_task_bypass<limiter_node<T, DecrementType>> task_type;
                     graph_task* t = allocator.new_object<task_type>(my_graph, allocator, *this);
-                    t->reserve_on_reference_node();
-                    // my_graph.reserve_wait();
                     __TBB_ASSERT(!rval, "Have two tasks to handle");
                     return t;
                 }
@@ -2044,8 +2034,6 @@ public:
                 small_object_allocator allocator{};
                 typedef forward_task_bypass<limiter_node<T, DecrementType>> task_type;
                 graph_task* t = allocator.new_object<task_type>(my_graph, allocator, *this);
-                t->reserve_on_reference_node();
-                // my_graph.reserve_wait();
                 spawn_in_graph_arena(graph_reference(), *t);
             }
         }
@@ -2056,7 +2044,7 @@ public:
     /** r.remove_predecessor(*this) is also called. */
     bool remove_successor( successor_type &r ) override {
         // TODO revamp: investigate why qualification is needed for remove_predecessor() call
-        tbb::detail::d1::remove_predecessor(r, *this);
+        tbb::detail::d2::remove_predecessor(r, *this);
         my_successors.remove_successor(r);
         return true;
     }
@@ -2069,8 +2057,6 @@ public:
             small_object_allocator allocator{};
             typedef forward_task_bypass<limiter_node<T, DecrementType>> task_type;
             graph_task* t = allocator.new_object<task_type>(my_graph, allocator, *this);
-            t->reserve_on_reference_node();
-            // my_graph.reserve_wait();
             spawn_in_graph_arena(graph_reference(), *t);
         }
         return true;
@@ -2105,8 +2091,6 @@ protected:
                 small_object_allocator allocator{};
                 typedef forward_task_bypass<limiter_node<T, DecrementType>> task_type;
                 rtask = allocator.new_object<task_type>(my_graph, allocator, *this);
-                rtask->reserve_on_reference_node();
-                // my_graph.reserve_wait();
             }
         }
         else {
@@ -3066,8 +3050,6 @@ public:
                 small_object_allocator allocator{};
                 typedef register_predecessor_task task_type;
                 graph_task* t = allocator.new_object<task_type>(graph_reference(), allocator, *this, s);
-                t->reserve_on_reference_node();
-                // graph_reference().reserve_wait();
                 spawn_in_graph_arena( my_graph, *t );
             }
         } else {
@@ -3143,8 +3125,8 @@ protected:
 
         task* execute(execution_data& ed) override {
             // TODO revamp: investigate why qualification is needed for register_successor() call
-            using tbb::detail::d1::register_predecessor;
-            using tbb::detail::d1::register_successor;
+            using tbb::detail::d2::register_predecessor;
+            using tbb::detail::d2::register_successor;
             if ( !register_predecessor(s, o) ) {
                 register_successor(o, s);
             }
@@ -3303,7 +3285,7 @@ inline void set_name(const async_node<Input, Output, Policy>& node, const char *
 {
     fgt_multioutput_node_desc(&node, name);
 }
-} // d1
+} // d2
 } // detail
 } // tbb
 
@@ -3314,65 +3296,65 @@ inline void set_name(const async_node<Input, Output, Policy>& node, const char *
 namespace tbb {
 namespace flow {
 inline namespace v1 {
-    using detail::d1::receiver;
-    using detail::d1::sender;
+    using detail::d2::receiver;
+    using detail::d2::sender;
 
-    using detail::d1::serial;
-    using detail::d1::unlimited;
+    using detail::d2::serial;
+    using detail::d2::unlimited;
 
-    using detail::d1::reset_flags;
-    using detail::d1::rf_reset_protocol;
-    using detail::d1::rf_reset_bodies;
-    using detail::d1::rf_clear_edges;
+    using detail::d2::reset_flags;
+    using detail::d2::rf_reset_protocol;
+    using detail::d2::rf_reset_bodies;
+    using detail::d2::rf_clear_edges;
 
-    using detail::d1::graph;
-    using detail::d1::graph_node;
-    using detail::d1::continue_msg;
+    using detail::d2::graph;
+    using detail::d2::graph_node;
+    using detail::d2::continue_msg;
 
-    using detail::d1::input_node;
-    using detail::d1::function_node;
-    using detail::d1::multifunction_node;
-    using detail::d1::split_node;
-    using detail::d1::output_port;
-    using detail::d1::indexer_node;
-    using detail::d1::tagged_msg;
-    using detail::d1::cast_to;
-    using detail::d1::is_a;
-    using detail::d1::continue_node;
-    using detail::d1::overwrite_node;
-    using detail::d1::write_once_node;
-    using detail::d1::broadcast_node;
-    using detail::d1::buffer_node;
-    using detail::d1::queue_node;
-    using detail::d1::sequencer_node;
-    using detail::d1::priority_queue_node;
-    using detail::d1::limiter_node;
-    using namespace detail::d1::graph_policy_namespace;
-    using detail::d1::join_node;
-    using detail::d1::input_port;
-    using detail::d1::copy_body;
-    using detail::d1::make_edge;
-    using detail::d1::remove_edge;
-    using detail::d1::tag_value;
-    using detail::d1::composite_node;
-    using detail::d1::async_node;
-    using detail::d1::node_priority_t;
-    using detail::d1::no_priority;
+    using detail::d2::input_node;
+    using detail::d2::function_node;
+    using detail::d2::multifunction_node;
+    using detail::d2::split_node;
+    using detail::d2::output_port;
+    using detail::d2::indexer_node;
+    using detail::d2::tagged_msg;
+    using detail::d2::cast_to;
+    using detail::d2::is_a;
+    using detail::d2::continue_node;
+    using detail::d2::overwrite_node;
+    using detail::d2::write_once_node;
+    using detail::d2::broadcast_node;
+    using detail::d2::buffer_node;
+    using detail::d2::queue_node;
+    using detail::d2::sequencer_node;
+    using detail::d2::priority_queue_node;
+    using detail::d2::limiter_node;
+    using namespace detail::d2::graph_policy_namespace;
+    using detail::d2::join_node;
+    using detail::d2::input_port;
+    using detail::d2::copy_body;
+    using detail::d2::make_edge;
+    using detail::d2::remove_edge;
+    using detail::d2::tag_value;
+    using detail::d2::composite_node;
+    using detail::d2::async_node;
+    using detail::d2::node_priority_t;
+    using detail::d2::no_priority;
 
 #if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
-    using detail::d1::follows;
-    using detail::d1::precedes;
-    using detail::d1::make_node_set;
-    using detail::d1::make_edges;
+    using detail::d2::follows;
+    using detail::d2::precedes;
+    using detail::d2::make_node_set;
+    using detail::d2::make_edges;
 #endif
 
 } // v1
 } // flow
 
-    using detail::d1::flow_control;
+    using detail::d2::flow_control;
 
 namespace profiling {
-    using detail::d1::set_name;
+    using detail::d2::set_name;
 } // profiling
 
 } // tbb

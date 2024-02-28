@@ -21,7 +21,7 @@
 #error Do not #include this internal file directly; use public TBB headers instead.
 #endif
 
-// included in namespace tbb::detail::d1
+// included in namespace tbb::detail::d2
 
 #include "_flow_graph_types_impl.h"
 

@@ -21,7 +21,7 @@
 
 namespace tbb {
 namespace detail {
-namespace d1 {
+namespace d2 {
 
 template <typename Input, typename Output>
 struct declare_body_types {
@@ -100,7 +100,7 @@ decltype(decide_on_operator_overload(std::declval<Body>())) decide_on_callable_t
 template <typename GraphOrSet, typename Body>
 input_node(GraphOrSet&&, Body)
 ->input_node<output_t<decltype(decide_on_callable_type<Body>(0))>>;
-    
+
 #if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
 
 template <typename NodeSet>
@@ -268,7 +268,7 @@ template <typename NodeSet>
 write_once_node(const NodeSet&)
 ->write_once_node<decide_on_set_t<NodeSet>>;
 #endif // __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
-} // namespace d1
+} // namespace d2
 } // namespace detail
 } // namespace tbb
 

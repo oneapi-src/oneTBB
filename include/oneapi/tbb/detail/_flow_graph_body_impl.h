@@ -21,7 +21,7 @@
 #error Do not #include this internal file directly; use public TBB headers instead.
 #endif
 
-// included in namespace tbb::detail::d1 (in flow_graph.h)
+// included in namespace tbb::detail::d2 (in flow_graph.h)
 
 typedef std::uint64_t tag_value;
 
