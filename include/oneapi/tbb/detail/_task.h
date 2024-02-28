@@ -210,7 +210,7 @@ public:
     }
 
     std::uint32_t get_num_child() {
-        return m_ref_count.load(std::memory_order_acquire);
+        return static_cast<std::uint32_t>(m_ref_count.load(std::memory_order_acquire));
     }
 
 protected:

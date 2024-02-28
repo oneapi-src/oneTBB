@@ -84,6 +84,10 @@ struct reduction_tree_node : public partitioner_node {
         m_allocator.delete_object(this, ed);
     }
 
+    void destroy() override {
+        __TBB_ASSERT(false, "Overaload without d1::execution_data is called");
+    }
+
     ~reduction_tree_node() {
         if( has_right_zombie ) zombie_space.begin()->~Body();
     }
@@ -255,6 +259,10 @@ struct deterministic_reduction_tree_node : public partitioner_node {
 
     void destroy(const d1::execution_data& ed) override {
         m_allocator.delete_object(this, ed);
+    }
+
+    void destroy() override {
+        __TBB_ASSERT(false, "Overaload without d1::execution_data is called");
     }
 };
 
