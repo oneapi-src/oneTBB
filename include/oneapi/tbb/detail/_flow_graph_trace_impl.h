@@ -24,7 +24,7 @@
 
 namespace tbb {
 namespace detail {
-namespace d1 {
+namespace d2 {
 
 template< typename T > class sender;
 template< typename T > class receiver;
@@ -357,7 +357,7 @@ struct fgt_internal_output_alias_helper {
 
 #endif // TBB_USE_PROFILING_TOOLS
 
-} // d1
+} // d2
 } // namespace detail
 } // namespace tbb
 
