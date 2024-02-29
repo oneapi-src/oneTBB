@@ -126,6 +126,16 @@ target_link_libraries(tbb
     ${TBB_COMMON_LINK_LIBS}
 )
 
+if(TBB_BUILD_APPLE_FRAMEWORKS)
+    set_target_properties(tbb PROPERTIES
+        FRAMEWORK TRUE
+        FRAMEWORK_VERSION ${TBB_BINARY_VERSION}.${TBB_BINARY_MINOR_VERSION}
+        XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER com.intel.tbb
+        MACOSX_FRAMEWORK_IDENTIFIER com.intel.tbb
+        MACOSX_FRAMEWORK_BUNDLE_VERSION ${TBB_BINARY_VERSION}.${TBB_BINARY_MINOR_VERSION}
+        MACOSX_FRAMEWORK_SHORT_VERSION_STRING ${TBB_BINARY_VERSION})
+endif()
+
 tbb_install_target(tbb)
 
 if (TBB_INSTALL)
@@ -181,6 +191,7 @@ if (TBB_INSTALL)
             COMPONENT devel)
 endif()
 
-if (COMMAND tbb_gen_vars)
+# not useful when bundled into a framework
+if (COMMAND tbb_gen_vars AND NOT TBB_BUILD_APPLE_FRAMEWORKS)
     tbb_gen_vars(tbb)
 endif()

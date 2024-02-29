@@ -90,4 +90,14 @@ target_link_libraries(tbbmalloc_proxy
     ${TBB_COMMON_LINK_LIBS}
 )
 
+if(TBB_BUILD_APPLE_FRAMEWORKS)
+    set_target_properties(tbbmalloc_proxy PROPERTIES 
+        FRAMEWORK TRUE
+        FRAMEWORK_VERSION ${TBBMALLOC_BINARY_VERSION}.${TBB_BINARY_MINOR_VERSION}
+        XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER com.intel.tbbmalloc-proxy
+        MACOSX_FRAMEWORK_IDENTIFIER com.intel.tbbmalloc-proxy
+        MACOSX_FRAMEWORK_BUNDLE_VERSION ${TBBMALLOC_BINARY_VERSION}.${TBB_BINARY_MINOR_VERSION}
+        MACOSX_FRAMEWORK_SHORT_VERSION_STRING ${TBBMALLOC_BINARY_VERSION})
+endif()
+
 tbb_install_target(tbbmalloc_proxy)

@@ -46,9 +46,17 @@ namespace utils {
 #endif
 #define EXT ".dll"
 #else
+#if TBB_USE_APPLE_FRAMEWORKS
+#define PREFIX // When build as Apple Framework, the binary has no lib prefix
+#else
 #define PREFIX "lib"
+#endif
 #if __APPLE__
+#if TBB_USE_APPLE_FRAMEWORKS
+#define EXT // When build as Apple Framework, the binary has no lib prefix
+#else
 #define EXT ".dylib"
+#endif
 // Android SDK build system does not support .so file name versioning
 #elif __FreeBSD__ || __NetBSD__ || __sun || _AIX || __ANDROID__
 #define EXT ".so"
@@ -58,10 +66,15 @@ namespace utils {
 #error Unknown OS
 #endif
 #endif
+#if TBB_USE_APPLE_FRAMEWORKS
+#define MALLOCFRAMEWORK "tbbmalloc.framework/"
+#else
+#define MALLOCFRAMEWORK
+#endif
 
 // Form the names of the TBB memory allocator binaries.
-#define MALLOCLIB_NAME1 PREFIX "tbbmalloc" SUFFIX1 EXT
-#define MALLOCLIB_NAME2 PREFIX "tbbmalloc" SUFFIX2 EXT
+#define MALLOCLIB_NAME1 MALLOCFRAMEWORK PREFIX "tbbmalloc" SUFFIX1 EXT
+#define MALLOCLIB_NAME2 MALLOCFRAMEWORK PREFIX "tbbmalloc" SUFFIX2 EXT
 
 #if _WIN32 || _WIN64
 using LIBRARY_HANDLE = HMODULE;

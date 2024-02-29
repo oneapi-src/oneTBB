@@ -35,7 +35,11 @@ macro(tbb_install_target target)
                 COMPONENT runtime
             ARCHIVE
                 DESTINATION ${CMAKE_INSTALL_LIBDIR}
-                COMPONENT devel)
+                COMPONENT devel
+            FRAMEWORK
+                DESTINATION ${CMAKE_INSTALL_LIBDIR}
+                COMPONENT runtime
+                OPTIONAL)
 
         if (BUILD_SHARED_LIBS)
             install(TARGETS ${target}
