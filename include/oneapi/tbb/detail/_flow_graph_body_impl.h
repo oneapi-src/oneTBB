@@ -53,7 +53,7 @@ namespace graph_policy_namespace {
     // K == type of field used for key-matching.  Each tag-matching port will be provided
     // functor that, given an object accepted by the port, will return the
     /// field of type K being used for matching.
-    template<typename K, typename KHash=tbb_hash_compare<typename std::decay<K>::type > >
+    template<typename K, typename KHash=d1::tbb_hash_compare<typename std::decay<K>::type > >
         __TBB_requires(tbb::detail::hash_compare<KHash, K>)
     struct key_matching {
         typedef K key_type;
@@ -249,12 +249,12 @@ template< typename NodeType >
 class forward_task_bypass : public graph_task {
     NodeType &my_node;
 public:
-    forward_task_bypass( graph& g, small_object_allocator& allocator, NodeType &n
+    forward_task_bypass( graph& g, d1::small_object_allocator& allocator, NodeType &n
                          , node_priority_t node_priority = no_priority
     ) : graph_task(g, allocator, node_priority),
     my_node(n) {}
 
-    task* execute(execution_data& ed) override {
+    d1::task* execute(d1::execution_data& ed) override {
         graph_task* next_task = my_node.forward_task();
         if (SUCCESSFULLY_ENQUEUED == next_task)
             next_task = nullptr;
@@ -264,7 +264,7 @@ public:
         return next_task;
     }
 
-    task* cancel(execution_data& ed) override {
+    d1::task* cancel(d1::execution_data& ed) override {
         finalize<forward_task_bypass>(ed);
         return nullptr;
     }
@@ -278,12 +278,12 @@ class apply_body_task_bypass : public graph_task {
     Input my_input;
 public:
 
-    apply_body_task_bypass( graph& g, small_object_allocator& allocator, NodeType &n, const Input &i
+    apply_body_task_bypass( graph& g, d1::small_object_allocator& allocator, NodeType &n, const Input &i
                             , node_priority_t node_priority = no_priority
     ) : graph_task(g, allocator, node_priority),
         my_node(n), my_input(i) {}
 
-    task* execute(execution_data& ed) override {
+    d1::task* execute(d1::execution_data& ed) override {
         graph_task* next_task = my_node.apply_body_bypass( my_input );
         if (SUCCESSFULLY_ENQUEUED == next_task)
             next_task = nullptr;
@@ -304,7 +304,7 @@ template< typename NodeType >
 class input_node_task_bypass : public graph_task {
     NodeType &my_node;
 public:
-    input_node_task_bypass( graph& g, small_object_allocator& allocator, NodeType &n )
+    input_node_task_bypass( graph& g, d1::small_object_allocator& allocator, NodeType &n )
         : graph_task(g, allocator), my_node(n) {}
 
     task* execute(execution_data& ed) override {
