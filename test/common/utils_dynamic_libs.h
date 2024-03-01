@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -38,11 +38,11 @@ namespace utils {
 #define SUFFIX2 "_debug"
 #endif /* TBB_USE_DEBUG */
 
-#if (_WIN32||_WIN64)
+#if (_WIN32 || _WIN64)
 #if __MINGW32__
-    #define PREFIX "lib"
+#define PREFIX "lib"
 #else
-    #define PREFIX
+#define PREFIX
 #endif
 #define EXT ".dll"
 #else
@@ -60,8 +60,8 @@ namespace utils {
 // Android SDK build system does not support .so file name versioning
 #elif __FreeBSD__ || __NetBSD__ || __sun || _AIX || __ANDROID__
 #define EXT ".so"
-#elif __unix__  // Order of these elif's matters!
-#define EXT __TBB_STRING(.so.2)
+#elif __unix__ // Order of these elif's matters!
+#define EXT __TBB_STRING(.so .2)
 #else
 #error Unknown OS
 #endif
@@ -79,7 +79,7 @@ namespace utils {
 #if _WIN32 || _WIN64
 using LIBRARY_HANDLE = HMODULE;
 #else
-using LIBRARY_HANDLE = void*;
+using LIBRARY_HANDLE = void *;
 #endif
 
 #if _WIN32 || _WIN64
@@ -90,53 +90,51 @@ using LIBRARY_HANDLE = void*;
 #define TEST_LIBRARY_NAME(base) PREFIX base SUFFIX1 ".so"
 #endif
 
-LIBRARY_HANDLE OpenLibrary(const char *name)
-{
+LIBRARY_HANDLE OpenLibrary(const char *name) {
 #if _WIN32 || _WIN64
 #if __TBB_WIN8UI_SUPPORT
-    TCHAR wlibrary[MAX_PATH];
-    if (MultiByteToWideChar(CP_UTF8, 0, name, -1, wlibrary, MAX_PATH) == 0) return false;
-    return ::LoadPackagedLibrary(wlibrary, 0);
+  TCHAR wlibrary[MAX_PATH];
+  if (MultiByteToWideChar(CP_UTF8, 0, name, -1, wlibrary, MAX_PATH) == 0)
+    return false;
+  return ::LoadPackagedLibrary(wlibrary, 0);
 #else
-    return ::LoadLibrary(name);
+  return ::LoadLibrary(name);
 #endif
 #else
-    return dlopen(name, RTLD_NOW|RTLD_GLOBAL);
+  return dlopen(name, RTLD_NOW | RTLD_GLOBAL);
 #endif
 }
 
-void CloseLibrary(LIBRARY_HANDLE lib)
-{
+void CloseLibrary(LIBRARY_HANDLE lib) {
 #if _WIN32 || _WIN64
-    BOOL ret = FreeLibrary(lib);
-    REQUIRE_MESSAGE(ret, "FreeLibrary must be successful");
+  BOOL ret = FreeLibrary(lib);
+  REQUIRE_MESSAGE(ret, "FreeLibrary must be successful");
 #else
-    int ret = dlclose(lib);
-    REQUIRE_MESSAGE(ret == 0, "dlclose must be successful");
+  int ret = dlclose(lib);
+  REQUIRE_MESSAGE(ret == 0, "dlclose must be successful");
 #endif
 }
 
 typedef void (*FunctionAddress)();
 
 template <typename FunctionPointer>
-void GetAddress(utils::LIBRARY_HANDLE lib, const char *name, FunctionPointer& func)
-{
+void GetAddress(utils::LIBRARY_HANDLE lib, const char *name,
+                FunctionPointer &func) {
 #if _WIN32 || _WIN64
-    func = (FunctionPointer)(void*)GetProcAddress(lib, name);
+  func = (FunctionPointer)(void *)GetProcAddress(lib, name);
 #else
-    func = (FunctionPointer)dlsym(lib, name);
+  func = (FunctionPointer)dlsym(lib, name);
 #endif
-    REQUIRE_MESSAGE(func, "Can't find required symbol in dynamic library");
+  REQUIRE_MESSAGE(func, "Can't find required symbol in dynamic library");
 }
 
-FunctionAddress GetAddress(utils::LIBRARY_HANDLE lib, const char *name)
-{
-    FunctionAddress func;
-    GetAddress(lib, name, func);
-    return func;
+FunctionAddress GetAddress(utils::LIBRARY_HANDLE lib, const char *name) {
+  FunctionAddress func;
+  GetAddress(lib, name, func);
+  return func;
 }
 
-}  // namespace utils
+} // namespace utils
 
 #endif // __TBB_DYNAMIC_LOAD_ENABLED
 #endif // __TBB_test_common_utils_dynamic_libs_H_
