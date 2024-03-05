@@ -229,6 +229,14 @@ d1::wait_tree_node_interface* get_thread_reference_node(d1::wait_tree_node_inter
     if (it != dispatcher.m_reference_node_map.end()) {
         ref_counter = it->second;
     } else {
+        if (dispatcher.m_reference_node_map.size() > 100) {
+            for (auto it = dispatcher.m_reference_node_map.begin(); it != dispatcher.m_reference_node_map.end(); ++it) {
+                if (it->second->get_num_child() == 0) {
+                    dispatcher.m_reference_node_map.erase(it);
+                }
+            }
+        }
+
         dispatcher.m_reference_node_map[wc] = ref_counter = new (cache_aligned_allocate(sizeof(d1::reference_node))) d1::reference_node(wc, 0);
     }
 

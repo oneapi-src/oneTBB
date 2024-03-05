@@ -42,7 +42,7 @@
 #include <cstdint>
 #include <exception>
 #include <memory> // unique_ptr
-#include <map>
+#include <unordered_map>
 
 //! Mutex type for global locks in the scheduler
 using scheduler_mutex_type = __TBB_SCHEDULER_MUTEX_TYPE;
@@ -481,7 +481,7 @@ public:
     suspend_point_type* m_suspend_point{ nullptr };
 
     //! Used to improve scalability of d1::wait_context by using per thread reference_counter
-    std::map<d1::wait_tree_node_interface*, d1::reference_node*> m_reference_node_map;
+    std::unordered_map<d1::wait_tree_node_interface*, d1::reference_node*> m_reference_node_map;
 
     //! Attempt to get a task from the mailbox.
     /** Gets a task only if it has not been executed by its sender or a thief
@@ -511,6 +511,14 @@ public:
             m_suspend_point->~suspend_point_type();
             cache_aligned_deallocate(m_suspend_point);
         }
+
+        for (auto& elem : m_reference_node_map) {
+            d1::reference_node*& node = elem.second;
+            node->~reference_node();
+            cache_aligned_deallocate(node);
+            poison_pointer(node);
+        }
+
         poison_pointer(m_thread_data);
         poison_pointer(m_suspend_point);
     }
