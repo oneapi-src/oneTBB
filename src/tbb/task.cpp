@@ -221,6 +221,31 @@ void notify_waiters(std::uintptr_t wait_ctx_addr) {
     governor::get_thread_data()->my_arena->get_waiting_threads_monitor().notify(is_related_wait_ctx);
 }
 
+d1::wait_tree_node_interface* get_thread_reference_node(d1::wait_tree_node_interface* wc) {
+    __TBB_ASSERT(wc, nullptr);
+    auto& dispatcher = *governor::get_thread_data()->my_task_dispatcher;
+
+    d1::reference_node* ref_counter{nullptr};
+    auto pos = dispatcher.m_reference_node_map.find(wc);
+    if (pos != dispatcher.m_reference_node_map.end()) {
+        ref_counter = pos->second;
+    } else {
+        if (dispatcher.m_reference_node_map.size() > 100) {
+            for (auto it = dispatcher.m_reference_node_map.begin(); it != dispatcher.m_reference_node_map.end();) {
+                if (it->second->get_num_child() == 0) {
+                    it = dispatcher.m_reference_node_map.erase(it);
+                } else {
+                    ++it;
+                }
+            }
+        }
+
+        dispatcher.m_reference_node_map[wc] = ref_counter = new (cache_aligned_allocate(sizeof(d1::reference_node))) d1::reference_node(wc, 0);
+    }
+
+    return ref_counter;
+}
+
 } // namespace r1
 } // namespace detail
 } // namespace tbb
