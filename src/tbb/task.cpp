@@ -231,9 +231,11 @@ d1::wait_tree_node_interface* get_thread_reference_node(d1::wait_tree_node_inter
         ref_counter = pos->second;
     } else {
         if (dispatcher.m_reference_node_map.size() > 100) {
-            for (auto it = dispatcher.m_reference_node_map.begin(); it != dispatcher.m_reference_node_map.end(); ++it) {
+            for (auto it = dispatcher.m_reference_node_map.begin(); it != dispatcher.m_reference_node_map.end();) {
                 if (it->second->get_num_child() == 0) {
-                    dispatcher.m_reference_node_map.erase(it);
+                    it = dispatcher.m_reference_node_map.erase(it);
+                } else {
+                    ++it;
                 }
             }
         }
