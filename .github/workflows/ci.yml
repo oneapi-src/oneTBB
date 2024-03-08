@@ -83,6 +83,8 @@ jobs:
   pages:
     if: ${{ github.ref == 'refs/heads/master' }}
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
     needs: [documentation]
     steps:
       - name: Checkout gh-pages
