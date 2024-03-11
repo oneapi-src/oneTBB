@@ -88,6 +88,11 @@ void market::update_allotment() {
                 continue;
             }
 
+            if (client.isFixed()) {
+                client.set_allotment(client.max_workers());
+                continue;
+            }
+
             if (max_priority_level == num_priority_levels) {
                 max_priority_level = list_idx;
             }

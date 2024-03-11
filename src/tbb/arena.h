@@ -40,6 +40,43 @@ namespace tbb {
 namespace detail {
 namespace r1 {
 
+class my_barrier
+{
+public:
+    my_barrier()
+        : thread_count(0)
+        , counter(0)
+        , waiting(0)
+    {}
+
+    void initialize(int count) {
+        thread_count = count;
+    }
+    void wait()
+    {
+        //fence mechanism
+        std::unique_lock<std::mutex> lk(m);
+        ++counter;
+        ++waiting;
+        cv.wait(lk, [&] {return counter >= thread_count; });
+        cv.notify_one();
+        --waiting;
+        if (waiting == 0)
+        {
+            //reset barrier
+            counter = 0;
+        }
+        lk.unlock();
+    }
+
+private:
+    std::mutex m;
+    std::condition_variable cv;
+    int counter;
+    int waiting;
+    int thread_count;
+};
+
 class task_dispatcher;
 class task_group_context;
 class threading_control;
@@ -230,6 +267,11 @@ struct arena_base : padded<intrusive_list_node> {
     //! The list of local observers attached to this arena.
     observer_list my_observers;
 
+    // barrier for fixed arena implementation
+    my_barrier arna_barrier;
+
+    //! The arena executing with fixed threadss.
+    std::atomic<bool> my_is_arena_fixed{false};
 #if __TBB_ARENA_BINDING
     //! Pointer to internal observer that allows to bind threads in arena to certain NUMA node.
     numa_binding_observer* my_numa_binding_observer{nullptr};
@@ -277,6 +319,7 @@ public:
     enum new_work_type {
         work_spawned,
         wakeup,
+        work_fixed_thread,
         work_enqueued
     };
 
@@ -381,6 +424,8 @@ public:
 
     bool is_arena_workerless() const { return my_max_num_workers == 0; }
 
+    bool is_arena_fixed() const { return my_is_arena_fixed; }
+
     void set_top_priority(bool);
 
     bool is_top_priority() const;
@@ -420,9 +465,11 @@ void arena::advertise_new_work() {
     // but never promises parallelism, the missed wakeup is not a correctness problem.
     are_workers_needed = my_pool_state.test_and_set();
 
+    int barrier_thread_cnt = 0;
     if (is_mandatory_needed || are_workers_needed) {
         int mandatory_delta = is_mandatory_needed ? 1 : 0;
         int workers_delta = are_workers_needed ? my_max_num_workers : 0;
+        barrier_thread_cnt = workers_delta;
 
         if (is_mandatory_needed && is_arena_workerless()) {
             // Set workers_delta to 1 to keep arena invariants consistent
@@ -431,6 +478,10 @@ void arena::advertise_new_work() {
 
         bool wakeup_workers = is_mandatory_needed || are_workers_needed;
         request_workers(mandatory_delta, workers_delta, wakeup_workers);
+        if (my_is_arena_fixed) {
+            arna_barrier.initialize(barrier_thread_cnt);
+            arna_barrier.wait();
+        }
     }
 }
 

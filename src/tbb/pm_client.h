@@ -36,6 +36,10 @@ public:
         my_arena.set_top_priority(b);
     }
 
+    bool isFixed() {
+        return my_arena.is_arena_fixed();
+    }
+
     int min_workers() const {
         return my_min_workers;
     }

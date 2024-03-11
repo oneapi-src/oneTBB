@@ -200,6 +200,9 @@ void arena::process(thread_data& tls) {
 
     __TBB_ASSERT( index >= my_num_reserved_slots, "Workers cannot occupy reserved slots" );
     tls.attach_arena(*this, index);
+    if (my_is_arena_fixed) {
+        arna_barrier.wait();
+    }
     // worker thread enters the dispatch loop to look for a work
     tls.my_inbox.set_is_idle(true);
     if (tls.my_arena_slot->is_task_pool_published()) {
@@ -822,6 +825,7 @@ void task_arena_impl::execute_with_fixed_threads(d1::task_arena_base& ta, d1::de
 
     bool same_arena = td->my_arena == a;
     std::size_t index1 = td->my_arena_index;
+    a->my_is_arena_fixed = true;
     if (!same_arena) {
         index1 = a->occupy_free_slot</*as_worker */false>(*td);
         if (index1 == arena::out_of_arena) {
