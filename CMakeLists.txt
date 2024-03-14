@@ -230,7 +230,7 @@ else()
     message(WARNING "TBB compiler settings not found ${TBB_COMPILER_SETTINGS_FILE}")
 endif()
 
-if (TBB_FIND_PACKAGE OR TBB_DIR)
+if (TBB_FIND_PACKAGE AND TBB_DIR)
     # Allow specifying external TBB to test with.
     # Do not add main targets and installation instructions in that case.
     message(STATUS "Using external TBB for testing")
