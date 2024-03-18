@@ -250,6 +250,23 @@ public:
         return true;
     }
 
+    //! Put an item to the receiver and wait for completion
+    bool try_put_and_wait( const T& t ) {
+        small_object_allocator alloc{};
+
+        wait_context_node* msg_wait_context = alloc.new_object<wait_context_node>();
+
+        graph_task *res = try_put_task(t, msg_wait_context);
+        if (!res) return false;
+        if (res != SUCCESSFULLY_ENQUEUED) spawn_in_graph_arena(graph_reference(), *res);
+
+        __TBB_ASSERT(graph_reference().my_context != nullptr, nullptr);
+
+        wait(msg_wait_context->get_context(),
+             *graph_reference().my_context);
+        return true;
+    }
+
     //! put item to successor; return task to run the successor if possible.
 protected:
     //! The input type of this receiver
@@ -262,6 +279,11 @@ protected:
     template< typename X, typename Y > friend class broadcast_cache;
     template< typename X, typename Y > friend class round_robin_cache;
     virtual graph_task *try_put_task(const T& t) = 0;
+    // TODO: make pure virtual
+    virtual graph_task *try_put_task(const T& t, wait_context_node* wait_ctx_node) {
+        return try_put_task(t);
+    }
+
     virtual graph& graph_reference() const = 0;
 
     template<typename TT, typename M> friend class successor_cache;

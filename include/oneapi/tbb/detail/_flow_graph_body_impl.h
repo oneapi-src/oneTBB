@@ -278,13 +278,14 @@ class apply_body_task_bypass : public graph_task {
     Input my_input;
 public:
 
-    apply_body_task_bypass( graph& g, small_object_allocator& allocator, NodeType &n, const Input &i
+    apply_body_task_bypass( graph& g, small_object_allocator& allocator, NodeType &n, const Input &i,
+                            wait_context_node* msg_waiter
                             , node_priority_t node_priority = no_priority
-    ) : graph_task(g, allocator, node_priority),
+    ) : graph_task(g, allocator, msg_waiter, node_priority),
         my_node(n), my_input(i) {}
 
     task* execute(execution_data& ed) override {
-        graph_task* next_task = my_node.apply_body_bypass( my_input );
+        graph_task* next_task = my_node.apply_body_bypass( my_input, this->get_msg_wait_context_node());
         if (SUCCESSFULLY_ENQUEUED == next_task)
             next_task = nullptr;
         else if (next_task)

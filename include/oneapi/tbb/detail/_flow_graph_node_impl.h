@@ -86,11 +86,15 @@ public:
         my_queue = nullptr;
     }
 
-    graph_task* try_put_task( const input_type& t) override {
+    graph_task* try_put_task( const input_type& t ) override {
+        return try_put_task(t, nullptr);
+    }
+
+    graph_task* try_put_task( const input_type& t, wait_context_node* msg_waiter  ) override {
         if ( my_is_no_throw )
-            return try_put_task_impl(t, has_policy<lightweight, Policy>());
+            return try_put_task_impl(t, has_policy<lightweight, Policy>(), msg_waiter);
         else
-            return try_put_task_impl(t, std::false_type());
+            return try_put_task_impl(t, std::false_type(), msg_waiter);
     }
 
     //! Adds src to the list of cached predecessors.
@@ -173,7 +177,7 @@ private:
         if(my_queue) {
             if(!my_queue->empty()) {
                 ++my_concurrency;
-                new_task = create_body_task(my_queue->front());
+                new_task = create_body_task(my_queue->front(), nullptr);
 
                 my_queue->pop();
             }
@@ -182,7 +186,7 @@ private:
             input_type i;
             if(my_predecessors.get_item(i)) {
                 ++my_concurrency;
-                new_task = create_body_task(i);
+                new_task = create_body_task(i, nullptr);
             }
         }
         return new_task;
@@ -233,7 +237,7 @@ private:
         __TBB_ASSERT(my_max_concurrency != 0, nullptr);
         if (my_concurrency < my_max_concurrency) {
             ++my_concurrency;
-            graph_task * new_task = create_body_task(*(op->elem));
+            graph_task * new_task = create_body_task(*(op->elem), nullptr);
             op->bypass_t = new_task;
             op->status.store(SUCCEEDED, std::memory_order_release);
         } else if ( my_queue && my_queue->push(*(op->elem)) ) {
@@ -267,22 +271,24 @@ private:
         return nullptr;
     }
 
-    graph_task* try_put_task_impl( const input_type& t, /*lightweight=*/std::true_type ) {
+    graph_task* try_put_task_impl( const input_type& t, /*lightweight=*/std::true_type,
+                                   wait_context_node* msg_waiter ) {
         if( my_max_concurrency == 0 ) {
-            return apply_body_bypass(t);
+            return apply_body_bypass(t, msg_waiter);
         } else {
             operation_type check_op(t, occupy_concurrency);
             my_aggregator.execute(&check_op);
             if( check_op.status == SUCCEEDED ) {
-                return apply_body_bypass(t);
+                return apply_body_bypass(t, msg_waiter);
             }
-            return internal_try_put_bypass(t);
+            return internal_try_put_bypass(t, msg_waiter);
         }
     }
 
-    graph_task* try_put_task_impl( const input_type& t, /*lightweight=*/std::false_type ) {
+    graph_task* try_put_task_impl( const input_type& t, /*lightweight=*/std::false_type,
+                                   wait_context_node* msg_waiter ) {
         if( my_max_concurrency == 0 ) {
-            return create_body_task(t);
+            return create_body_task(t, msg_waiter);
         } else {
             return internal_try_put_bypass(t);
         }
@@ -290,19 +296,19 @@ private:
 
     //! Applies the body to the provided input
     //  then decides if more work is available
-    graph_task* apply_body_bypass( const input_type &i ) {
-        return static_cast<ImplType *>(this)->apply_body_impl_bypass(i);
+    graph_task* apply_body_bypass( const input_type &i, wait_context_node* msg_waiter ) {
+        return static_cast<ImplType *>(this)->apply_body_impl_bypass(i, msg_waiter);
     }
 
     //! allocates a task to apply a body
-    graph_task* create_body_task( const input_type &input ) {
+    graph_task* create_body_task( const input_type &input, wait_context_node* msg_waiter) {
         if (!is_graph_active(my_graph_ref)) {
             return nullptr;
         }
         // TODO revamp: extract helper for common graph task allocation part
         small_object_allocator allocator{};
         typedef apply_body_task_bypass<class_type, input_type> task_type;
-        graph_task* t = allocator.new_object<task_type>( my_graph_ref, allocator, *this, input, my_priority );
+        graph_task* t = allocator.new_object<task_type>( my_graph_ref, allocator, *this, input, msg_waiter, my_priority );
         t->reserve_on_reference_node();
         // graph_reference().reserve_wait();
         return t;
@@ -400,7 +406,7 @@ public:
     }
 
     //TODO: consider moving into the base class
-    graph_task* apply_body_impl_bypass( const input_type &i) {
+    graph_task* apply_body_impl_bypass( const input_type &i, wait_context_node* msg_waiter ) {
         output_type v = apply_body_impl(i);
         graph_task* postponed_task = nullptr;
         if( base_type::my_max_concurrency != 0 ) {
@@ -412,7 +418,7 @@ public:
             // execution policy
             spawn_in_graph_arena(base_type::graph_reference(), *postponed_task);
         }
-        graph_task* successor_task = successors().try_put_task(v);
+        graph_task* successor_task = successors().try_put_task(v, msg_waiter);
 #if _MSC_VER && !__INTEL_COMPILER
 #pragma warning (push)
 #pragma warning (disable: 4127)  /* suppress conditional expression is constant */

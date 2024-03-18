@@ -127,14 +127,9 @@ class graph_task : public task {
 public:
     graph_task(graph& g, small_object_allocator& allocator
                , node_priority_t node_priority = no_priority);
-    // graph_task(graph& g, small_object_allocator& allocator
-    //            , node_priority_t node_priority = no_priority
-    // )
-    //     : my_graph(g)
-    //     , priority(node_priority)
-    //     , my_allocator(allocator)
-    //     , my_reference_node(r1::get_thread_reference_node(&my_graph.get_wait_context_node()))
-    // {}
+    graph_task(graph& g, small_object_allocator& allocator,
+               wait_context_node* msg_wait_context_node,
+               node_priority_t node_priority_t = no_priority);
     graph& my_graph; // graph instance the task belongs to
     // TODO revamp: rename to my_priority
     node_priority_t priority;
@@ -145,11 +140,17 @@ public:
 protected:
     template <typename DerivedType>
     void finalize(const execution_data& ed);
+
+    wait_context_node* get_msg_wait_context_node() const {
+        return my_msg_wait_context_node;
+    }
 private:
     // To organize task_list
     graph_task* my_next{ nullptr };
     small_object_allocator my_allocator;
     wait_tree_node_interface* my_reference_node;
+    wait_context_node*        my_msg_wait_context_node;
+    wait_tree_node_interface* my_msg_wait_reference_node;
     // TODO revamp: elaborate internal interfaces to avoid friends declarations
     friend class graph_task_list;
     friend graph_task* prioritize_task(graph& g, graph_task& gt);
@@ -368,6 +369,9 @@ private:
 
     friend class task_arena_base;
     friend class graph_task;
+
+    template <typename T>
+    friend class receiver;
 };  // class graph
 
 template<typename DerivedType>
@@ -382,17 +386,37 @@ template<typename DerivedType>
 inline void graph_task::finalize(const execution_data& ed) {
     // graph& g = my_graph;
     wait_tree_node_interface* ref_node = my_reference_node;
+    wait_tree_node_interface* msg_ref_node = my_msg_wait_reference_node;
+
     destruct_and_deallocate<DerivedType>(ed);
     ref_node->release(1, ed);
+
+    if (msg_ref_node != nullptr)
+        msg_ref_node->release();
+
     // g.release_wait();
+}
+
+inline graph_task::graph_task(graph& g, small_object_allocator& allocator,
+                              wait_context_node* msg_wait_context_node,
+                              node_priority_t node_priority)
+    : my_graph(g)
+    , priority(node_priority)
+    , my_allocator(allocator)
+    , my_reference_node(r1::get_thread_reference_node(&my_graph.get_wait_context_node()))
+    , my_msg_wait_context_node(msg_wait_context_node)
+    , my_msg_wait_reference_node(msg_wait_context_node ?
+                                 r1::get_thread_reference_node(msg_wait_context_node) :
+                                 nullptr)
+{
+    if (my_msg_wait_reference_node) {
+        my_msg_wait_reference_node->reserve();
+    }
 }
 
 inline graph_task::graph_task(graph& g, small_object_allocator& allocator
                        , node_priority_t node_priority)
-    : my_graph(g)
-    , priority(node_priority)
-    , my_allocator(allocator)
-    , my_reference_node(r1::get_thread_reference_node(&my_graph.get_wait_context_node())) {}
+    : graph_task(g, allocator, /*msg_wait_context_node = */nullptr, node_priority) {}
 
 //********************************************************************************
 // end of graph tasks helpers
