@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2023 Intel Corporation
+# Copyright (c) 2020-2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ endif()
 set(TBB_LIB_COMPILE_FLAGS -D_CRT_SECURE_NO_WARNINGS /GS)
 set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} /volatile:iso /FS /EHsc)
 
-set(TBB_LIB_LINK_FLAGS ${TBB_LIB_LINK_FLAGS} /DYNAMICBASE /NXCOMPAT)
+set(TBB_LIB_LINK_FLAGS ${TBB_LIB_LINK_FLAGS} /DEPENDENTLOADFLAG:0x2000 /DYNAMICBASE /NXCOMPAT)
 
 if (TBB_ARCH EQUAL 32)
     set(TBB_LIB_LINK_FLAGS ${TBB_LIB_LINK_FLAGS} /SAFESEH )
