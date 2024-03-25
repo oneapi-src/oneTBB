@@ -243,7 +243,7 @@ public:
     virtual ~receiver() {}
 
     //! Put an item to the receiver
-    bool try_put( const T& t ) {
+    virtual bool try_put( const T& t ) {
         graph_task *res = try_put_task(t);
         if (!res) return false;
         if (res != SUCCESSFULLY_ENQUEUED) spawn_in_graph_arena(graph_reference(), *res);
