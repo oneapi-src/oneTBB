@@ -19,6 +19,7 @@
 #include "oneapi/tbb/tbb_allocator.h"
 #include "oneapi/tbb/cache_aligned_allocator.h"
 #include "itt_notify.h"
+#include "literal_const_string.h"
 #include "tls.h"
 #include "oneapi/tbb/detail/_exception.h"
 #include "oneapi/tbb/detail/_small_object_pool.h"
@@ -27,7 +28,7 @@ namespace tbb {
 namespace detail {
 namespace r1 {
 
-void handle_perror(int error_code, const char* aux_info);
+void handle_perror(int error_code, const literal_const_string& aux_info);
 
 using Token = unsigned long;
 
