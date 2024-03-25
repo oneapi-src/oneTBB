@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2021 Intel Corporation
+    Copyright (c) 2021-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -128,6 +128,36 @@ public:
 
 };
 
+#if _MSC_VER && __TBB_x86_32
+// Workaround: MSVC does not apply alignment to variables on the stack
+class collaborative_once_runner_holder : no_copy {
+    collaborative_once_runner *m_runner;
+    char m_storage[max_nfs_size + sizeof(collaborative_once_runner)];
+public:
+    collaborative_once_runner_holder() {
+        std::uintptr_t base = reinterpret_cast<std::uintptr_t>(m_storage);
+        base = (base + (collaborative_once_references_mask - 1)) & ~collaborative_once_references_mask;
+        m_runner = new (reinterpret_cast<char *>(base)) collaborative_once_runner();
+    }
+    ~collaborative_once_runner_holder() {
+        m_runner->~collaborative_once_runner();
+    }
+    collaborative_once_runner *operator->() noexcept {
+        return m_runner;
+    }
+};
+#else
+class collaborative_once_runner_holder : no_copy {
+    collaborative_once_runner m_runner;
+public:
+    collaborative_once_runner_holder() = default;
+    ~collaborative_once_runner_holder() = default;
+    collaborative_once_runner *operator->() noexcept {
+        return &m_runner;
+    }
+};
+#endif
+
 class collaborative_once_flag : no_copy {
     enum state : std::uintptr_t {
         uninitialized,
@@ -155,20 +185,20 @@ class collaborative_once_flag : no_copy {
     template <typename Fn>
     void do_collaborative_call_once(Fn&& f) {
         std::uintptr_t expected = m_state.load(std::memory_order_acquire);
-        collaborative_once_runner runner;
+        collaborative_once_runner_holder runner;
 
         do {
-            if (expected == state::uninitialized && m_state.compare_exchange_strong(expected, runner.to_bits())) {
+            if (expected == state::uninitialized && m_state.compare_exchange_strong(expected, runner->to_bits())) {
                 // Winner thread
-                runner.run_once([&] {
+                runner->run_once([&] {
                     try_call([&] {
                         std::forward<Fn>(f)();
                     }).on_exception([&] {
                         // Reset the state to uninitialized to allow other threads to try initialization again
-                        set_completion_state(runner.to_bits(), state::uninitialized);
+                        set_completion_state(runner->to_bits(), state::uninitialized);
                     });
                     // We successfully executed functor
-                    set_completion_state(runner.to_bits(), state::done);
+                    set_completion_state(runner->to_bits(), state::done);
                 });
                 break;
             } else {
