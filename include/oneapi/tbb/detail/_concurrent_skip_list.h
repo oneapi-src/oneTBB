@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2019-2022 Intel Corporation
+    Copyright (c) 2019-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -266,8 +266,11 @@ protected:
     using list_node_type = skip_list_node<value_type, node_allocator_type>;
     using node_type = d1::node_handle<key_type, value_type, list_node_type, allocator_type>;
 
-    using iterator = skip_list_iterator<list_node_type, value_type>;
     using const_iterator = skip_list_iterator<list_node_type, const value_type>;
+    // iterator for ordered sets should be constant to prohibit modification of keys that sorting
+    using iterator = typename std::conditional<std::is_same<value_type, key_type>::value,
+                                               const_iterator,
+                                               skip_list_iterator<list_node_type, value_type>>::type;
 
     using reference = value_type&;
     using const_reference = const value_type&;
@@ -282,6 +285,7 @@ protected:
 private:
     template <typename T>
     using is_transparent = dependent_bool<comp_is_transparent<key_compare>, T>;
+    using non_const_iterator = skip_list_iterator<list_node_type, value_type>;
 public:
     static constexpr bool allow_multimapping = container_traits::allow_multimapping;
 
@@ -441,17 +445,13 @@ public:
         return emplace(std::forward<Args>(args)...).first;
     }
 
-    iterator unsafe_erase( iterator pos ) {
+    iterator unsafe_erase( const_iterator pos ) {
         std::pair<node_ptr, node_ptr> extract_result = internal_extract(pos);
         if (extract_result.first) { // node was extracted
             delete_value_node(extract_result.first);
             return extract_result.second;
         }
         return end();
-    }
-
-    iterator unsafe_erase( const_iterator pos ) {
-        return unsafe_erase(get_iterator(pos));
     }
 
     iterator unsafe_erase( const_iterator first, const_iterator last ) {
@@ -478,10 +478,6 @@ public:
     node_type unsafe_extract( const_iterator pos ) {
         std::pair<node_ptr, node_ptr> extract_result = internal_extract(pos);
         return extract_result.first ? d1::node_handle_accessor::construct<node_type>(extract_result.first) : node_type();
-    }
-
-    node_type unsafe_extract( iterator pos ) {
-        return unsafe_extract(const_iterator(pos));
     }
 
     node_type unsafe_extract( const key_type& key ) {
@@ -762,7 +758,8 @@ private:
         } else {
             my_size.store(0, std::memory_order_relaxed);
             my_max_height.store(other.my_max_height.load(std::memory_order_relaxed), std::memory_order_relaxed);
-            internal_copy(std::make_move_iterator(other.begin()), std::make_move_iterator(other.end()));
+            internal_copy(std::make_move_iterator(non_const_iterator(other.internal_begin())),
+                          std::make_move_iterator(non_const_iterator(nullptr)));
         }
     }
 
@@ -1170,7 +1167,8 @@ private:
         if (my_node_allocator == other.my_node_allocator) {
             internal_move(std::move(other));
         } else {
-            internal_copy(std::make_move_iterator(other.begin()), std::make_move_iterator(other.end()));
+            internal_copy(std::make_move_iterator(non_const_iterator(other.internal_begin())),
+                          std::make_move_iterator(non_const_iterator(nullptr)));
         }
     }
 

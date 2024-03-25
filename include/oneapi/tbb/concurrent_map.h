@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2019-2021 Intel Corporation
+    Copyright (c) 2019-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -175,6 +175,17 @@ public:
     void merge(concurrent_multimap<key_type, mapped_type, OtherCompare, Allocator>&& source) {
         this->internal_merge(std::move(source));
     }
+
+    using base_type::unsafe_erase;
+    using base_type::unsafe_extract;
+
+    iterator unsafe_erase(iterator pos) {
+        return this->unsafe_erase(const_iterator(pos));
+    }
+
+    node_type unsafe_extract(iterator pos) {
+        return this->unsafe_extract(const_iterator(pos));
+    }
 }; // class concurrent_map
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
@@ -291,6 +302,17 @@ public:
     template<typename OtherCompare>
     void merge(concurrent_map<key_type, mapped_type, OtherCompare, Allocator>&& source) {
         this->internal_merge(std::move(source));
+    }
+
+    using base_type::unsafe_erase;
+    using base_type::unsafe_extract;
+
+    iterator unsafe_erase(iterator pos) {
+        return this->unsafe_erase(const_iterator(pos));
+    }
+
+    node_type unsafe_extract(iterator pos) {
+        return this->unsafe_extract(const_iterator(pos));
     }
 }; // class concurrent_multimap
 
