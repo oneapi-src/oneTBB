@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020-2023 Intel Corporation
+    Copyright (c) 2020-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -53,6 +53,7 @@ TBB_EXPORT void __TBB_EXPORTED_FUNC execute_and_wait(d1::task& t, d1::task_group
 TBB_EXPORT void __TBB_EXPORTED_FUNC wait(d1::wait_context&, d1::task_group_context& ctx);
 TBB_EXPORT d1::slot_id __TBB_EXPORTED_FUNC execution_slot(const d1::execution_data*);
 TBB_EXPORT d1::task_group_context* __TBB_EXPORTED_FUNC current_context();
+TBB_EXPORT d1::task* __TBB_EXPORTED_FUNC current_task();
 
 // Do not place under __TBB_RESUMABLE_TASKS. It is a stub for unsupported platforms.
 struct suspend_point_type;
@@ -147,6 +148,68 @@ public:
     }
 };
 
+class alignas(max_nfs_size) distributed_reference_counter {
+public:
+    // Despite the internal reference count is uin64_t we limit the user interface with uint32_t
+    // to preserve a part of the internal reference count for special needs.
+    distributed_reference_counter(std::uint32_t ref_count, distributed_reference_counter* parent,
+                                  wait_context& wo, small_object_allocator& allocator)
+        : m_ref_count{ref_count}
+        , m_parent_ref(parent)
+        , m_wait_ctx(wo)
+        , m_allocator(allocator)
+    {
+        suppress_unused_warning(m_version_and_traits);
+    }
+
+    distributed_reference_counter(const distributed_reference_counter&) = delete;
+
+    virtual ~distributed_reference_counter() {
+        __TBB_ASSERT(m_ref_count.load(std::memory_order_relaxed) == 0, nullptr);
+    }
+
+    void reserve(std::uint32_t delta = 1) {
+        add_reference(delta);
+    }
+
+    void release(std::uint32_t delta = 1) {
+        add_reference(-std::int64_t(delta));
+    }
+
+protected:
+    void release_parent() {
+        if (m_parent_ref) {
+            m_parent_ref->release();
+        } else {
+            m_wait_ctx.release();
+        }
+    }
+
+    // Add ability to create new behaviors by overriding logic of this method
+    // e.g., add invocation of user's callback once counter reached 0 (formally continuation)
+    virtual void add_reference(std::int64_t delta) {
+        std::uint64_t r = m_ref_count.fetch_add(static_cast<std::uint64_t>(delta)) + static_cast<std::uint64_t>(delta);
+
+        __TBB_ASSERT_EX((r & overflow_mask) == 0, "Overflow is detected");
+
+        if (!r) {
+            release_parent();
+
+            auto allocator = m_allocator;
+            this->~distributed_reference_counter();
+            allocator.deallocate(this);
+        }
+    }
+
+    std::uint64_t m_version_and_traits{};
+
+    static constexpr std::uint64_t overflow_mask = ~((1LLU << 32) - 1);
+    std::atomic<std::uint64_t> m_ref_count;
+    distributed_reference_counter* m_parent_ref{nullptr};
+    wait_context& m_wait_ctx;
+    small_object_allocator m_allocator;
+};
+
 struct execution_data {
     task_group_context* context{};
     slot_id original_slot{};
@@ -199,6 +262,7 @@ inline void wait(wait_context& wait_ctx, task_group_context& ctx) {
     call_itt_task_notify(destroy, &wait_ctx);
 }
 
+using r1::current_task;
 using r1::current_context;
 
 class task_traits {
