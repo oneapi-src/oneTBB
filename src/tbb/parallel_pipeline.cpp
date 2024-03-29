@@ -84,7 +84,7 @@ private:
     //! False until flow_control::stop() is called.
     std::atomic<bool> end_of_input;
 
-    d1::wait_context wait_ctx;
+    d1::wait_context_node wait_ctx;
 };
 
 //! This structure is used to store task information in an input buffer
@@ -271,6 +271,7 @@ private:
     pipeline& my_pipeline;
     d1::base_filter* my_filter;
     d1::small_object_allocator m_allocator;
+    d1::wait_tree_node_interface* my_wait_tree_node;
     //! True if this task has not yet read the input.
     bool my_at_start;
 
@@ -282,7 +283,7 @@ private:
         ITT_NOTIFY( sync_releasing, &my_pipeline.input_tokens );
         if( (my_pipeline.input_tokens.fetch_sub(1, std::memory_order_release)) > 1 ) {
             d1::small_object_allocator alloc{};
-            r1::spawn( *alloc.new_object<stage_task>(ed, my_pipeline, alloc ), my_pipeline.my_context );
+            r1::spawn( *alloc.new_object<stage_task>(ed, my_pipeline, alloc, r1::get_thread_reference_node(&my_pipeline.wait_ctx) ), my_pipeline.my_context );
         }
     }
 
@@ -290,24 +291,26 @@ public:
 
     //! Construct stage_task for first stage in a pipeline.
     /** Such a stage has not read any input yet. */
-    stage_task(pipeline& pipeline, d1::small_object_allocator& alloc ) :
+    stage_task(pipeline& pipeline, d1::small_object_allocator& alloc, d1::wait_tree_node_interface* node) :
         my_pipeline(pipeline),
         my_filter(pipeline.first_filter),
         m_allocator(alloc),
+        my_wait_tree_node(node),
         my_at_start(true)
     {
         task_info::reset();
-        my_pipeline.wait_ctx.reserve();
+        my_wait_tree_node->reserve();
     }
     //! Construct stage_task for a subsequent stage in a pipeline.
-    stage_task(pipeline& pipeline, d1::base_filter* filter, const task_info& info, d1::small_object_allocator& alloc) :
+    stage_task(pipeline& pipeline, d1::base_filter* filter, const task_info& info, d1::small_object_allocator& alloc, d1::wait_tree_node_interface* node) :
         task_info(info),
         my_pipeline(pipeline),
         my_filter(filter),
         m_allocator(alloc),
+        my_wait_tree_node(node),
         my_at_start(false)
     {
-        my_pipeline.wait_ctx.reserve();
+        my_wait_tree_node->reserve();
     }
     //! Roughly equivalent to the constructor of input stage task
     void reset() {
@@ -336,12 +339,12 @@ public:
             my_filter->finalize(my_object);
             my_object = nullptr;
         }
-        my_pipeline.wait_ctx.release();
+        my_wait_tree_node->release();
     }
     //! Creates and spawns stage_task from task_info
     void spawn_stage_task(const task_info& info, d1::execution_data& ed) {
         d1::small_object_allocator alloc{};
-        stage_task* clone = alloc.new_object<stage_task>(ed, my_pipeline, my_filter, info, alloc);
+        stage_task* clone = alloc.new_object<stage_task>(ed, my_pipeline, my_filter, info, alloc, r1::get_thread_reference_node(&my_pipeline.wait_ctx));
         r1::spawn(*clone, my_pipeline.my_context);
     }
 };
@@ -449,10 +452,10 @@ void __TBB_EXPORTED_FUNC parallel_pipeline(d1::task_group_context& cxt, std::siz
     pipe.fill_pipeline(fn);
 
     d1::small_object_allocator alloc{};
-    stage_task& st = *alloc.new_object<stage_task>(pipe, alloc);
+    stage_task& st = *alloc.new_object<stage_task>(pipe, alloc, r1::get_thread_reference_node(&pipe.wait_ctx));
 
     // Start execution of tasks
-    r1::execute_and_wait(st, cxt, pipe.wait_ctx, cxt);
+    r1::execute_and_wait(st, cxt, pipe.wait_ctx.get_context(), cxt);
 }
 
 void __TBB_EXPORTED_FUNC set_end_of_input(d1::base_filter& bf) {
