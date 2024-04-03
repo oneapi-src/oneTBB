@@ -39,4 +39,4 @@ This document contains changes of oneTBB compared to the last release.
 - Enabled the oneTBB library search using the pkg-config tool in Conda packages.
 
 ## :octocat: Open-source Contributions Integrated
-- Fixed the compiler warning for missing virtual destructor. Contributed by Elias Engelbert Plank @elias-plank (https://github.com/oneapi-src/oneTBB/pull/1215).
+- Fixed the compiler warning for missing virtual destructor. Contributed by Elias Engelbert Plank (https://github.com/oneapi-src/oneTBB/pull/1215).
