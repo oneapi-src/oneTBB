@@ -230,7 +230,7 @@ d1::wait_tree_vertex_interface* get_thread_reference_vertex(d1::wait_tree_vertex
     if (pos != dispatcher.m_reference_vertex_map.end()) {
         ref_counter = pos->second;
     } else {
-        if (dispatcher.m_reference_vertex_map.size() > 100) {
+        if (dispatcher.m_reference_vertex_map.size() > 1000) {
             for (auto it = dispatcher.m_reference_vertex_map.begin(); it != dispatcher.m_reference_vertex_map.end();) {
                 if (it->second->get_num_child() == 0) {
                     it = dispatcher.m_reference_vertex_map.erase(it);
