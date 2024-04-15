@@ -232,8 +232,8 @@ protected:
     virtual void destroy(const d1::execution_data&) {}
 
 private:
-    wait_tree_vertex_interface* my_parent{};
-    std::atomic<std::uint64_t> m_ref_count{};
+    wait_tree_vertex_interface* my_parent;
+    std::atomic<std::uint64_t> m_ref_count;
 };
 
 struct execution_data {
