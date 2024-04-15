@@ -601,7 +601,7 @@ public:
 }; // class task_group
 
 #if TBB_PREVIEW_ISOLATED_TASK_GROUP
-class spawn_delegate : public delegate_base {
+class spawn_delegate : public d1::delegate_base {
     task* task_to_spawn;
     task_group_context& context;
     bool operator()() const override {
