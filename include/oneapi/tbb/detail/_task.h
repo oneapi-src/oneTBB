@@ -157,6 +157,10 @@ class wait_tree_vertex_interface {
 public:
     virtual void reserve(std::uint32_t delta = 1) = 0;
     virtual void release(std::uint32_t delta = 1) = 0;
+<<<<<<< HEAD
+=======
+    virtual void release(std::uint32_t delta, const d1::execution_data&) = 0;
+>>>>>>> 4e88ad44 (Add wait_vertex implementation)
 
 protected:
     virtual ~wait_tree_vertex_interface() = default;
@@ -185,6 +189,11 @@ private:
         return m_wait.continue_execution();
     }
 
+<<<<<<< HEAD
+=======
+    void release(std::uint32_t delta, const d1::execution_data&) override { release(delta); }
+
+>>>>>>> 4e88ad44 (Add wait_vertex implementation)
     wait_context m_wait;
 };
 
