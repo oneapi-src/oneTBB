@@ -464,16 +464,16 @@ public:
 
 class task_group_base : no_copy {
 protected:
-    d1::wait_context_vertex m_wait_node;
+    d1::wait_context_vertex m_wait_vertex;
     d1::task_group_context m_context;
 
     template<typename F>
     task_group_status internal_run_and_wait(const F& f) {
-        function_stack_task<F> t{ f, r1::get_thread_reference_vertex(&m_wait_node) };
+        function_stack_task<F> t{ f, r1::get_thread_reference_vertex(&m_wait_vertex) };
 
         bool cancellation_status = false;
         try_call([&] {
-            execute_and_wait(t, context(), m_wait_node.get_context(), context());
+            execute_and_wait(t, context(), m_wait_vertex.get_context(), context());
         }).on_completion([&] {
             // TODO: the reset method is not thread-safe. Ensure the correct behavior.
             cancellation_status = context().is_group_execution_cancelled();
@@ -490,7 +490,7 @@ protected:
 
         bool cancellation_status = false;
         try_call([&] {
-            execute_and_wait(*acs::release(h), context(), m_wait_node.get_context(), context());
+            execute_and_wait(*acs::release(h), context(), m_wait_vertex.get_context(), context());
         }).on_completion([&] {
             // TODO: the reset method is not thread-safe. Ensure the correct behavior.
             cancellation_status = context().is_group_execution_cancelled();
@@ -503,7 +503,7 @@ protected:
     d1::task* prepare_task(F&& f) {
         d1::small_object_allocator alloc{};
         return alloc.new_object<function_task<typename std::decay<F>::type>>(std::forward<F>(f),
-            r1::get_thread_reference_vertex(&m_wait_node), context(), alloc);
+            r1::get_thread_reference_vertex(&m_wait_vertex), context(), alloc);
     }
 
     d1::task_group_context& context() noexcept {
@@ -515,24 +515,24 @@ protected:
         d1::small_object_allocator alloc{};
         using function_task_t =  d2::function_task<typename std::decay<F>::type>;
         d2::task_handle_task* function_task_p =  alloc.new_object<function_task_t>(std::forward<F>(f),
-            r1::get_thread_reference_vertex(&m_wait_node), context(), alloc);
+            r1::get_thread_reference_vertex(&m_wait_vertex), context(), alloc);
 
         return d2::task_handle_accessor::construct(function_task_p);
     }
 
 public:
     task_group_base(uintptr_t traits = 0)
-        : m_wait_node(0)
+        : m_wait_vertex(0)
         , m_context(d1::task_group_context::bound, d1::task_group_context::default_traits | traits)
     {}
 
     task_group_base(d1::task_group_context& ctx)
-        : m_wait_node(0)
+        : m_wait_vertex(0)
         , m_context(&ctx)
     {}
 
     ~task_group_base() noexcept(false) {
-        if (m_wait_node.continue_execution()) {
+        if (m_wait_vertex.continue_execution()) {
 #if __TBB_CPP17_UNCAUGHT_EXCEPTIONS_PRESENT
             bool stack_unwinding_in_progress = std::uncaught_exceptions() > 0;
 #else
@@ -542,7 +542,7 @@ public:
             // in case of missing wait (for the sake of better testability & debuggability)
             if (!context().is_group_execution_cancelled())
                 cancel();
-            d1::wait(m_wait_node.get_context(), context());
+            d1::wait(m_wait_vertex.get_context(), context());
             if (!stack_unwinding_in_progress)
                 throw_exception(exception_id::missing_wait);
         }
@@ -551,7 +551,7 @@ public:
     task_group_status wait() {
         bool cancellation_status = false;
         try_call([&] {
-            d1::wait( m_wait_node.get_context(), context());
+            d1::wait( m_wait_vertex.get_context(), context());
         }).on_completion([&] {
             // TODO: the reset method is not thread-safe. Ensure the correct behavior.
             cancellation_status = m_context.is_group_execution_cancelled();
