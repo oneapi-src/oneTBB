@@ -34,7 +34,7 @@ class task_handle;
 
 class task_handle_task : public d1::task {
     std::uint64_t m_version_and_traits{};
-    d1::wait_context& m_wait_ctx;
+    d1::wait_tree_vertex_interface* m_wait_tree_node;
     d1::task_group_context& m_ctx;
     d1::small_object_allocator m_allocator;
 public:
@@ -46,15 +46,16 @@ public:
         }
     }
 
-    task_handle_task(d1::wait_context& wo, d1::task_group_context& ctx, d1::small_object_allocator& alloc)
-        : m_wait_ctx(wo)
+    task_handle_task(d1::wait_tree_vertex_interface* node, d1::task_group_context& ctx, d1::small_object_allocator& alloc)
+        : m_wait_tree_node(node)
         , m_ctx(ctx)
         , m_allocator(alloc) {
         suppress_unused_warning(m_version_and_traits);
+        m_wait_tree_node->reserve();
     }
 
     ~task_handle_task() override {
-        m_wait_ctx.release();
+        m_wait_tree_node->release();
     }
 
     d1::task_group_context& ctx() const { return m_ctx; }
