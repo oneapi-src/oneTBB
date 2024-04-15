@@ -34,7 +34,7 @@ class task_handle;
 
 class task_handle_task : public d1::task {
     std::uint64_t m_version_and_traits{};
-    d1::wait_tree_vertex_interface* m_wait_tree_node;
+    d1::wait_tree_vertex_interface* m_wait_tree_vertex;
     d1::task_group_context& m_ctx;
     d1::small_object_allocator m_allocator;
 public:
