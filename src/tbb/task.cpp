@@ -230,9 +230,12 @@ d1::wait_tree_vertex_interface* get_thread_reference_vertex(d1::wait_tree_vertex
     if (pos != dispatcher.m_reference_vertex_map.end()) {
         ref_counter = pos->second;
     } else {
-        if (dispatcher.m_reference_vertex_map.size() > 1000) {
+        constexpr std::size_t max_reference_vertex_map_size = 1000;
+        if (dispatcher.m_reference_vertex_map.size() > max_reference_vertex_map_size) {
             for (auto it = dispatcher.m_reference_vertex_map.begin(); it != dispatcher.m_reference_vertex_map.end();) {
                 if (it->second->get_num_child() == 0) {
+                    it->second->~reference_vertex();
+                    cache_aligned_deallocate(it->second);
                     it = dispatcher.m_reference_vertex_map.erase(it);
                 } else {
                     ++it;
