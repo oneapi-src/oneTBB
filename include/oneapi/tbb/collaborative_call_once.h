@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2021 Intel Corporation
+    Copyright (c) 2021-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -31,6 +31,27 @@ namespace d1 {
     #pragma warning (push)
     #pragma warning (disable: 4324)
 #endif
+
+template <typename F>
+class function_stack_task : public task {
+    const F& m_func;
+    wait_context& m_wait_ctx;
+
+    void finalize() {
+        m_wait_ctx.release();
+    }
+    task* execute(d1::execution_data&) override {
+        task* res = d2::task_ptr_or_nullptr(m_func);
+        finalize();
+        return res;
+    }
+    task* cancel(d1::execution_data&) override {
+        finalize();
+        return nullptr;
+    }
+public:
+    function_stack_task(const F& f, wait_context& wctx) : m_func(f), m_wait_ctx(wctx) {}
+};
 
 constexpr std::uintptr_t collaborative_once_max_references = max_nfs_size;
 constexpr std::uintptr_t collaborative_once_references_mask = collaborative_once_max_references-1;
