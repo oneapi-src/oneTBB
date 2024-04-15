@@ -186,7 +186,10 @@ private:
         return m_wait.continue_execution();
     }
 
-    void release(std::uint32_t delta, const d1::execution_data&) override { release(delta); }
+    void release(std::uint32_t, const d1::execution_data&) override {
+        __TBB_ASSERT(false,
+            "This method is overloaded only to fulfill the base class interface requirements, and thus, it should not be called.");
+    }
 
     wait_context m_wait;
 };
