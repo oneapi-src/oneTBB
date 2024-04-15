@@ -96,8 +96,8 @@ private:
     }
 public:
     template<typename FF>
-    function_task(FF&& f, d1::wait_tree_vertex_interface* node, d1::task_group_context& ctx, d1::small_object_allocator& alloc)
-        : task_handle_task{node, ctx, alloc},
+    function_task(FF&& f, d1::wait_tree_vertex_interface* vertex, d1::task_group_context& ctx, d1::small_object_allocator& alloc)
+        : task_handle_task{vertex, ctx, alloc},
           m_func(std::forward<FF>(f)) {}
 };
 
@@ -442,7 +442,7 @@ class isolated_task_group;
 template <typename F>
 class function_stack_task : public d1::task {
     const F& m_func;
-    d1::wait_tree_vertex_interface* m_wait_tree_node;
+    d1::wait_tree_vertex_interface* m_wait_tree_vertex;
 
     void finalize() {
         m_wait_tree_node->release();
