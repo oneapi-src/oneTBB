@@ -445,7 +445,7 @@ class function_stack_task : public d1::task {
     d1::wait_tree_vertex_interface* m_wait_tree_vertex;
 
     void finalize() {
-        m_wait_tree_node->release();
+        m_wait_tree_vertex->release();
     }
     task* execute(d1::execution_data&) override {
         task* res = d2::task_ptr_or_nullptr(m_func);
@@ -457,8 +457,8 @@ class function_stack_task : public d1::task {
         return nullptr;
     }
 public:
-    function_stack_task(const F& f, d1::wait_tree_vertex_interface* node) : m_func(f), m_wait_tree_node(node) {
-        m_wait_tree_node->reserve();
+    function_stack_task(const F& f, d1::wait_tree_vertex_interface* node) : m_func(f), m_wait_tree_vertex(node) {
+        m_wait_tree_vertex->reserve();
     }
 };
 
