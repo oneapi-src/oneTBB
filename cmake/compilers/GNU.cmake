@@ -35,6 +35,40 @@ if (NOT CMAKE_GENERATOR MATCHES "Ninja" AND NOT CMAKE_CXX_DEPENDS_USE_COMPILER)
     set(TBB_MMD_FLAG -MMD)
 endif()
 
+
+# Binutils < 2.31.1 does not support the "tpause" instruction.
+# When compiling with a modern version of GCC (which does support it), but then
+# relying on an outdated assembler will fail in the assembler.
+# Here we will invoke the GNU assembler to get the version number and
+# convert it to an integer that can be used in the C++ code to compare
+# against, and disable the __TBB_WAITPKG_INTRINSICS_PRESENT macro.
+# Unfortunately, binutils only reports the MAJOR.MINOR version, without patch,
+# so the check we effectively implement is version >2.32 (instead of >=2.31.1).
+# Capturing the output in CMake can be done like below. The version information
+# will written to either stdout or stderr; for me it's stderr, but let's just
+# grab both to be sure.
+execute_process(
+    COMMAND ${CMAKE_CXX_COMPILER} -xc -c /dev/null -Wa,-v -o/dev/null
+    OUTPUT_VARIABLE ASSEMBLER_VERSION_LINE_OUT
+    ERROR_VARIABLE ASSEMBLER_VERSION_LINE_ERR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_STRIP_TRAILING_WHITESPACE
+)
+set(ASSEMBLER_VERSION_LINE ${ASSEMBLER_VERSION_LINE_OUT}${ASSEMBLER_VERSION_LINE_ERR})
+string(REGEX REPLACE "GNU assembler version ([0-9]+\\.[0-9]+).*" "\\1" GNU_ASSEMBLER_VERSION "${ASSEMBLER_VERSION_LINE}")
+string(FIND ${GNU_ASSEMBLER_VERSION} "." DOT_POSITION)
+if(DOT_POSITION EQUAL -1)
+    message(FATAL_ERROR "Invalid version string format: ${GNU_ASSEMBLER_VERSION}")
+endif()
+
+# Extract the major and minor version numbers (without relying on REGEX to support older CMake versions <3.9)
+string(SUBSTRING ${GNU_ASSEMBLER_VERSION} 0 ${DOT_POSITION} GNU_ASSEMBLER_MAJOR_VERSION)
+string(SUBSTRING ${GNU_ASSEMBLER_VERSION} ${DOT_POSITION} -1 DOT_AND_MINOR_VERSION)
+string(SUBSTRING ${DOT_AND_MINOR_VERSION} 1 -1 GNU_ASSEMBLER_MINOR_VERSION)
+math(EXPR GNU_ASSEMBLER_VERSION_NUMBER  "${GNU_ASSEMBLER_MAJOR_VERSION} * 1000 + ${GNU_ASSEMBLER_MINOR_VERSION}")
+set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} "-DGNU_AS_VERSION=${GNU_ASSEMBLER_VERSION_NUMBER}")
+message(STATUS "GNU Assembler version: ${GNU_ASSEMBLER_VERSION}  (${GNU_ASSEMBLER_VERSION_NUMBER})")
+
 # Enable Intel(R) Transactional Synchronization Extensions (-mrtm) and WAITPKG instructions support (-mwaitpkg) on relevant processors
 if (CMAKE_SYSTEM_PROCESSOR MATCHES "(AMD64|amd64|i.86|x86)")
     set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -mrtm $<$<AND:$<NOT:$<CXX_COMPILER_ID:Intel>>,$<NOT:$<VERSION_LESS:${CMAKE_CXX_COMPILER_VERSION},11.0>>>:-mwaitpkg>)
