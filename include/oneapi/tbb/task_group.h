@@ -602,14 +602,14 @@ public:
 
 #if TBB_PREVIEW_ISOLATED_TASK_GROUP
 class spawn_delegate : public d1::delegate_base {
-    task* task_to_spawn;
-    task_group_context& context;
+    d1::task* task_to_spawn;
+    d1::task_group_context& context;
     bool operator()() const override {
         spawn(*task_to_spawn, context);
         return true;
     }
 public:
-    spawn_delegate(task* a_task, task_group_context& ctx)
+    spawn_delegate(d1::task* a_task, d1::task_group_context& ctx)
         : task_to_spawn(a_task), context(ctx)
     {}
 };
@@ -646,7 +646,7 @@ class isolated_task_group : public task_group {
 public:
     isolated_task_group() : task_group() {}
 
-    isolated_task_group(task_group_context& ctx) : task_group(ctx) {}
+    isolated_task_group(d1::task_group_context& ctx) : task_group(ctx) {}
 
     template<typename F>
     void run(F&& f) {
