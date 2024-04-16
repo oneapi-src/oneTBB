@@ -47,15 +47,15 @@ public:
     }
 
     task_handle_task(d1::wait_tree_vertex_interface* node, d1::task_group_context& ctx, d1::small_object_allocator& alloc)
-        : m_wait_tree_node(node)
+        : m_wait_tree_vertex(node)
         , m_ctx(ctx)
         , m_allocator(alloc) {
         suppress_unused_warning(m_version_and_traits);
-        m_wait_tree_node->reserve();
+        m_wait_tree_vertex->reserve();
     }
 
     ~task_handle_task() override {
-        m_wait_tree_node->release();
+        m_wait_tree_vertex->release();
     }
 
     d1::task_group_context& ctx() const { return m_ctx; }
