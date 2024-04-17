@@ -31,6 +31,11 @@
 #include <cstddef>
 #include <new>
 
+#include <iostream>
+#include <chrono>
+#include <thread>
+#include <algorithm>
+
 namespace tbb {
 namespace detail {
 #if __TBB_CPP20_CONCEPTS_PRESENT
@@ -55,6 +60,35 @@ concept parallel_for_function = std::invocable<const std::remove_reference_t<Fun
 #endif // __TBB_CPP20_CONCEPTS_PRESENT
 namespace d1 {
 
+struct statistics_holder {
+    ~statistics_holder() {
+        ++statistics_holder::avg_time.total_runs;
+        statistics_holder::avg_time.total_time += std::chrono::duration_cast<std::chrono::microseconds>((*std::max_element(per_thread_task_start.begin(), per_thread_task_start.end()) - start_time)).count();
+    }
+
+    void register_start() {
+        start_time = std::chrono::steady_clock::now();
+    }
+
+    void register_thread() {
+        auto thread_index = this_task_arena::current_thread_index();
+        // __TBB_ASSERT_EX(per_thread_task_start[thread_index] == std::chrono::steady_clock::time_point{}, "Task was stolen");
+        per_thread_task_start[thread_index] = std::chrono::steady_clock::now();
+    }
+
+    static struct time_collector {
+        ~time_collector() {
+            std::cout << "Avg tree unfold time = " << total_time / (float) total_runs <<  "us" << std::endl;
+        }
+        std::uint64_t total_time{};
+        std::uint64_t total_runs{};
+    } avg_time;
+    std::chrono::steady_clock::time_point start_time;
+    std::vector<std::chrono::steady_clock::time_point> per_thread_task_start{std::thread::hardware_concurrency(), std::chrono::steady_clock::time_point{}};
+};
+
+statistics_holder::time_collector statistics_holder::avg_time{};
+
 //! Task type used in parallel_for
 /** @ingroup algorithms */
 template<typename Range, typename Body, typename Partitioner>
@@ -65,34 +99,38 @@ struct start_for : public task {
 
     typename Partitioner::task_partition_type my_partition;
     small_object_allocator my_allocator;
+    statistics_holder& my_statistics;
 
     task* execute(execution_data&) override;
     task* cancel(execution_data&) override;
     void finalize(const execution_data&);
 
     //! Constructor for root task.
-    start_for( const Range& range, const Body& body, Partitioner& partitioner, small_object_allocator& alloc ) :
+    start_for( const Range& range, const Body& body, Partitioner& partitioner, small_object_allocator& alloc, statistics_holder& statistics ) :
         my_range(range),
         my_body(body),
         my_parent(nullptr),
         my_partition(partitioner),
-        my_allocator(alloc) {}
+        my_allocator(alloc),
+        my_statistics(statistics) {}
     //! Splitting constructor used to generate children.
     /** parent_ becomes left child.  Newly constructed object is right child. */
-    start_for( start_for& parent_, typename Partitioner::split_type& split_obj, small_object_allocator& alloc ) :
+    start_for( start_for& parent_, typename Partitioner::split_type& split_obj, small_object_allocator& alloc, statistics_holder& statistics ) :
         my_range(parent_.my_range, get_range_split_object<Range>(split_obj)),
         my_body(parent_.my_body),
         my_parent(nullptr),
         my_partition(parent_.my_partition, split_obj),
-        my_allocator(alloc) {}
+        my_allocator(alloc),
+        my_statistics(statistics) {}
     //! Construct right child from the given range as response to the demand.
     /** parent_ remains left child.  Newly constructed object is right child. */
-    start_for( start_for& parent_, const Range& r, depth_t d, small_object_allocator& alloc ) :
+    start_for( start_for& parent_, const Range& r, depth_t d, small_object_allocator& alloc, statistics_holder& statistics ) :
         my_range(r),
         my_body(parent_.my_body),
         my_parent(nullptr),
         my_partition(parent_.my_partition, split()),
-        my_allocator(alloc)
+        my_allocator(alloc),
+        my_statistics(statistics)
     {
         my_partition.align_depth( d );
     }
@@ -104,11 +142,13 @@ struct start_for : public task {
     static void run(const Range& range, const Body& body, Partitioner& partitioner, task_group_context& context) {
         if ( !range.empty() ) {
             small_object_allocator alloc{};
-            start_for& for_task = *alloc.new_object<start_for>(range, body, partitioner, alloc);
+            statistics_holder statistics;
+            start_for& for_task = *alloc.new_object<start_for>(range, body, partitioner, alloc, statistics);
 
             // defer creation of the wait node until task allocation succeeds
             wait_node wn;
             for_task.my_parent = &wn;
+            statistics.register_start();
             execute_and_wait(for_task, context, wn.m_wait, context);
         }
     }
@@ -132,7 +172,7 @@ private:
     void offer_work_impl(execution_data& ed, Args&&... constructor_args) {
         // New right child
         small_object_allocator alloc{};
-        start_for& right_child = *alloc.new_object<start_for>(ed, std::forward<Args>(constructor_args)..., alloc);
+        start_for& right_child = *alloc.new_object<start_for>(ed, std::forward<Args>(constructor_args)..., alloc, my_statistics);
 
         // New root node as a continuation and ref count. Left and right child attach to the new parent.
         right_child.my_parent = my_parent = alloc.new_object<tree_node>(ed, my_parent, 2, alloc);
@@ -163,6 +203,7 @@ void start_for<Range, Body, Partitioner>::finalize(const execution_data& ed) {
 //! execute task for parallel_for
 template<typename Range, typename Body, typename Partitioner>
 task* start_for<Range, Body, Partitioner>::execute(execution_data& ed) {
+    my_statistics.register_thread();
     if (!is_same_affinity(ed)) {
         my_partition.note_affinity(execution_slot(ed));
     }
