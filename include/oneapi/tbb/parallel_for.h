@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2024 Intel Corporation
+    Copyright (c) 2005-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ template<typename Range, typename Body, typename Partitioner>
 struct start_for : public task {
     Range my_range;
     const Body my_body;
-    wait_tree_node_interface* my_wait_tree_node;
+    node* my_parent;
 
     typename Partitioner::task_partition_type my_partition;
     small_object_allocator my_allocator;
@@ -74,7 +74,7 @@ struct start_for : public task {
     start_for( const Range& range, const Body& body, Partitioner& partitioner, small_object_allocator& alloc ) :
         my_range(range),
         my_body(body),
-        my_wait_tree_node(nullptr),
+        my_parent(nullptr),
         my_partition(partitioner),
         my_allocator(alloc) {}
     //! Splitting constructor used to generate children.
@@ -82,7 +82,7 @@ struct start_for : public task {
     start_for( start_for& parent_, typename Partitioner::split_type& split_obj, small_object_allocator& alloc ) :
         my_range(parent_.my_range, get_range_split_object<Range>(split_obj)),
         my_body(parent_.my_body),
-        my_wait_tree_node(nullptr),
+        my_parent(nullptr),
         my_partition(parent_.my_partition, split_obj),
         my_allocator(alloc) {}
     //! Construct right child from the given range as response to the demand.
@@ -90,7 +90,7 @@ struct start_for : public task {
     start_for( start_for& parent_, const Range& r, depth_t d, small_object_allocator& alloc ) :
         my_range(r),
         my_body(parent_.my_body),
-        my_wait_tree_node(nullptr),
+        my_parent(nullptr),
         my_partition(parent_.my_partition, split()),
         my_allocator(alloc)
     {
@@ -106,9 +106,10 @@ struct start_for : public task {
             small_object_allocator alloc{};
             start_for& for_task = *alloc.new_object<start_for>(range, body, partitioner, alloc);
 
-            wait_context_node wn{1};
-            for_task.my_wait_tree_node = &wn;
-            execute_and_wait(for_task, context, wn.get_context(), context);
+            // defer creation of the wait node until task allocation succeeds
+            wait_node wn;
+            for_task.my_parent = &wn;
+            execute_and_wait(for_task, context, wn.m_wait, context);
         }
     }
     //! Run body for range, serves as callback for partitioner
@@ -134,7 +135,7 @@ private:
         start_for& right_child = *alloc.new_object<start_for>(ed, std::forward<Args>(constructor_args)..., alloc);
 
         // New root node as a continuation and ref count. Left and right child attach to the new parent.
-        right_child.my_wait_tree_node = my_wait_tree_node = alloc.new_object<partitioner_node>(ed, my_wait_tree_node, 2, alloc);
+        right_child.my_parent = my_parent = alloc.new_object<tree_node>(ed, my_parent, 2, alloc);
         // Spawn the right sibling
         right_child.spawn_self(ed);
     }
@@ -148,13 +149,13 @@ private:
 template<typename Range, typename Body, typename Partitioner>
 void start_for<Range, Body, Partitioner>::finalize(const execution_data& ed) {
     // Get the current parent and allocator an object destruction
-    wait_tree_node_interface* wait_tree_node = my_wait_tree_node;
+    node* parent = my_parent;
     auto allocator = my_allocator;
     // Task execution finished - destroy it
     this->~start_for();
     // Unwind the tree decrementing the parent`s reference count
 
-    wait_tree_node->release(1, ed);
+    fold_tree<tree_node>(parent, ed);
     allocator.deallocate(this, ed);
 
 }
