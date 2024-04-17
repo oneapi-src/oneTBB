@@ -25,8 +25,6 @@ on:
       - synchronize
       - reopened
 
-permissions: read-all
-
 env:
   BUILD_CONCURRENCY: 2
   MACOS_BUILD_CONCURRENCY: 3
@@ -83,8 +81,6 @@ jobs:
   pages:
     if: ${{ github.ref == 'refs/heads/master' }}
     runs-on: ubuntu-latest
-    permissions:
-      pages: write
     needs: [documentation]
     steps:
       - name: Checkout gh-pages
