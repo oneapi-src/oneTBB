@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2024 Intel Corporation
+    Copyright (c) 2005-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -113,15 +113,36 @@ template<typename Range, typename Body, typename Partitioner> struct start_scan;
 template<typename Range, typename Body, typename Partitioner> struct start_reduce;
 template<typename Range, typename Body, typename Partitioner> struct start_deterministic_reduce;
 
-class partitioner_node : public reference_node {
-public:
-    partitioner_node(wait_tree_node_interface* parent, std::uint32_t ref_count, small_object_allocator& alloc)
-        : reference_node{parent, ref_count}
+struct node {
+    node* my_parent{};
+    std::atomic<int> m_ref_count{};
+
+    node() = default;
+    node(node* parent, int ref_count) :
+        my_parent{parent}, m_ref_count{ref_count} {
+        __TBB_ASSERT(ref_count > 0, "The ref count must be positive");
+    }
+};
+
+struct wait_node : node {
+    wait_node() : node{ nullptr, 1 } {}
+    wait_context m_wait{1};
+};
+
+//! Join task node that contains shared flag for stealing feedback
+struct tree_node : public node {
+    small_object_allocator m_allocator;
+    std::atomic<bool> m_child_stolen{false};
+
+    tree_node(node* parent, int ref_count, small_object_allocator& alloc)
+        : node{parent, ref_count}
         , m_allocator{alloc} {}
+
+    void join(task_group_context*) {/*dummy, required only for reduction algorithms*/};
 
     template <typename Task>
     static void mark_task_stolen(Task &t) {
-        std::atomic<bool> &flag = static_cast<partitioner_node*>(t.my_wait_tree_node)->m_child_stolen;
+        std::atomic<bool> &flag = static_cast<tree_node*>(t.my_parent)->m_child_stolen;
 #if TBB_USE_PROFILING_TOOLS
         // Threading tools respect lock prefix but report false-positive data-race via plain store
         flag.exchange(true);
@@ -131,28 +152,34 @@ public:
     }
     template <typename Task>
     static bool is_peer_stolen(Task &t) {
-        return static_cast<partitioner_node*>(t.my_wait_tree_node)->m_child_stolen.load(std::memory_order_relaxed);
+        return static_cast<tree_node*>(t.my_parent)->m_child_stolen.load(std::memory_order_relaxed);
     }
-
-    template <typename Task>
-    static bool is_concurrent_task(Task &t) {
-        return static_cast<partitioner_node*>(t.my_wait_tree_node)->get_num_child() >= 2;
-    }
-
-protected:
-    small_object_allocator m_allocator;
-
-private:
-    void destroy(const d1::execution_data& ed) override {
-        m_allocator.delete_object(this, ed);
-    }
-
-    void destroy() override {
-        __TBB_ASSERT(false, "Overaload without d1::execution_data is called");
-    }
-
-    std::atomic<bool> m_child_stolen{false};
 };
+
+// Context used to check cancellation state during reduction join process
+template<typename TreeNodeType>
+void fold_tree(node* n, const execution_data& ed) {
+    for (;;) {
+        __TBB_ASSERT(n, nullptr);
+        __TBB_ASSERT(n->m_ref_count.load(std::memory_order_relaxed) > 0, "The refcount must be positive.");
+        call_itt_task_notify(releasing, n);
+        if (--n->m_ref_count > 0) {
+            return;
+        }
+        node* parent = n->my_parent;
+        if (!parent) {
+            break;
+        };
+
+        call_itt_task_notify(acquired, n);
+        TreeNodeType* self = static_cast<TreeNodeType*>(n);
+        self->join(ed.context);
+        self->m_allocator.delete_object(self, ed);
+        n = parent;
+    }
+    // Finish parallel for execution when the root (last node) is reached
+    static_cast<wait_node*>(n)->m_wait.release();
+}
 
 //! Depth is a relative depth of recursive division inside a range pool. Relative depth allows
 //! infinite absolute depth of the recursion for heavily unbalanced workloads with range represented
@@ -381,7 +408,7 @@ struct dynamic_grainsize_mode : Mode {
     bool check_being_stolen(Task &t, const execution_data& ed) { // part of old should_execute_range()
         if( !(self().my_divisor / Mode::my_partition::factor) ) { // if not from the top P tasks of binary tree
             self().my_divisor = 1; // TODO: replace by on-stack flag (partition_state's member)?
-            if( is_stolen_task(ed) && partitioner_node::is_concurrent_task(t) ) { // runs concurrently with the left task
+            if( is_stolen_task(ed) && t.my_parent->m_ref_count >= 2 ) { // runs concurrently with the left task
 #if __TBB_USE_OPTIONAL_RTTI
                 // RTTI is available, check whether the cast is valid
                 // TODO: TBB_REVAMP_TODO __TBB_ASSERT(dynamic_cast<tree_node*>(t.m_parent), 0);
@@ -389,7 +416,7 @@ struct dynamic_grainsize_mode : Mode {
                 // - initial value of my_divisor != 0 (protected by separate assertion)
                 // - is_stolen_task() always returns false for the root task.
 #endif
-                partitioner_node::mark_task_stolen(t);
+                tree_node::mark_task_stolen(t);
                 if( !my_max_depth ) my_max_depth++;
                 my_max_depth += __TBB_DEMAND_DEPTH_ADD;
                 return true;
@@ -434,7 +461,7 @@ struct dynamic_grainsize_mode : Mode {
                 self().my_divisor = 0; // once for each task; depth will be decreased in align_depth()
                 return true;
             }
-            else if ( partitioner_node::is_peer_stolen(t) ) {
+            else if ( tree_node::is_peer_stolen(t) ) {
                 my_max_depth += __TBB_DEMAND_DEPTH_ADD;
                 return true;
             }
@@ -463,7 +490,7 @@ public:
     }
     template <typename Task>
     bool check_for_demand(Task& t) {
-        if (partitioner_node::is_peer_stolen(t)) {
+        if (tree_node::is_peer_stolen(t)) {
             my_max_depth += __TBB_DEMAND_DEPTH_ADD;
             return true;
         } else return false;
