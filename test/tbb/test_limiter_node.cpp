@@ -38,8 +38,8 @@
 const int L = 10;
 const int N = 1000;
 
-using tbb::detail::d1::SUCCESSFULLY_ENQUEUED;
-using tbb::detail::d1::graph_task;
+using tbb::detail::d2::SUCCESSFULLY_ENQUEUED;
+using tbb::detail::d2::graph_task;
 
 template< typename T >
 struct serial_receiver : public tbb::flow::receiver<T>, utils::NoAssign {

@@ -424,7 +424,7 @@ void graph_iterator<C,N>::internal_forward() {
 }
 
 //! Constructs a graph with isolated task_group_context
-inline graph::graph() : my_wait_context_node(0), my_nodes(nullptr), my_nodes_last(nullptr), my_task_arena(nullptr) {
+inline graph::graph() : my_wait_context_vertex(0), my_nodes(nullptr), my_nodes_last(nullptr), my_task_arena(nullptr) {
     prepare_task_arena();
     own_context = true;
     cancelled = false;
@@ -435,7 +435,7 @@ inline graph::graph() : my_wait_context_node(0), my_nodes(nullptr), my_nodes_las
 }
 
 inline graph::graph(task_group_context& use_this_context) :
-    my_wait_context_node(0), my_context(&use_this_context), my_nodes(nullptr), my_nodes_last(nullptr), my_task_arena(nullptr) {
+    my_wait_context_vertex(0), my_context(&use_this_context), my_nodes(nullptr), my_nodes_last(nullptr), my_task_arena(nullptr) {
     prepare_task_arena();
     own_context = false;
     cancelled = false;
@@ -454,13 +454,13 @@ inline graph::~graph() {
 }
 
 inline void graph::reserve_wait() {
-    my_wait_context_node.reserve();
+    my_wait_context_vertex.reserve();
     fgt_reserve_wait(this);
 }
 
 inline void graph::release_wait() {
     fgt_release_wait(this);
-    my_wait_context_node.release();
+    my_wait_context_vertex.release();
 }
 
 inline void graph::register_node(graph_node *n) {
@@ -703,7 +703,7 @@ private:
             return false;
         }
         if ( !my_has_cached_item ) {
-            flow_control control;
+            d1::flow_control control;
 
             fgt_begin_body( my_body );
 
@@ -722,7 +722,7 @@ private:
     }
 
     graph_task* create_put_task() {
-        small_object_allocator allocator{};
+        d1::small_object_allocator allocator{};
         typedef input_node_task_bypass< input_node<output_type> > task_type;
         graph_task* t = allocator.new_object<task_type>(my_graph, allocator, *this);
         return t;
@@ -1167,7 +1167,7 @@ protected:
     };
 
     // implements the aggregator_operation concept
-    class buffer_operation : public aggregated_operation< buffer_operation > {
+    class buffer_operation : public d1::aggregated_operation< buffer_operation > {
     public:
         char type;
         T* elem;
@@ -1182,9 +1182,9 @@ protected:
     };
 
     bool forwarder_busy;
-    typedef aggregating_functor<class_type, buffer_operation> handler_type;
-    friend class aggregating_functor<class_type, buffer_operation>;
-    aggregator< handler_type, buffer_operation> my_aggregator;
+    typedef d1::aggregating_functor<class_type, buffer_operation> handler_type;
+    friend class d1::aggregating_functor<class_type, buffer_operation>;
+    d1::aggregator< handler_type, buffer_operation> my_aggregator;
 
     virtual void handle_operations(buffer_operation *op_list) {
         handle_operations_impl(op_list, this);
@@ -1217,7 +1217,7 @@ protected:
             if(is_graph_active(this->my_graph)) {
                 forwarder_busy = true;
                 typedef forward_task_bypass<class_type> task_type;
-                small_object_allocator allocator{};
+                d1::small_object_allocator allocator{};
                 graph_task* new_task = allocator.new_object<task_type>(graph_reference(), allocator, *this);
                 // tmp should point to the last item handled by the aggregator.  This is the operation
                 // the handling thread enqueued.  So modifying that record will be okay.
@@ -1963,7 +1963,7 @@ private:
                     if ( check_conditions() ) {
                         if ( is_graph_active(this->my_graph) ) {
                             typedef forward_task_bypass<limiter_node<T, DecrementType>> task_type;
-                            small_object_allocator allocator{};
+                            d1::small_object_allocator allocator{};
                             graph_task* rtask = allocator.new_object<task_type>( my_graph, allocator, *this );
                             spawn_in_graph_arena(graph_reference(), *rtask);
                         }
@@ -1981,7 +1981,7 @@ private:
             if (reserved) my_predecessors.try_release();
             if ( check_conditions() ) {
                 if ( is_graph_active(this->my_graph) ) {
-                    small_object_allocator allocator{};
+                    d1::small_object_allocator allocator{};
                     typedef forward_task_bypass<limiter_node<T, DecrementType>> task_type;
                     graph_task* t = allocator.new_object<task_type>(my_graph, allocator, *this);
                     __TBB_ASSERT(!rval, "Have two tasks to handle");
@@ -2031,7 +2031,7 @@ public:
         //spawn a forward task if this is the only successor
         if ( was_empty && !my_predecessors.empty() && my_count + my_tries < my_threshold ) {
             if ( is_graph_active(this->my_graph) ) {
-                small_object_allocator allocator{};
+                d1::small_object_allocator allocator{};
                 typedef forward_task_bypass<limiter_node<T, DecrementType>> task_type;
                 graph_task* t = allocator.new_object<task_type>(my_graph, allocator, *this);
                 spawn_in_graph_arena(graph_reference(), *t);
@@ -2054,7 +2054,7 @@ public:
         spin_mutex::scoped_lock lock(my_mutex);
         my_predecessors.add( src );
         if ( my_count + my_tries < my_threshold && !my_successors.empty() && is_graph_active(this->my_graph) ) {
-            small_object_allocator allocator{};
+            d1::small_object_allocator allocator{};
             typedef forward_task_bypass<limiter_node<T, DecrementType>> task_type;
             graph_task* t = allocator.new_object<task_type>(my_graph, allocator, *this);
             spawn_in_graph_arena(graph_reference(), *t);
@@ -2088,7 +2088,7 @@ protected:
             spin_mutex::scoped_lock lock(my_mutex);
             --my_tries;
             if (check_conditions() && is_graph_active(this->my_graph)) {
-                small_object_allocator allocator{};
+                d1::small_object_allocator allocator{};
                 typedef forward_task_bypass<limiter_node<T, DecrementType>> task_type;
                 rtask = allocator.new_object<task_type>(my_graph, allocator, *this);
             }
@@ -3047,7 +3047,7 @@ public:
                 // because failed reserve does not mean that register_successor is not ready to put a message immediately.
                 // We have some sort of infinite loop: reserving node tries to set pull state for the edge,
                 // but overwrite_node tries to return push state back. That is why we have to break this loop with task creation.
-                small_object_allocator allocator{};
+                d1::small_object_allocator allocator{};
                 typedef register_predecessor_task task_type;
                 graph_task* t = allocator.new_object<task_type>(graph_reference(), allocator, *this, s);
                 spawn_in_graph_arena( my_graph, *t );
@@ -3120,10 +3120,10 @@ protected:
     //! Breaks an infinite loop between the node reservation and register_successor call
     struct register_predecessor_task : public graph_task {
         register_predecessor_task(
-            graph& g, small_object_allocator& allocator, predecessor_type& owner, successor_type& succ)
+            graph& g, d1::small_object_allocator& allocator, predecessor_type& owner, successor_type& succ)
             : graph_task(g, allocator), o(owner), s(succ) {};
 
-        task* execute(execution_data& ed) override {
+        d1::task* execute(d1::execution_data& ed) override {
             // TODO revamp: investigate why qualification is needed for register_successor() call
             using tbb::detail::d2::register_predecessor;
             using tbb::detail::d2::register_successor;
@@ -3134,7 +3134,7 @@ protected:
             return nullptr;
         }
 
-        task* cancel(execution_data& ed) override {
+        d1::task* cancel(d1::execution_data& ed) override {
             finalize<register_predecessor_task>(ed);
             return nullptr;
         }
@@ -3351,7 +3351,7 @@ inline namespace v1 {
 } // v1
 } // flow
 
-    using detail::d2::flow_control;
+    using detail::d1::flow_control;
 
 namespace profiling {
     using detail::d2::set_name;
