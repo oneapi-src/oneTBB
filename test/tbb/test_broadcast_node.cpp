@@ -29,7 +29,7 @@
 //! \brief Test for [flow_graph.broadcast_node] specification
 
 
-#define TBB_INTERNAL_NAMESPACE detail::d1
+#define TBB_INTERNAL_NAMESPACE detail::d2
 namespace tbb {
 using task = TBB_INTERNAL_NAMESPACE::graph_task;
 }
@@ -281,4 +281,3 @@ TEST_CASE("Deduction guides"){
     test_deduction_guides();
 }
 #endif
-

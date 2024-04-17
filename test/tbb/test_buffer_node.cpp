@@ -307,7 +307,7 @@ int test_parallel(int num_threads) {
 // Chained buffers ( 2 & 3 ), single sender, items at last buffer in arbitrary order
 //
 
-#define TBB_INTERNAL_NAMESPACE detail::d1
+#define TBB_INTERNAL_NAMESPACE detail::d2
 using tbb::TBB_INTERNAL_NAMESPACE::register_predecessor;
 using tbb::TBB_INTERNAL_NAMESPACE::remove_predecessor;
 

@@ -150,7 +150,7 @@ private:
     friend class apply_body_task_bypass< class_type, input_type >;
     friend class forward_task_bypass< class_type >;
 
-    class operation_type : public aggregated_operation< operation_type > {
+    class operation_type : public d1::aggregated_operation< operation_type > {
     public:
         char type;
         union {
@@ -164,9 +164,9 @@ private:
     };
 
     bool forwarder_busy;
-    typedef aggregating_functor<class_type, operation_type> handler_type;
-    friend class aggregating_functor<class_type, operation_type>;
-    aggregator< handler_type, operation_type > my_aggregator;
+    typedef d1::aggregating_functor<class_type, operation_type> handler_type;
+    friend class d1::aggregating_functor<class_type, operation_type>;
+    d1::aggregator< handler_type, operation_type > my_aggregator;
 
     graph_task* perform_queued_requests() {
         graph_task* new_task = nullptr;
@@ -300,7 +300,7 @@ private:
             return nullptr;
         }
         // TODO revamp: extract helper for common graph task allocation part
-        small_object_allocator allocator{};
+        d1::small_object_allocator allocator{};
         typedef apply_body_task_bypass<class_type, input_type> task_type;
         graph_task* t = allocator.new_object<task_type>( my_graph_ref, allocator, *this, input, my_priority );
         return t;
@@ -326,7 +326,7 @@ private:
         if (!is_graph_active(my_graph_ref)) {
             return nullptr;
         }
-        small_object_allocator allocator{};
+        d1::small_object_allocator allocator{};
         typedef forward_task_bypass<class_type> task_type;
         graph_task* t = allocator.new_object<task_type>( graph_reference(), allocator, *this, my_priority );
         return t;
@@ -678,7 +678,7 @@ protected:
             return apply_body_bypass( continue_msg() );
         }
         else {
-            small_object_allocator allocator{};
+            d1::small_object_allocator allocator{};
             typedef apply_body_task_bypass<class_type, continue_msg> task_type;
             graph_task* t = allocator.new_object<task_type>( graph_reference(), allocator, *this, continue_msg(), my_priority );
             return t;
