@@ -30,8 +30,8 @@
 //! \brief Test for [flow_graph.input_node] specification
 
 
-using tbb::detail::d1::graph_task;
-using tbb::detail::d1::SUCCESSFULLY_ENQUEUED;
+using tbb::detail::d2::graph_task;
+using tbb::detail::d2::SUCCESSFULLY_ENQUEUED;
 
 const int N = 1000;
 

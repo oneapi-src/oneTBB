@@ -140,7 +140,7 @@ private:
     // To organize task_list
     graph_task* my_next{ nullptr };
     d1::small_object_allocator my_allocator;
-    d1::wait_tree_node_interface* my_reference_node;
+    d1::wait_tree_vertex_interface* my_reference_vertex;
     // TODO revamp: elaborate internal interfaces to avoid friends declarations
     friend class graph_task_list;
     friend graph_task* prioritize_task(graph& g, graph_task& gt);
@@ -278,7 +278,7 @@ public:
         caught_exception = false;
         try_call([this] {
             my_task_arena->execute([this] {
-                wait(my_wait_context_node.get_context(), *my_context);
+                wait(my_wait_context_vertex.get_context(), *my_context);
             });
             cancelled = my_context->is_group_execution_cancelled();
         }).on_exception([this] {
@@ -329,7 +329,7 @@ public:
     bool exception_thrown() { return caught_exception; }
 
 private:
-    d1::wait_context_node my_wait_context_node;
+    d1::wait_context_vertex my_wait_context_vertex;
     task_group_context *my_context;
     bool own_context;
     bool cancelled;
@@ -346,7 +346,7 @@ private:
 
     graph_task_priority_queue_t my_priority_queue;
 
-    d1::wait_context_node& get_wait_context_node() { return my_wait_context_node; }
+    d1::wait_context_vertex& get_wait_context_node() { return my_wait_context_vertex; }
 
     friend void activate_graph(graph& g);
     friend void deactivate_graph(graph& g);
@@ -369,9 +369,9 @@ inline void graph_task::destruct_and_deallocate(const d1::execution_data& ed) {
 
 template<typename DerivedType>
 inline void graph_task::finalize(const d1::execution_data& ed) {
-    d1::wait_tree_node_interface* reference_node = my_reference_node;
+    d1::wait_tree_vertex_interface* reference_vertex = my_reference_vertex;
     destruct_and_deallocate<DerivedType>(ed);
-    reference_node->release();
+    reference_vertex->release();
 }
 
 inline graph_task::graph_task(graph& g, d1::small_object_allocator& allocator,
@@ -379,9 +379,9 @@ inline graph_task::graph_task(graph& g, d1::small_object_allocator& allocator,
     : my_graph(g)
     , priority(node_priority)
     , my_allocator(allocator)
-    , my_reference_node(r1::get_thread_reference_node(&my_graph.get_wait_context_node()))
+    , my_reference_vertex(r1::get_thread_reference_vertex(&my_graph.get_wait_context_node()))
 {
-    my_reference_node->reserve();
+    my_reference_vertex->reserve();
 }
 
 //********************************************************************************

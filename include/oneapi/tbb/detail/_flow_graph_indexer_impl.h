@@ -118,7 +118,7 @@
         };
         typedef indexer_node_base<InputTuple,output_type,StructTypes> class_type;
 
-        class indexer_node_base_operation : public aggregated_operation<indexer_node_base_operation> {
+        class indexer_node_base_operation : public d1::aggregated_operation<indexer_node_base_operation> {
         public:
             char type;
             union {
@@ -132,9 +132,9 @@
                 my_succ(const_cast<successor_type *>(&s)) {}
         };
 
-        typedef aggregating_functor<class_type, indexer_node_base_operation> handler_type;
-        friend class aggregating_functor<class_type, indexer_node_base_operation>;
-        aggregator<handler_type, indexer_node_base_operation> my_aggregator;
+        typedef d1::aggregating_functor<class_type, indexer_node_base_operation> handler_type;
+        friend class d1::aggregating_functor<class_type, indexer_node_base_operation>;
+        d1::aggregator<handler_type, indexer_node_base_operation> my_aggregator;
 
         void handle_operations(indexer_node_base_operation* op_list) {
             indexer_node_base_operation *current;

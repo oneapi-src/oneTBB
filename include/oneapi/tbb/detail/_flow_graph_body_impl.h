@@ -77,7 +77,7 @@ template< typename Output >
 class input_body : no_assign {
 public:
     virtual ~input_body() {}
-    virtual Output operator()(flow_control& fc) = 0;
+    virtual Output operator()(d1::flow_control& fc) = 0;
     virtual input_body* clone() = 0;
 };
 
@@ -86,7 +86,7 @@ template< typename Output, typename Body>
 class input_body_leaf : public input_body<Output> {
 public:
     input_body_leaf( const Body &_body ) : body(_body) { }
-    Output operator()(flow_control& fc) override { return body(fc); }
+    Output operator()(d1::flow_control& fc) override { return body(fc); }
     input_body_leaf* clone() override {
         return new input_body_leaf< Output, Body >(body);
     }
@@ -293,7 +293,7 @@ public:
         return next_task;
     }
 
-    task* cancel(execution_data& ed) override {
+    d1::task* cancel(d1::execution_data& ed) override {
         finalize<apply_body_task_bypass>(ed);
         return nullptr;
     }
@@ -307,7 +307,7 @@ public:
     input_node_task_bypass( graph& g, d1::small_object_allocator& allocator, NodeType &n )
         : graph_task(g, allocator), my_node(n) {}
 
-    task* execute(execution_data& ed) override {
+    d1::task* execute(d1::execution_data& ed) override {
         graph_task* next_task = my_node.apply_body_bypass( );
         if (SUCCESSFULLY_ENQUEUED == next_task)
             next_task = nullptr;
@@ -317,7 +317,7 @@ public:
         return next_task;
     }
 
-    task* cancel(execution_data& ed) override {
+    d1::task* cancel(d1::execution_data& ed) override {
         finalize<input_node_task_bypass>(ed);
         return nullptr;
     }

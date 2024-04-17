@@ -32,6 +32,11 @@ namespace d1 {
 class base_filter;
 }
 
+namespace d2 {
+template <typename Output>
+class input_node;
+}
+
 namespace r1 {
 TBB_EXPORT void __TBB_EXPORTED_FUNC set_end_of_input(d1::base_filter&);
 class pipeline;
@@ -131,7 +136,7 @@ class flow_control {
     template<typename Body, typename InputType, typename OutputType > friend class concrete_filter;
     template<typename Output>
     __TBB_requires(std::copyable<Output>)
-    friend class input_node;
+    friend class d2::input_node;
 public:
     void stop() { is_pipeline_stopped = true; }
 };
