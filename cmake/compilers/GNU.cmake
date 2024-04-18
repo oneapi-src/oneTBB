@@ -36,17 +36,16 @@ if (NOT CMAKE_GENERATOR MATCHES "Ninja" AND NOT CMAKE_CXX_DEPENDS_USE_COMPILER)
 endif()
 
 
-# Binutils < 2.31.1 does not support the "tpause" instruction.
-# When compiling with a modern version of GCC (which does support it), but then
-# relying on an outdated assembler will fail in the assembler.
-# Here we will invoke the GNU assembler to get the version number and
+# Binutils < 2.31.1 do not support the tpause instruction.
+# When compiling with a modern version of GCC (supporting it) but
+# relying on an outdated assembler, the assembler fails.
+# The following code invokes the GNU assembler to get the version number and
 # convert it to an integer that can be used in the C++ code to compare
 # against, and disable the __TBB_WAITPKG_INTRINSICS_PRESENT macro.
-# Unfortunately, binutils only reports the MAJOR.MINOR version, without patch,
-# so the check we effectively implement is version >=2.32 (instead of >=2.31.1).
+# Binutils only report the version in the MAJOR.MINOR format, 
+# therefore the version checked is >=2.32 (instead of >=2.31.1).
 # Capturing the output in CMake can be done like below. The version information
-# will written to either stdout or stderr; for me it's stderr, but let's just
-# grab both to be sure.
+# is written to either stdout or stderr. Here, both are used. 
 execute_process(
     COMMAND ${CMAKE_CXX_COMPILER} -xc -c /dev/null -Wa,-v -o/dev/null
     OUTPUT_VARIABLE ASSEMBLER_VERSION_LINE_OUT
