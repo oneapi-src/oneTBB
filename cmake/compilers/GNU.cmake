@@ -43,7 +43,7 @@ endif()
 # convert it to an integer that can be used in the C++ code to compare
 # against, and disable the __TBB_WAITPKG_INTRINSICS_PRESENT macro.
 # Unfortunately, binutils only reports the MAJOR.MINOR version, without patch,
-# so the check we effectively implement is version >2.32 (instead of >=2.31.1).
+# so the check we effectively implement is version >=2.32 (instead of >=2.31.1).
 # Capturing the output in CMake can be done like below. The version information
 # will written to either stdout or stderr; for me it's stderr, but let's just
 # grab both to be sure.
