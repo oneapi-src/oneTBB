@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2022-2023 Intel Corporation
+    Copyright (c) 2022-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ public:
     thread_dispatcher_client* create_client(arena& a);
     void register_client(thread_dispatcher_client* client);
     bool try_unregister_client(thread_dispatcher_client* client, std::uint64_t aba_epoch, unsigned priority);
+    bool is_any_client_in_need();
 
     void adjust_job_count_estimate(int delta);
     void release(bool blocking_terminate);
@@ -66,8 +67,8 @@ private:
     void insert_client(thread_dispatcher_client& client);
     void remove_client(thread_dispatcher_client& client);
     bool is_client_alive(thread_dispatcher_client* client);
-    thread_dispatcher_client* client_in_need(client_list_type* clients, thread_dispatcher_client* hint);
-    thread_dispatcher_client* client_in_need(thread_dispatcher_client* prev);
+    thread_dispatcher_client* client_in_need(client_list_type* clients, thread_dispatcher_client* hint, bool should_join);
+    thread_dispatcher_client* client_in_need(thread_dispatcher_client* prev, bool should_join = true);
 
     friend class threading_control_impl;
     static constexpr unsigned num_priority_levels = d1::num_priority_levels;

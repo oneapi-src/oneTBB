@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2022-2023 Intel Corporation
+    Copyright (c) 2022-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -131,7 +131,7 @@ bool thread_dispatcher::is_client_alive(thread_dispatcher_client* client) {
     return false;
 }
 
-thread_dispatcher_client* thread_dispatcher::client_in_need(client_list_type* clients, thread_dispatcher_client* hint) {
+thread_dispatcher_client* thread_dispatcher::client_in_need(client_list_type* clients, thread_dispatcher_client* hint, bool should_join) {
     // TODO: make sure client with higher priority returned only if there are available slots in it.
     hint = select_next_client(hint);
     if (!hint) {
@@ -149,19 +149,23 @@ thread_dispatcher_client* thread_dispatcher::client_in_need(client_list_type* cl
             } while (clients[curr_priority_level].empty());
             it = clients[curr_priority_level].begin();
         }
-        if (t.try_join()) {
+        if (t.try_join(should_join)) {
             return &t;
         }
     } while (it != hint);
     return nullptr;
 }
 
-thread_dispatcher_client* thread_dispatcher::client_in_need(thread_dispatcher_client* prev) {
+thread_dispatcher_client* thread_dispatcher::client_in_need(thread_dispatcher_client* prev, bool should_join) {
     client_list_mutex_type::scoped_lock lock(my_list_mutex, /*is_writer=*/false);
     if (is_client_alive(prev)) {
-        return client_in_need(my_client_list, prev);
+        return client_in_need(my_client_list, prev, should_join);
     }
-    return client_in_need(my_client_list, my_next_client);
+    return client_in_need(my_client_list, my_next_client, should_join);
+}
+
+bool thread_dispatcher::is_any_client_in_need() {
+    return client_in_need(nullptr, /* should_join = */ false) != nullptr;
 }
 
 void thread_dispatcher::adjust_job_count_estimate(int delta) {

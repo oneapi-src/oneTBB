@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2022-2023 Intel Corporation
+    Copyright (c) 2022-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -29,8 +29,8 @@ public:
     thread_dispatcher_client(arena& a, std::uint64_t aba_epoch) : my_arena(a), my_aba_epoch(aba_epoch) {}
 
     // Interface of communication with thread pool
-    bool try_join() {
-        return my_arena.try_join();
+    bool try_join(bool should_join) {
+        return my_arena.try_join(should_join);
     }
     void process(thread_data& td) {
         my_arena.process(td);
