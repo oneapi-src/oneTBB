@@ -169,9 +169,11 @@ void task_group_context_impl::bind_to(d1::task_group_context& ctx, thread_data* 
 #if defined(__INTEL_COMPILER) && __INTEL_COMPILER <= 1910
             ((std::atomic<typename std::underlying_type<d1::task_group_context::state>::type>&)ctx.my_state).compare_exchange_strong(
                 (typename std::underlying_type<d1::task_group_context::state>::type&)state,
-                (typename std::underlying_type<d1::task_group_context::state>::type)d1::task_group_context::state::locked)
+                (typename std::underlying_type<d1::task_group_context::state>::type)d1::task_group_context::state::locked,
+                std::memory_order_acquire, std::memory_order_relaxed)
 #else
-            ctx.my_state.compare_exchange_strong(state, d1::task_group_context::state::locked)
+            ctx.my_state.compare_exchange_strong(state, d1::task_group_context::state::locked,
+                                                 std::memory_order_acquire, std::memory_order_relaxed)
 #endif
             ) {
             // If we are in the outermost task dispatch loop of an external thread, then

@@ -292,7 +292,7 @@ inline void private_worker::wake_or_launch() {
         my_thread_monitor.notify();
         break;
     case st_init:
-        if (my_state.compare_exchange_strong(state, st_starting)) {
+        if (my_state.compare_exchange_strong(state, st_starting, std::memory_order_relaxed, std::memory_order_relaxed)) {
             // after this point, remove_server_ref() must be done by created thread
 #if __TBB_USE_WINAPI
             // Win thread_monitor::launch is designed on the assumption that the workers thread id go from 1 to Hard limit set by TBB market::global_market
@@ -360,7 +360,7 @@ inline bool private_server::try_insert_in_asleep_list( private_worker& t ) {
     // it sees us sleeping on the list and wakes us up.
     auto expected = my_slack.load(std::memory_order_relaxed);
     while (expected < 0) {
-        if (my_slack.compare_exchange_strong(expected, expected + 1)) {
+        if (my_slack.compare_exchange_strong(expected, expected + 1, std::memory_order_relaxed, std::memory_order_relaxed)) {
             t.my_next = my_asleep_list_root.load(std::memory_order_relaxed);
             my_asleep_list_root.store(&t, std::memory_order_relaxed);
             return true;
@@ -386,7 +386,7 @@ void private_server::wake_some( int additional_slack ) {
         int old = my_slack.load(std::memory_order_relaxed);
         do {
             if (old <= 0) goto done;
-        } while (!my_slack.compare_exchange_strong(old, old - 1));
+        } while (!my_slack.compare_exchange_strong(old, old - 1, std::memory_order_relaxed, std::memory_order_relaxed));
         ++allotted_slack;
     }
 done:

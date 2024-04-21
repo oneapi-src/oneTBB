@@ -71,7 +71,6 @@ struct task_proxy : public d1::task {
             const intptr_t cleaner_bit = location_mask & ~from_bit;
             // Attempt to transition the proxy to the "empty" state with
             // cleaner_bit specifying entity responsible for its eventual freeing.
-            // Explicit cast to void* is to work around a seeming ICC 11.1 bug.
             if ( task_and_tag.compare_exchange_strong(tat, cleaner_bit) ) {
                 // Successfully grabbed the task, and left new owner with the job of freeing the proxy
                 return task_ptr(tat);
@@ -181,7 +180,7 @@ public:
         __TBB_ASSERT( !my_first.load(std::memory_order_relaxed), nullptr );
         __TBB_ASSERT( !my_last.load(std::memory_order_relaxed), nullptr );
         __TBB_ASSERT( !my_is_idle.load(std::memory_order_relaxed), nullptr );
-        my_last = &my_first;
+        my_last.store(&my_first, std::memory_order_relaxed);
         suppress_unused_warning(pad);
     }
 
@@ -189,7 +188,7 @@ public:
     void drain() {
         // No fences here because other threads have already quit.
         for( ; task_proxy* t = my_first; ) {
-            my_first.store(t->next_in_mailbox, std::memory_order_relaxed);
+            my_first.store(t->next_in_mailbox.load(std::memory_order_relaxed), std::memory_order_relaxed);
             t->allocator.delete_object(t);
         }
     }

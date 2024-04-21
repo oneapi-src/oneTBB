@@ -53,7 +53,7 @@ void* small_object_pool_impl::allocate_impl(d1::small_object_pool*& allocator, s
             m_private_list = m_private_list->next;
         } else if (m_public_list.load(std::memory_order_relaxed)) {
             // No fence required for read of my_public_list above, because std::atomic::exchange() has a fence.
-            obj = m_public_list.exchange(nullptr);
+            obj = m_public_list.exchange(nullptr, std::memory_order_acquire);
             __TBB_ASSERT( obj, "another thread emptied the my_public_list" );
             m_private_list = obj->next;
         } else {
@@ -106,7 +106,7 @@ void small_object_pool_impl::deallocate_impl(void* ptr, std::size_t number_of_by
                     break;
                 }
                 obj->next = old_public_list;
-                if (m_public_list.compare_exchange_strong(old_public_list, obj)) {
+                if (m_public_list.compare_exchange_strong(old_public_list, obj, std::memory_order_release, std::memory_order_relaxed)) {
                     break;
                 }
             }

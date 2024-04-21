@@ -30,12 +30,12 @@ void thread_request_serializer::update(int delta) {
     constexpr std::uint64_t delta_mask = (pending_delta_base << 1) - 1;
     constexpr std::uint64_t counter_value = delta_mask + 1;
 
-    int prev_pending_delta = my_pending_delta.fetch_add(counter_value + delta);
+    int prev_pending_delta = my_pending_delta.fetch_add(counter_value + delta, std::memory_order_relaxed);
 
     // There is a pseudo request aggregator, so only thread that see pending_delta_base in my_pending_delta
     // Will enter to critical section and call adjust_job_count_estimate
     if (prev_pending_delta == pending_delta_base) {
-        delta = int(my_pending_delta.exchange(pending_delta_base) & delta_mask) - int(pending_delta_base);
+        delta = int(my_pending_delta.exchange(pending_delta_base, std::memory_order_relaxed) & delta_mask) - int(pending_delta_base);
         mutex_type::scoped_lock lock(my_mutex);
         my_total_request += delta;
         delta = limit_delta(delta, my_soft_limit, my_total_request);
@@ -82,7 +82,7 @@ thread_request_serializer_proxy::thread_request_serializer_proxy(thread_dispatch
 void thread_request_serializer_proxy::register_mandatory_request(int mandatory_delta) {
     if (mandatory_delta != 0) {
         mutex_type::scoped_lock lock(my_mutex, /* is_write = */ false);
-        int prev_value = my_num_mandatory_requests.fetch_add(mandatory_delta);
+        int prev_value = my_num_mandatory_requests.fetch_add(mandatory_delta, std::memory_order_relaxed);
 
         const bool should_try_enable = mandatory_delta > 0 && prev_value == 0;
         const bool should_try_disable = mandatory_delta < 0 && prev_value == 1;

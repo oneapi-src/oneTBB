@@ -140,12 +140,12 @@ public:
     //! Some thread is now the owner of this slot
     void occupy() {
         __TBB_ASSERT(!my_is_occupied.load(std::memory_order_relaxed), nullptr);
-        my_is_occupied.store(true, std::memory_order_release);
+        my_is_occupied.store(true, std::memory_order_relaxed);
     }
 
     //! Try to occupy the slot
     bool try_occupy() {
-        return !is_occupied() && my_is_occupied.exchange(true) == false;
+        return !is_occupied() && my_is_occupied.exchange(true, std::memory_order_acquire) == false;
     }
 
     //! Some thread is now the owner of this slot
@@ -297,8 +297,10 @@ private:
             __TBB_ASSERT( tp == LockedTaskPool || tp == task_pool_ptr, "slot ownership corrupt?" );
 #endif
             d1::task** expected = task_pool_ptr;
-            if( task_pool.load(std::memory_order_relaxed) != LockedTaskPool &&
-                task_pool.compare_exchange_strong(expected, LockedTaskPool ) ) {
+            if (task_pool.load(std::memory_order_relaxed) != LockedTaskPool &&
+                task_pool.compare_exchange_strong(expected, LockedTaskPool,
+                                                  std::memory_order_acquire, std::memory_order_relaxed))
+            {
                 // We acquired our own slot
                 break;
             } else if( !sync_prepare_done ) {
@@ -335,7 +337,10 @@ private:
                 break;
             }
             d1::task** expected = victim_task_pool;
-            if (victim_task_pool != LockedTaskPool && task_pool.compare_exchange_strong(expected, LockedTaskPool) ) {
+            if (victim_task_pool != LockedTaskPool &&
+                task_pool.compare_exchange_strong(expected, LockedTaskPool,
+                                                  std::memory_order_acquire, std::memory_order_relaxed))
+            {
                 // We've locked victim's task pool
                 break;
             } 

@@ -314,7 +314,7 @@ void arena::free_arena () {
         // __TBB_ASSERT( !my_slots[i].my_scheduler, "arena slot is not empty" );
         // TODO: understand the assertion and modify
         // __TBB_ASSERT( my_slots[i].task_pool == EmptyTaskPool, nullptr);
-        __TBB_ASSERT( my_slots[i].head == my_slots[i].tail, nullptr); // TODO: replace by is_quiescent_local_task_pool_empty
+        __TBB_ASSERT( my_slots[i].head.load(std::memory_order_relaxed) == my_slots[i].tail.load(std::memory_order_relaxed), nullptr); // TODO: replace by is_quiescent_local_task_pool_empty
         my_slots[i].free_task_pool();
         mailbox(i).drain();
         my_slots[i].my_default_task_dispatcher->~task_dispatcher();
