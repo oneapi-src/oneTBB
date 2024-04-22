@@ -326,27 +326,23 @@ private:
     /** Garbles victim_arena_slot->task_pool for the duration of the lock. **/
     d1::task** lock_task_pool() {
         d1::task** victim_task_pool;
-        for ( atomic_backoff backoff;; /*backoff pause embedded in the loop*/) {
-            victim_task_pool = task_pool.load(std::memory_order_relaxed);
-            // Microbenchmarks demonstrated that aborting stealing attempt when the
-            // victim's task pool is locked degrade performance.
-            // NOTE: Do not use comparison of head and tail indices to check for
-            // the presence of work in the victim's task pool, as they may give
-            // incorrect indication because of task pool relocations and resizes.
-            if (victim_task_pool == EmptyTaskPool) {
-                break;
-            }
+        victim_task_pool = task_pool.load(std::memory_order_relaxed);
+        // Microbenchmarks demonstrated that aborting stealing attempt when the
+        // victim's task pool is locked degrade performance.
+        // NOTE: Do not use comparison of head and tail indices to check for
+        // the presence of work in the victim's task pool, as they may give
+        // incorrect indication because of task pool relocations and resizes.
+        if (victim_task_pool != EmptyTaskPool) {
             d1::task** expected = victim_task_pool;
-            if (victim_task_pool != LockedTaskPool &&
-                task_pool.compare_exchange_strong(expected, LockedTaskPool,
-                                                  std::memory_order_acquire, std::memory_order_relaxed))
+            if (victim_task_pool == LockedTaskPool ||
+                !task_pool.compare_exchange_strong(expected, LockedTaskPool,
+                                                    std::memory_order_acquire, std::memory_order_relaxed))
             {
                 // We've locked victim's task pool
-                break;
-            } 
-            // Someone else acquired a lock, so pause and do exponential backoff.
-            backoff.pause();
+                victim_task_pool = EmptyTaskPool;
+            }
         }
+
         __TBB_ASSERT(victim_task_pool == EmptyTaskPool ||
                     (task_pool.load(std::memory_order_relaxed) == LockedTaskPool &&
                     victim_task_pool != LockedTaskPool), "not really locked victim's task pool?");
