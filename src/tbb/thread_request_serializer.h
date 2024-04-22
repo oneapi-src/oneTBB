@@ -39,7 +39,7 @@ class thread_request_serializer : public thread_request_observer {
 public:
     thread_request_serializer(thread_dispatcher& td, int soft_limit);
     void set_active_num_workers(int soft_limit);
-    int num_workers_requested() { return my_total_request.load(std::memory_order_acquire); }
+    int num_workers_requested() { return my_total_request.load(std::memory_order_relaxed); }
     bool is_no_workers_avaliable() { return my_soft_limit == 0; }
 
 private:

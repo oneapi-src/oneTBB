@@ -37,7 +37,7 @@ void thread_request_serializer::update(int delta) {
     if (prev_pending_delta == pending_delta_base) {
         delta = int(my_pending_delta.exchange(pending_delta_base) & delta_mask) - int(pending_delta_base);
         mutex_type::scoped_lock lock(my_mutex);
-        my_total_request.store(my_total_request.load(std::memory_order_relaxed) + delta, std::memory_order_release);
+        my_total_request.store(my_total_request.load(std::memory_order_relaxed) + delta, std::memory_order_relaxed);
         delta = limit_delta(delta, my_soft_limit, my_total_request.load(std::memory_order_relaxed));
         my_thread_dispatcher.adjust_job_count_estimate(delta);
     }
