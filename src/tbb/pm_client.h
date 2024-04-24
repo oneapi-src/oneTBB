@@ -50,12 +50,6 @@ public:
         set_workers(min_max_workers.first, min_max_workers.second);
         return delta;
     }
-
-    virtual void register_thread() = 0;
-
-    virtual void unregister_thread() = 0;
-
-
 protected:
     void set_workers(int mn_w, int mx_w) {
         __TBB_ASSERT(mn_w >= 0, nullptr);

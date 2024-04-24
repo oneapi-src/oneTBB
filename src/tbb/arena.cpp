@@ -196,8 +196,6 @@ void arena::process(thread_data& tls) {
         return;
     }
 
-    my_tc_client.get_pm_client()->register_thread();
-
     __TBB_ASSERT( index >= my_num_reserved_slots, "Workers cannot occupy reserved slots" );
     tls.attach_arena(*this, index);
     // worker thread enters the dispatch loop to look for a work
@@ -236,8 +234,6 @@ void arena::process(thread_data& tls) {
     tls.my_inbox.detach();
     __TBB_ASSERT(tls.my_inbox.is_idle_state(true), nullptr);
     __TBB_ASSERT(is_alive(my_guard), nullptr);
-
-    my_tc_client.get_pm_client()->unregister_thread();
 
     // In contrast to earlier versions of TBB (before 3.0 U5) now it is possible
     // that arena may be temporarily left unpopulated by threads. See comments in

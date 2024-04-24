@@ -28,10 +28,6 @@ class tbb_permit_manager_client : public pm_client {
 public:
     tbb_permit_manager_client(arena& a) : pm_client(a) {}
 
-    void register_thread() override {}
-
-    void unregister_thread() override {}
-
     void set_allotment(unsigned allotment) {
         my_arena.set_allotment(allotment);
     }

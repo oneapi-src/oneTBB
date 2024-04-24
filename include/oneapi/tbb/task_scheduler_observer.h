@@ -37,6 +37,7 @@ class observer_list;
 has the task scheduler initialized or is attached to an arena.
 Repeated calls with the same state are no-ops. **/
 TBB_EXPORT void __TBB_EXPORTED_FUNC observe(d1::task_scheduler_observer&, bool state = true);
+void observe(d1::task_scheduler_observer&, r1::arena&);
 }
 
 namespace d1 {
@@ -44,6 +45,7 @@ class task_scheduler_observer {
     friend class r1::observer_proxy;
     friend class r1::observer_list;
     friend void r1::observe(d1::task_scheduler_observer&, bool);
+    friend void r1::observe(d1::task_scheduler_observer&, r1::arena&);
 
     //! Pointer to the proxy holding this observer.
     /** Observers are proxied by the scheduler to maintain persistent lists of them. **/

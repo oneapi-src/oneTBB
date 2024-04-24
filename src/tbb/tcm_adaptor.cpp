@@ -17,6 +17,7 @@
 #include "oneapi/tbb/detail/_intrusive_list_node.h"
 #include "oneapi/tbb/detail/_template_helpers.h"
 #include "oneapi/tbb/task_arena.h"
+#include "oneapi/tbb/task_scheduler_observer.h"
 
 #include "pm_client.h"
 #include "dynamic_link.h"
@@ -43,6 +44,7 @@ namespace {
 #pragma weak tcmRegisterThread
 #pragma weak tcmUnregisterThread
 #pragma weak tcmGetVersionInfo
+#pragma weak tcmInitPermit
 #endif /* __TBB_WEAK_SYMBOLS_PRESENT */
 
 tcm_result_t(*tcm_connect)(tcm_callback_t callback, tcm_client_id_t* client_id){nullptr};
@@ -94,17 +96,41 @@ static const dynamic_link_descriptor tcm_link_table[] = {
 static bool tcm_functions_loaded{ false };
 }
 
+class tcm_register_observer : public tbb::task_scheduler_observer {
+public:
+    tcm_register_observer(arena& a) : my_arena(a) {}
+
+    void set_permit_handle(tcm_permit_handle_t ph) {
+        __TBB_ASSERT(ph, nullptr);
+        my_permit_handle = ph;
+        r1::observe(*this, my_arena);
+    }
+
+    void on_scheduler_entry(bool) override {
+        __TBB_ASSERT(tcm_register_thread, nullptr);
+        auto return_code = tcm_register_thread(my_permit_handle);
+        __TBB_ASSERT_EX(return_code == TCM_RESULT_SUCCESS, nullptr);
+    }
+
+    void on_scheduler_exit(bool) override {
+        __TBB_ASSERT(tcm_unregister_thread, nullptr);
+        auto return_code = tcm_unregister_thread();
+        __TBB_ASSERT_EX(return_code == TCM_RESULT_SUCCESS, nullptr);
+    }
+private:
+    arena& my_arena;
+    tcm_permit_handle_t my_permit_handle { nullptr };
+};
+
 class tcm_client : public pm_client {
     using tcm_client_mutex_type = d1::mutex;
 public:
-    tcm_client(tcm_adaptor& adaptor, arena& a) : pm_client(a), my_tcm_adaptor(adaptor) {}
+    tcm_client(tcm_adaptor& adaptor, arena& a) : pm_client(a), my_tcm_adaptor(adaptor), my_register_observer(a) {}
 
     ~tcm_client() {
-        if (my_permit_handle) {
-            __TBB_ASSERT(tcm_release_permit, nullptr);
-            auto res = tcm_release_permit(my_permit_handle);
-            __TBB_ASSERT_EX(res == TCM_RESULT_SUCCESS, nullptr);
-        }
+        __TBB_ASSERT(tcm_release_permit, nullptr);
+        auto res = tcm_release_permit(my_permit_handle);
+        __TBB_ASSERT_EX(res == TCM_RESULT_SUCCESS, nullptr);
     }
 
     int update_concurrency(uint32_t concurrency) {
@@ -170,7 +196,7 @@ public:
         __TBB_ASSERT_EX(res == TCM_RESULT_SUCCESS, nullptr);
     }
 
-    void init(d1::constraints& constraints) {
+    void init(tcm_client_id_t client_id, d1::constraints& constraints) {
         __TBB_ASSERT(tcm_request_permit, nullptr);
         __TBB_ASSERT(tcm_deactivate_permit, nullptr);
 
@@ -190,26 +216,17 @@ public:
 
         my_permit_request.min_sw_threads = 0;
         my_permit_request.max_sw_threads = 0;
+        tcm_result_t res = tcm_request_permit(client_id, my_permit_request, this, &my_permit_handle, nullptr);
+        __TBB_ASSERT_EX(res == TCM_RESULT_SUCCESS, nullptr);
+        my_register_observer.set_permit_handle(my_permit_handle);
     }
-
-    void register_thread() override {
-        __TBB_ASSERT(tcm_register_thread, nullptr);
-        auto return_code = tcm_register_thread(my_permit_handle);
-        __TBB_ASSERT_EX(return_code == TCM_RESULT_SUCCESS, nullptr);
-    }
-
-    void unregister_thread() override {
-        __TBB_ASSERT(tcm_unregister_thread, nullptr);
-        auto return_code = tcm_unregister_thread();
-        __TBB_ASSERT_EX(return_code == TCM_RESULT_SUCCESS, nullptr);
-    }
-
 private:
     tcm_cpu_constraints_t my_permit_constraints = TCM_PERMIT_REQUEST_CONSTRAINTS_INITIALIZER;
     tcm_permit_request_t my_permit_request = TCM_PERMIT_REQUEST_INITIALIZER;
-    tcm_permit_handle_t my_permit_handle{};
+    tcm_permit_handle_t my_permit_handle{nullptr};
     tcm_client_mutex_type my_permit_mutex;
     tcm_adaptor& my_tcm_adaptor;
+    tcm_register_observer my_register_observer;
 };
 
 //------------------------------------------------------------------------
@@ -236,7 +253,8 @@ tcm_result_t renegotiation_callback(tcm_permit_handle_t, void* client_ptr, tcm_c
 }
 
 void tcm_adaptor::initialize() {
-    tcm_functions_loaded = dynamic_link(TCMLIB_NAME, tcm_link_table, /* tcm_link_table size = */ 11);
+    std::size_t table_size = sizeof(tcm_link_table) / sizeof(dynamic_link_descriptor);
+    tcm_functions_loaded = dynamic_link(TCMLIB_NAME, tcm_link_table, table_size);
 }
 
 bool tcm_adaptor::is_initialized() {
@@ -279,7 +297,7 @@ pm_client* tcm_adaptor::create_client(arena& a) {
 }
 
 void tcm_adaptor::register_client(pm_client* c, d1::constraints& constraints) {
-    static_cast<tcm_client*>(c)->init(constraints);
+    static_cast<tcm_client*>(c)->init(my_impl->client_id, constraints);
 }
 
 void tcm_adaptor::unregister_and_destroy_client(pm_client& c) {

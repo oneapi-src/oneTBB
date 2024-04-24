@@ -96,6 +96,7 @@ class observer_proxy {
     friend class d1::task_scheduler_observer;
     friend class observer_list;
     friend void observe(d1::task_scheduler_observer&, bool);
+    friend void observe(d1::task_scheduler_observer &t, arena&);
     //! Reference count used for garbage collection.
     /** 1 for reference from my task_scheduler_observer.
         1 for each task dispatcher's last observer pointer.
