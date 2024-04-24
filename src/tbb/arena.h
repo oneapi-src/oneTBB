@@ -385,7 +385,11 @@ public:
 
     bool is_top_priority() const;
 
-    bool try_join(bool should_join);
+    bool is_joinable() const {
+        return num_workers_active() < my_num_workers_allotted.load(std::memory_order_relaxed);
+    }
+
+    bool try_join();
 
     void set_allotment(unsigned allotment);
 

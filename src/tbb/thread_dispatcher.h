@@ -67,8 +67,8 @@ private:
     void insert_client(thread_dispatcher_client& client);
     void remove_client(thread_dispatcher_client& client);
     bool is_client_alive(thread_dispatcher_client* client);
-    thread_dispatcher_client* client_in_need(client_list_type* clients, thread_dispatcher_client* hint, bool should_join);
-    thread_dispatcher_client* client_in_need(thread_dispatcher_client* prev, bool should_join = true);
+    thread_dispatcher_client* client_in_need(client_list_type* clients, thread_dispatcher_client* hint);
+    thread_dispatcher_client* client_in_need(thread_dispatcher_client* prev);
 
     friend class threading_control_impl;
     static constexpr unsigned num_priority_levels = d1::num_priority_levels;

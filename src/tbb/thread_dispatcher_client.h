@@ -29,9 +29,14 @@ public:
     thread_dispatcher_client(arena& a, std::uint64_t aba_epoch) : my_arena(a), my_aba_epoch(aba_epoch) {}
 
     // Interface of communication with thread pool
-    bool try_join(bool should_join) {
-        return my_arena.try_join(should_join);
+    bool try_join() {
+        return my_arena.try_join();
     }
+
+    bool is_joinable() {
+        return my_arena.is_joinable();
+    }
+
     void process(thread_data& td) {
         my_arena.process(td);
     }
