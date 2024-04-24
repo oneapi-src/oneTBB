@@ -83,7 +83,7 @@ jobs:
   pages:
     if: ${{ github.ref == 'refs/heads/master' }}
     permissions:
-      contents: read
+      contents: write
       pages: write
       id-token: write
     runs-on: ubuntu-latest
