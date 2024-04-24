@@ -191,7 +191,6 @@ if (TBB_INSTALL)
             COMPONENT devel)
 endif()
 
-# not useful when bundled into a framework
-if (COMMAND tbb_gen_vars AND NOT TBB_BUILD_APPLE_FRAMEWORKS)
+if (COMMAND tbb_gen_vars)
     tbb_gen_vars(tbb)
 endif()

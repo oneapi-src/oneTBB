@@ -47,7 +47,7 @@ namespace utils {
 #define EXT ".dll"
 #else
 #if TBB_USE_APPLE_FRAMEWORKS
-#define PREFIX // When build as Apple* Framework, the binary has no lib prefix
+#define PREFIX // When built as Apple* Framework, the binary has no lib prefix
 #else
 #define PREFIX "lib"
 #endif
