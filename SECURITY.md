@@ -5,7 +5,7 @@ ensuring the highest level of Security and trust for our users who consume
 oneTBB.
 
 ## Supported Versions
-Security vulnerabilities can be fixed in the [latest version][1] version
+Security vulnerabilities are fixed in the [latest version][1]
 and delivered as a patch release. We don't guarantee security fixes to be
 back-ported to older oneTBB versions.
 
