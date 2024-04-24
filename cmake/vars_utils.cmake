@@ -29,8 +29,8 @@ macro(tbb_gen_vars target)
     if (NOT TBB_BUILD_APPLE_FRAMEWORKS)
         set(BIN_PATH $<TARGET_FILE_DIR:${target}>)
     else()
-        # For Apple frameworks, the binaries are placed in a framework bundle. 
-        # When using an Apple framework, you refer to the bundle, not the binary inside, so we take the bundle's path and go up one level.
+        # For Apple* frameworks, the binaries are placed in a framework bundle. 
+        # When using an Apple* framework, you refer to the bundle, not the binary inside, so we take the bundle's path and go up one level.
         # This path will then be used to generate the vars file, and the contents of the vars file will use the bundle's parent directory.
         set(BIN_PATH $<TARGET_BUNDLE_DIR:${target}>/..)
     endif()
