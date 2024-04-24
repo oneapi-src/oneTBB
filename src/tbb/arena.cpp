@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2023 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -396,7 +396,7 @@ bool arena::is_top_priority() const {
 }
 
 bool arena::try_join() {
-    if (num_workers_active() < my_num_workers_allotted.load(std::memory_order_relaxed)) {
+    if (is_joinable()) {
         my_references += arena::ref_worker;
         return true;
     }
