@@ -16,7 +16,7 @@ before disclosing them on public forums or opening a public GitHub* issue.
 
 Report a vulnerability to us in one of two ways:
 * Open a draft **[GitHub* Security Advisory][2]**
-* Send an e-mail to: **security@lists.uxlfoundation.org**.
+* Send an e-mail to: **security@uxlfoundation.org**.
 Along with the report, provide the following info:
   * A descriptive title.
   * Your name and affiliation (if any).
