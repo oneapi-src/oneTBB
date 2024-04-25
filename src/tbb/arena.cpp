@@ -553,14 +553,16 @@ void task_arena_impl::initialize(d1::task_arena_base& ta) {
 #endif /*!__TBB_ARENA_BINDING*/
     }
 
-#if __TBB_ARENA_BINDING
+#if __TBB_CPUBIND_PRESENT
     numa_binding_observer* observer = construct_binding_observer(
         static_cast<d1::task_arena*>(&ta), arena::num_arena_slots(ta.my_max_concurrency, ta.my_num_reserved_slots),
         ta.my_numa_id, ta.core_type(), ta.max_threads_per_core());
     if (observer) {
+        // TODO: Consider lazy initialization for internal arena so
+        // the direct calls to observer might be omitted until actual initialization. 
         observer->on_scheduler_entry(true);
     }
-#endif /*__TBB_ARENA_BINDING*/
+#endif /*__TBB_CPUBIND_PRESENT*/
 
     __TBB_ASSERT(ta.my_arena.load(std::memory_order_relaxed) == nullptr, "Arena already initialized");
     unsigned priority_level = arena_priority_level(ta.my_priority);
