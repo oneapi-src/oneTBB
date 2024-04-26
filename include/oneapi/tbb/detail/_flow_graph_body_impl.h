@@ -249,10 +249,9 @@ template< typename NodeType >
 class forward_task_bypass : public graph_task {
     NodeType &my_node;
 public:
-    forward_task_bypass( graph& g, small_object_allocator& allocator, NodeType &n
-                         , node_priority_t node_priority = no_priority
-    ) : graph_task(g, allocator, node_priority),
-    my_node(n) {}
+    forward_task_bypass( graph& g, small_object_allocator& allocator, NodeType &n,
+                         node_priority_t node_priority = no_priority)
+        : graph_task(g, allocator, node_priority), my_node(n) {}
 
     task* execute(execution_data& ed) override {
         graph_task* next_task = my_node.forward_task();

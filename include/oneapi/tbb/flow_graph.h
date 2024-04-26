@@ -1199,11 +1199,20 @@ protected:
         T* elem;
         graph_task* ltask;
         successor_type *r;
+        wait_context_node* waiter;
 
-        buffer_operation(const T& e, op_type t) : type(char(t))
-                                                  , elem(const_cast<T*>(&e)) , ltask(nullptr)
-                                                  , r(nullptr)
+        buffer_operation(const T& e, op_type t, wait_context_node* msg_waiter)
+            : type(char(t))
+            , elem(const_cast<T*>(&e))
+            , ltask(nullptr)
+            , r(nullptr)
+            , waiter(msg_waiter)
         {}
+
+        buffer_operation(const T& e, op_type t)
+            : buffer_operation(e, t, nullptr)
+        {}
+
         buffer_operation(op_type t) : type(char(t)), elem(nullptr), ltask(nullptr), r(nullptr) {}
     };
 
@@ -1278,6 +1287,7 @@ protected:
         buffer_operation op_data(try_fwd_task);
         graph_task *last_task = nullptr;
         do {
+            std::cout << "Try forward" << std::endl;
             op_data.status = WAIT;
             op_data.ltask = nullptr;
             my_aggregator.execute(&op_data);
@@ -1329,6 +1339,7 @@ protected:
 
     template<typename derived_type>
     void internal_forward_task_impl(buffer_operation *op, derived_type* derived) {
+        std::cout << "internal_forward_task_impl" << std::endl;
         __TBB_ASSERT(static_cast<class_type*>(derived) == this, "'this' is not a base class for derived");
 
         if (this->my_reserved || !derived->is_item_valid()) {
@@ -1339,6 +1350,7 @@ protected:
         // Try forwarding, giving each successor a chance
         graph_task* last_task = nullptr;
         size_type counter = my_successors.size();
+        std::cout << "successors size " << counter << std::endl;
         for (; counter > 0 && derived->is_item_valid(); --counter)
             derived->try_put_and_add_task(last_task);
 
@@ -1354,7 +1366,7 @@ protected:
 
     virtual bool internal_push(buffer_operation *op) {
         __TBB_ASSERT(op->elem, nullptr);
-        this->push_back(*(op->elem));
+        this->push_back(*(op->elem), op->waiter);
         op->status.store(SUCCEEDED, std::memory_order_release);
         return true;
     }
@@ -1486,8 +1498,8 @@ protected:
     template<typename X, typename Y> friend class broadcast_cache;
     template<typename X, typename Y> friend class round_robin_cache;
     //! receive an item, return a task *if possible
-    graph_task *try_put_task(const T &t) override {
-        buffer_operation op_data(t, put_item);
+    graph_task *try_put_task(const T &t, wait_context_node* msg_waiter) override {
+        buffer_operation op_data(t, put_item, msg_waiter);
         my_aggregator.execute(&op_data);
         graph_task *ft = grab_forwarding_task(op_data);
         // sequencer_nodes can return failure (if an item has been previously inserted)
@@ -1503,6 +1515,10 @@ protected:
             ft = SUCCESSFULLY_ENQUEUED;
         }
         return ft;
+    }
+
+    graph_task* try_put_task(const T& t) override {
+        return try_put_task(t, nullptr);
     }
 
     graph& graph_reference() const override {
@@ -1537,13 +1553,19 @@ private:
     }
 
     void try_put_and_add_task(graph_task*& last_task) {
-        graph_task *new_task = this->my_successors.try_put_task(this->front());
+        wait_context_node* waiter = this->front_waiter();
+        graph_task *new_task = this->my_successors.try_put_task(this->front(), waiter);
         if (new_task) {
+            std::cout << "successor accepted task" << std::endl;
             // workaround for icc bug
             graph& graph_ref = this->graph_reference();
             last_task = combine_tasks(graph_ref, last_task, new_task);
+            if (waiter) {
+                waiter->release(1);
+            }
             this->destroy_front();
         }
+        std::cout << "successor rejected task" << std::endl;
     }
 
 protected:

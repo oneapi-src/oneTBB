@@ -34,12 +34,20 @@ public:
         return this->item_buffer<T, A>::front();
     }
 
+    wait_context_node* front_waiter() const {
+        return this->item_buffer<T, A>::front_waiter();
+    }
+
     void pop() {
         this->destroy_front();
     }
 
     bool push( T& t ) {
         return this->push_back( t );
+    }
+
+    bool push( T& t, wait_context_node* msg_waiter) {
+        return this->push_back(t, msg_waiter);
     }
 };
 
@@ -162,8 +170,12 @@ private:
             predecessor_type *r;
         };
         graph_task* bypass_t;
+        wait_context_node* msg_waiter;
+
+        operation_type(const input_type& e, op_type t, wait_context_node* waiter) :
+            type(char(t)), elem(const_cast<input_type*>(&e)), bypass_t(nullptr), msg_waiter(waiter) {}
         operation_type(const input_type& e, op_type t) :
-            type(char(t)), elem(const_cast<input_type*>(&e)), bypass_t(nullptr) {}
+            operation_type(e, t, nullptr) {}
         operation_type(op_type t) : type(char(t)), r(nullptr), bypass_t(nullptr) {}
     };
 
@@ -177,8 +189,11 @@ private:
         if(my_queue) {
             if(!my_queue->empty()) {
                 ++my_concurrency;
-                new_task = create_body_task(my_queue->front(), nullptr);
-
+                wait_context_node* msg_waiter = my_queue->front_waiter();
+                new_task = create_body_task(my_queue->front(), msg_waiter);
+                if (msg_waiter) {
+                    msg_waiter->release(1);
+                }
                 my_queue->pop();
             }
         }
@@ -237,10 +252,10 @@ private:
         __TBB_ASSERT(my_max_concurrency != 0, nullptr);
         if (my_concurrency < my_max_concurrency) {
             ++my_concurrency;
-            graph_task * new_task = create_body_task(*(op->elem), nullptr);
+            graph_task * new_task = create_body_task(*(op->elem), op->msg_waiter);
             op->bypass_t = new_task;
             op->status.store(SUCCEEDED, std::memory_order_release);
-        } else if ( my_queue && my_queue->push(*(op->elem)) ) {
+        } else if ( my_queue && my_queue->push(*(op->elem), op->msg_waiter) ) {
             op->bypass_t = SUCCESSFULLY_ENQUEUED;
             op->status.store(SUCCEEDED, std::memory_order_release);
         } else {
@@ -262,8 +277,8 @@ private:
         }
     }
 
-    graph_task* internal_try_put_bypass( const input_type& t ) {
-        operation_type op_data(t, tryput_bypass);
+    graph_task* internal_try_put_bypass( const input_type& t, wait_context_node* msg_waiter) {
+        operation_type op_data(t, tryput_bypass, msg_waiter);
         my_aggregator.execute(&op_data);
         if( op_data.status == SUCCEEDED ) {
             return op_data.bypass_t;
@@ -290,7 +305,7 @@ private:
         if( my_max_concurrency == 0 ) {
             return create_body_task(t, msg_waiter);
         } else {
-            return internal_try_put_bypass(t);
+            return internal_try_put_bypass(t, msg_waiter);
         }
     }
 

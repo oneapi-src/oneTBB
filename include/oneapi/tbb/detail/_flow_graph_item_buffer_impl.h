@@ -37,9 +37,16 @@ public:
     typedef T item_type;
     enum buffer_item_state { no_item=0, has_item=1, reserved_item=2 };
 protected:
+    struct buffer_element_type {
+        item_type item;
+        wait_context_node* msg_waiter;
+        buffer_item_state state;
+    };
+
     typedef size_t size_type;
-    typedef std::pair<item_type, buffer_item_state> aligned_space_item;
-    typedef aligned_space<aligned_space_item> buffer_item_type;
+
+    // typedef std::pair<item_type, buffer_item_state> aligned_space_item;
+    typedef aligned_space<buffer_element_type> buffer_item_type;
     typedef typename allocator_traits<A>::template rebind_alloc<buffer_item_type> allocator_type;
     buffer_item_type *my_array;
     size_type my_array_size;
@@ -49,37 +56,45 @@ protected:
 
     bool buffer_empty() const { return my_head == my_tail; }
 
-    aligned_space_item &item(size_type i) {
+    buffer_element_type& element(size_type i) {
         __TBB_ASSERT(!(size_type(&(my_array[i&(my_array_size-1)].begin()->second))%alignment_of<buffer_item_state>::value), nullptr);
         __TBB_ASSERT(!(size_type(&(my_array[i&(my_array_size-1)].begin()->first))%alignment_of<item_type>::value), nullptr);
         return *my_array[i & (my_array_size - 1) ].begin();
     }
 
-    const aligned_space_item &item(size_type i) const {
+    const buffer_element_type& element(size_type i) const {
         __TBB_ASSERT(!(size_type(&(my_array[i&(my_array_size-1)].begin()->second))%alignment_of<buffer_item_state>::value), nullptr);
         __TBB_ASSERT(!(size_type(&(my_array[i&(my_array_size-1)].begin()->first))%alignment_of<item_type>::value), nullptr);
         return *my_array[i & (my_array_size-1)].begin();
     }
 
-    bool my_item_valid(size_type i) const { return (i < my_tail) && (i >= my_head) && (item(i).second != no_item); }
+    bool my_item_valid(size_type i) const { return (i < my_tail) && (i >= my_head) && (element(i).state != no_item); }
 #if TBB_USE_ASSERT
-    bool my_item_reserved(size_type i) const { return item(i).second == reserved_item; }
+    bool my_item_reserved(size_type i) const { return element(i).state == reserved_item; }
 #endif
 
     // object management in buffer
-    const item_type &get_my_item(size_t i) const {
+    const item_type& get_my_item(size_t i) const {
         __TBB_ASSERT(my_item_valid(i),"attempt to get invalid item");
-        item_type* itm = const_cast<item_type*>(reinterpret_cast<const item_type*>(&item(i).first));
-        return *itm;
+        return element(i).item;
     }
 
     // may be called with an empty slot or a slot that has already been constructed into.
-    void set_my_item(size_t i, const item_type &o) {
-        if(item(i).second != no_item) {
+    void set_my_item(size_t i, const item_type& o, wait_context_node* waiter) {
+        if (element(i).state != no_item) {
             destroy_item(i);
         }
-        new(&(item(i).first)) item_type(o);
-        item(i).second = has_item;
+        ::new(&element(i).item) item_type(o);
+        element(i).msg_waiter = waiter;
+        element(i).state = has_item;
+
+        if (waiter) {
+            waiter->reserve(1);
+        }
+    }
+
+    void set_my_item(size_t i, const item_type &o) {
+        set_my_item(i, o, nullptr);
     }
 
     // destructively-fetch an object from the buffer
@@ -97,7 +112,6 @@ protected:
         __TBB_ASSERT(my_item_valid(from), "Trying to move from an empty slot");
         set_my_item(to, get_my_item(from));   // could have std::move semantics
         destroy_item(from);
-
     }
 
     // put an item in an empty slot.  Return true if successful, else false
@@ -119,8 +133,10 @@ protected:
 
     void destroy_item(size_type i) {
         __TBB_ASSERT(my_item_valid(i), "destruction of invalid item");
-        item(i).first.~item_type();
-        item(i).second = no_item;
+        auto& e = element(i);
+        e.item.~item_type();
+        e.msg_waiter = nullptr;
+        e.state = no_item;
     }
 
     // returns the front element
@@ -128,6 +144,12 @@ protected:
     {
         __TBB_ASSERT(my_item_valid(my_head), "attempt to fetch head non-item");
         return get_my_item(my_head);
+    }
+
+    wait_context_node* front_waiter() const
+    {
+        __TBB_ASSERT(my_item_valid(my_head), "attempt to fetch head non-item");
+        return element(my_head).msg_waiter;
     }
 
     // returns  the back element
@@ -138,8 +160,8 @@ protected:
     }
 
     // following methods are for reservation of the front of a buffer.
-    void reserve_item(size_type i) { __TBB_ASSERT(my_item_valid(i) && !my_item_reserved(i), "item cannot be reserved"); item(i).second = reserved_item; }
-    void release_item(size_type i) { __TBB_ASSERT(my_item_reserved(i), "item is not reserved"); item(i).second = has_item; }
+    void reserve_item(size_type i) { __TBB_ASSERT(my_item_valid(i) && !my_item_reserved(i), "item cannot be reserved"); element(i).state = reserved_item; }
+    void release_item(size_type i) { __TBB_ASSERT(my_item_reserved(i), "item is not reserved"); element(i).state = has_item; }
 
     void destroy_front() { destroy_item(my_head); ++my_head; }
     void destroy_back() { destroy_item(my_tail-1); --my_tail; }
@@ -163,14 +185,15 @@ protected:
         buffer_item_type* new_array = allocator_type().allocate(new_size);
 
         // initialize validity to "no"
-        for( size_type i=0; i<new_size; ++i ) { new_array[i].begin()->second = no_item; }
+        for( size_type i=0; i<new_size; ++i ) { new_array[i].begin()->state = no_item; }
 
         for( size_type i=my_head; i<my_tail; ++i) {
             if(my_item_valid(i)) {  // sequencer_node may have empty slots
                 // placement-new copy-construct; could be std::move
-                char *new_space = (char *)&(new_array[i&(new_size-1)].begin()->first);
+                char *new_space = (char *)&(new_array[i&(new_size-1)].begin()->item);
                 (void)new(new_space) item_type(get_my_item(i));
-                new_array[i&(new_size-1)].begin()->second = item(i).second;
+                new_array[i & (new_size - 1)].begin()->msg_waiter = element(i).msg_waiter;
+                new_array[i & (new_size - 1)].begin()->state = element(i).state;
             }
         }
 
@@ -180,31 +203,49 @@ protected:
         my_array_size = new_size;
     }
 
-    bool push_back(item_type &v) {
-        if(buffer_full()) {
+    bool push_back(item_type& v, wait_context_node* waiter) {
+        if (buffer_full()) {
             grow_my_array(size() + 1);
         }
-        set_my_item(my_tail, v);
+        set_my_item(my_tail, v, waiter);
         ++my_tail;
         return true;
     }
 
-    bool pop_back(item_type &v) {
+    bool push_back(item_type &v) {
+        return push_back(v, nullptr);
+    }
+
+    bool pop_back(item_type &v, wait_context_node*& waiter) {
         if (!my_item_valid(my_tail-1)) {
             return false;
         }
-        v = this->back();
+        auto& e = element(my_tail - 1);
+        v = e.item;
+        waiter = e.msg_waiter;
         destroy_back();
         return true;
     }
 
-    bool pop_front(item_type &v) {
+    bool pop_back(item_type& v) {
+        wait_context_node* dummy_waiter = nullptr;
+        return pop_back(v, dummy_waiter);
+    }
+
+    bool pop_front(item_type &v, wait_context_node*& waiter) {
         if(!my_item_valid(my_head)) {
             return false;
         }
-        v = this->front();
+        auto& e = element(my_head);
+        v = e.item;
+        waiter = e.msg_waiter;
         destroy_front();
         return true;
+    }
+
+    bool pop_front(item_type& v) {
+        wait_context_node* dummy_waiter = nullptr;
+        return pop_front(v, dummy_waiter);
     }
 
     // This is used both for reset and for grow_my_array.  In the case of grow_my_array
