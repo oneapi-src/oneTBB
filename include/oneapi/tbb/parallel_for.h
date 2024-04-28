@@ -414,7 +414,7 @@ template <typename Index, typename Function>
     __TBB_requires(parallel_for_index<Index> && parallel_for_function<Function, Index>)
 void parallel_for(Index first, Index last, Index step, const Function& f, const static_partitioner& partitioner, task_group_context &context) {
     parallel_for_impl<Index,Function,const static_partitioner>(first, last, step, f, partitioner, context);
-}
+} 
 //! Parallel iteration over a range of integers with explicit step, task group context, and affinity partitioner
 template <typename Index, typename Function>
     __TBB_requires(parallel_for_index<Index> && parallel_for_function<Function, Index>)
