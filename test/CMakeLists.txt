@@ -43,6 +43,10 @@ function(tbb_add_test)
         ${TBB_COMMON_COMPILE_FLAGS}
     )
 
+    if (TBB_BUILD_APPLE_FRAMEWORKS)
+        add_compile_definitions(TBB_USE_APPLE_FRAMEWORKS)
+    endif()
+
     if (ANDROID_PLATFORM)
         # Expand the linker rpath by the CMAKE_LIBRARY_OUTPUT_DIRECTORY path since clang compiler from Android SDK
         # doesn't respect the -L flag.
