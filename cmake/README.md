@@ -189,7 +189,7 @@ cmake --build . --target test # currently does not work on Windows* OS
 ## Installation
 See [Installation from Sources](../INSTALL.md) to learn how to install oneTBB.
 
-Instructions for installation from the release packages are below:
+To install oneTBB from the release packages, use the following commands: 
 ```bash
 tar -xvf  tar -xvf oneapi-tbb-xxx.xx.x-*.tgz
 source env/vars.sh
