@@ -51,10 +51,10 @@ template <typename T, typename Input, typename Output>
 struct body_types<Output (T::*)(Input&)> : declare_body_types<Input, Output> {};
 
 template <typename T, typename Output>
-struct body_types<Output (T::*)(flow_control&) const> : declare_body_types<NoInputBody, Output> {};
+struct body_types<Output (T::*)(d1::flow_control&) const> : declare_body_types<NoInputBody, Output> {};
 
 template <typename T, typename Output>
-struct body_types<Output (T::*)(flow_control&)> : declare_body_types<NoInputBody, Output> {};
+struct body_types<Output (T::*)(d1::flow_control&)> : declare_body_types<NoInputBody, Output> {};
 
 template <typename Input, typename Output>
 struct body_types<Output (*)(Input&)> : declare_body_types<Input, Output> {};
@@ -63,7 +63,7 @@ template <typename Input, typename Output>
 struct body_types<Output (*)(const Input&)> : declare_body_types<Input, Output> {};
 
 template <typename Output>
-struct body_types<Output (*)(flow_control&)> : declare_body_types<NoInputBody, Output> {};
+struct body_types<Output (*)(d1::flow_control&)> : declare_body_types<NoInputBody, Output> {};
 
 template <typename Body>
 using input_t = typename body_types<Body>::input_type;
