@@ -101,6 +101,9 @@ template <typename PerBodyFunc> float test(PerBodyFunc&& body) {
                 tbb::static_partitioner()
             );
         });
+        // To avoid tasks stealing in the beginning of the parallel algorithm, the test waits for
+        // the threads to leave the arena, so that on the next iteration they have tasks assigned
+        // in their mailboxes and, thus, don't need to search for work to do in other task pools.
         observer.wait_leave();
     }
 
