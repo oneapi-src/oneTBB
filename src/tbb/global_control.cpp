@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2023 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 #include "oneapi/tbb/detail/_config.h"
 #include "oneapi/tbb/detail/_template_helpers.h"
 
+#include "oneapi/tbb/cache_aligned_allocator.h"
 #include "oneapi/tbb/global_control.h"
 #include "oneapi/tbb/tbb_allocator.h"
 #include "oneapi/tbb/spin_mutex.h"
@@ -139,11 +140,22 @@ class alignas(max_nfs_size) lifetime_control : public control_storage {
     }
 };
 
-static allowed_parallelism_control allowed_parallelism_ctl;
-static stack_size_control stack_size_ctl;
-static terminate_on_exception_control terminate_on_exception_ctl;
-static lifetime_control lifetime_ctl;
-static control_storage *controls[] = {&allowed_parallelism_ctl, &stack_size_ctl, &terminate_on_exception_ctl, &lifetime_ctl};
+static control_storage* controls[] = {nullptr, nullptr, nullptr, nullptr};
+
+void global_control_acquire() {
+    controls[0] = new (cache_aligned_allocate(sizeof(allowed_parallelism_control))) allowed_parallelism_control{};
+    controls[1] = new (cache_aligned_allocate(sizeof(stack_size_control))) stack_size_control{};
+    controls[2] = new (cache_aligned_allocate(sizeof(terminate_on_exception_control))) terminate_on_exception_control{};
+    controls[3] = new (cache_aligned_allocate(sizeof(lifetime_control))) lifetime_control{};
+}
+
+void global_control_release() {
+    for (auto& ptr : controls) {
+        ptr->~control_storage();
+        cache_aligned_deallocate(ptr);
+        ptr = nullptr;
+    }
+}
 
 void global_control_lock() {
     for (auto& ctl : controls) {
