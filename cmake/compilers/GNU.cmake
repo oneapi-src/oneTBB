@@ -55,19 +55,16 @@ execute_process(
     ERROR_STRIP_TRAILING_WHITESPACE
 )
 set(ASSEMBLER_VERSION_LINE ${ASSEMBLER_VERSION_LINE_OUT}${ASSEMBLER_VERSION_LINE_ERR})
-string(REGEX REPLACE "GNU assembler version ([0-9]+\\.[0-9]+).*" "\\1" GNU_ASSEMBLER_VERSION "${ASSEMBLER_VERSION_LINE}")
-string(FIND ${GNU_ASSEMBLER_VERSION} "." DOT_POSITION)
-if(DOT_POSITION EQUAL -1)
-    message(FATAL_ERROR "Invalid version string format: ${GNU_ASSEMBLER_VERSION}")
-endif()
+string(REGEX REPLACE "GNU assembler version ([0-9]+)\\.([0-9]+).*" "\\1" _tbb_gnu_asm_major_version "${ASSEMBLER_VERSION_LINE}")
+string(REGEX REPLACE "GNU assembler version ([0-9]+)\\.([0-9]+).*" "\\2" _tbb_gnu_asm_minor_version "${ASSEMBLER_VERSION_LINE}")
+unset(ASSEMBLER_VERSION_LINE_OUT)
+unset(ASSEMBLER_VERSION_LINE_ERR)
+unset(ASSEMBLER_VERSION_LINE)
+message(TRACE "Extracted GNU asssembler version: major=${_tbb_gnu_asm_major_version} minor=${_tbb_gnu_asm_minor_version}")
 
-# Extract the major and minor version numbers (without relying on REGEX to support older CMake versions <3.9)
-string(SUBSTRING ${GNU_ASSEMBLER_VERSION} 0 ${DOT_POSITION} GNU_ASSEMBLER_MAJOR_VERSION)
-string(SUBSTRING ${GNU_ASSEMBLER_VERSION} ${DOT_POSITION} -1 DOT_AND_MINOR_VERSION)
-string(SUBSTRING ${DOT_AND_MINOR_VERSION} 1 -1 GNU_ASSEMBLER_MINOR_VERSION)
-math(EXPR GNU_ASSEMBLER_VERSION_NUMBER  "${GNU_ASSEMBLER_MAJOR_VERSION} * 1000 + ${GNU_ASSEMBLER_MINOR_VERSION}")
-set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} "-DGNU_AS_VERSION=${GNU_ASSEMBLER_VERSION_NUMBER}")
-message(STATUS "GNU Assembler version: ${GNU_ASSEMBLER_VERSION}  (${GNU_ASSEMBLER_VERSION_NUMBER})")
+math(EXPR _tbb_gnu_asm_version_number  "${_tbb_gnu_asm_major_version} * 1000 + ${_tbb_gnu_asm_minor_version}")
+set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} "-D__TBB_GNU_ASM_VERSION=${_tbb_gnu_asm_version_number}")
+message(STATUS "GNU Assembler version: ${_tbb_gnu_asm_major_version}.${_tbb_gnu_asm_minor_version}  (${_tbb_gnu_asm_version_number})")
 
 # Enable Intel(R) Transactional Synchronization Extensions (-mrtm) and WAITPKG instructions support (-mwaitpkg) on relevant processors
 if (CMAKE_SYSTEM_PROCESSOR MATCHES "(AMD64|amd64|i.86|x86)")
