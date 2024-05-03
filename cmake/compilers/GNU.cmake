@@ -60,7 +60,7 @@ string(REGEX REPLACE "GNU assembler version ([0-9]+)\\.([0-9]+).*" "\\2" _tbb_gn
 unset(ASSEMBLER_VERSION_LINE_OUT)
 unset(ASSEMBLER_VERSION_LINE_ERR)
 unset(ASSEMBLER_VERSION_LINE)
-message(TRACE "Extracted GNU asssembler version: major=${_tbb_gnu_asm_major_version} minor=${_tbb_gnu_asm_minor_version}")
+message(TRACE "Extracted GNU assembler version: major=${_tbb_gnu_asm_major_version} minor=${_tbb_gnu_asm_minor_version}")
 
 math(EXPR _tbb_gnu_asm_version_number  "${_tbb_gnu_asm_major_version} * 1000 + ${_tbb_gnu_asm_minor_version}")
 set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} "-D__TBB_GNU_ASM_VERSION=${_tbb_gnu_asm_version_number}")
