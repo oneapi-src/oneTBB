@@ -55,8 +55,8 @@ execute_process(
     ERROR_STRIP_TRAILING_WHITESPACE
 )
 set(ASSEMBLER_VERSION_LINE ${ASSEMBLER_VERSION_LINE_OUT}${ASSEMBLER_VERSION_LINE_ERR})
-string(REGEX REPLACE "GNU assembler version ([0-9]+)\\.([0-9]+).*" "\\1" _tbb_gnu_asm_major_version "${ASSEMBLER_VERSION_LINE}")
-string(REGEX REPLACE "GNU assembler version ([0-9]+)\\.([0-9]+).*" "\\2" _tbb_gnu_asm_minor_version "${ASSEMBLER_VERSION_LINE}")
+string(REGEX REPLACE ".*GNU assembler version ([0-9]+)\\.([0-9]+).*" "\\1" _tbb_gnu_asm_major_version "${ASSEMBLER_VERSION_LINE}")
+string(REGEX REPLACE ".*GNU assembler version ([0-9]+)\\.([0-9]+).*" "\\2" _tbb_gnu_asm_minor_version "${ASSEMBLER_VERSION_LINE}")
 unset(ASSEMBLER_VERSION_LINE_OUT)
 unset(ASSEMBLER_VERSION_LINE_ERR)
 unset(ASSEMBLER_VERSION_LINE)
