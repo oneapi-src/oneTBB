@@ -48,15 +48,15 @@ endif()
 # information is written to either stdout or stderr. To not make any
 # assumptions, both are captured.
 execute_process(
-    COMMAND ${CMAKE_CXX_COMPILER} -diag-disable=10441 -xc -c /dev/null -Wa,-v -o/dev/null
+    COMMAND ${CMAKE_CXX_COMPILER} -xc -c /dev/null -Wa,-v -o/dev/null
     OUTPUT_VARIABLE ASSEMBLER_VERSION_LINE_OUT
     ERROR_VARIABLE ASSEMBLER_VERSION_LINE_ERR
     OUTPUT_STRIP_TRAILING_WHITESPACE
     ERROR_STRIP_TRAILING_WHITESPACE
 )
 set(ASSEMBLER_VERSION_LINE ${ASSEMBLER_VERSION_LINE_OUT}${ASSEMBLER_VERSION_LINE_ERR})
-string(REGEX REPLACE "GNU assembler version ([0-9]+)\\.([0-9]+).*" "\\1" _tbb_gnu_asm_major_version "${ASSEMBLER_VERSION_LINE}")
-string(REGEX REPLACE "GNU assembler version ([0-9]+)\\.([0-9]+).*" "\\2" _tbb_gnu_asm_minor_version "${ASSEMBLER_VERSION_LINE}")
+string(REGEX REPLACE ".*GNU assembler version ([0-9]+)\\.([0-9]+).*" "\\1" _tbb_gnu_asm_major_version "${ASSEMBLER_VERSION_LINE}")
+string(REGEX REPLACE ".*GNU assembler version ([0-9]+)\\.([0-9]+).*" "\\2" _tbb_gnu_asm_minor_version "${ASSEMBLER_VERSION_LINE}")
 unset(ASSEMBLER_VERSION_LINE_OUT)
 unset(ASSEMBLER_VERSION_LINE_ERR)
 unset(ASSEMBLER_VERSION_LINE)
