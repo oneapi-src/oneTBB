@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2023 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -61,23 +61,24 @@ public:
         __TBB_ASSERT(t == nullptr, nullptr);
 
         if (is_worker_should_leave(slot)) {
-            static constexpr std::chrono::microseconds worker_wait_leave_duration(400);
-            static_assert(worker_wait_leave_duration > std::chrono::steady_clock::duration(1), "Clock resolution is not enough for measured interval.");
+            if (!governor::hybrid_cpu()) {
+                static constexpr std::chrono::microseconds worker_wait_leave_duration(1000);
+                static_assert(worker_wait_leave_duration > std::chrono::steady_clock::duration(1), "Clock resolution is not enough for measured interval.");
 
-            for (auto t1 = std::chrono::steady_clock::now(), t2 = t1;
-                std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1) < worker_wait_leave_duration;
-                t2 = std::chrono::steady_clock::now())
-            {
-                if (!is_arena_empty() && !my_arena.is_recall_requested()) {
-                    return true;
-                }
+                for (auto t1 = std::chrono::steady_clock::now(), t2 = t1;
+                    std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1) < worker_wait_leave_duration;
+                    t2 = std::chrono::steady_clock::now())
+                {
+                    if (!is_arena_empty() && !my_arena.is_recall_requested()) {
+                        return true;
+                    }
 
-                if (my_arena.my_market->check_for_arena_in_need()) {
-                    break;
+                    if (my_arena.my_market->check_for_arena_in_need()) {
+                        break;
+                    }
+                    d0::yield();
                 }
-                d0::yield();
             }
-
             // Leave dispatch loop
             return false;
         }

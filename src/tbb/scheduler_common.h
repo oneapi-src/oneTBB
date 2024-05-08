@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -245,12 +245,7 @@ public:
     // no worse than 2x the optimal spin time. Or perhaps a time-slice quantum is the right amount.
     stealing_loop_backoff(int num_workers)
         : my_pause_threshold{ 2 * (num_workers + 1) }
-#if __APPLE__
-        // threshold value tuned separately for macOS due to high cost of sched_yield there
-        , my_yield_threshold{10}
-#else
         , my_yield_threshold{100}
-#endif
         , my_pause_count{}
         , my_yield_count{}
     {}
