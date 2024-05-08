@@ -35,7 +35,11 @@
 // Suffix string
 #define __TBB_VERSION_SUFFIX ""
 // Full official version string
-#define TBB_VERSION_STRING __TBB_STRING(TBB_VERSION_MAJOR) "." __TBB_STRING(TBB_VERSION_MINOR) __TBB_VERSION_SUFFIX
+#define TBB_VERSION_STRING              \
+    __TBB_STRING(TBB_VERSION_MAJOR) "." \
+    __TBB_STRING(TBB_VERSION_MINOR) "." \
+    __TBB_STRING(TBB_VERSION_PATCH)     \
+    __TBB_VERSION_SUFFIX
 
 // OneAPI oneTBB specification version
 #define ONETBB_SPEC_VERSION "1.0"
