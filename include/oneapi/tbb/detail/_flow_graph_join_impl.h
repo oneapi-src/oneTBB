@@ -95,9 +95,20 @@
             return join_helper<N-1>::get_my_item(my_input, out) && res;       // do get on other inputs before returning
         }
 
+        template <typename InputTuple, typename OutputTuple>
+        static inline bool get_my_item( InputTuple& my_input, OutputTuple& out, message_metainfo& metainfo ) {
+            bool res = std::get<N-1>(my_input).get_item(std::get<N-1>(out), metainfo);
+            return join_helper<N-1>::get_my_item(my_input, out, metainfo) && res;
+        }
+
         template<typename InputTuple, typename OutputTuple>
         static inline bool get_items(InputTuple &my_input, OutputTuple &out) {
             return get_my_item(my_input, out);
+        }
+
+        template <typename InputTuple, typename OutputTuple>
+        static inline bool get_items(InputTuple& my_input, OutputTuple& out, message_metainfo& metainfo) {
+            return get_my_item(my_input, out, metainfo);
         }
 
         template<typename InputTuple>
@@ -169,8 +180,18 @@
         }
 
         template<typename InputTuple, typename OutputTuple>
+        static inline bool get_my_item( InputTuple& my_input, OutputTuple& out, message_metainfo& metainfo) {
+            return std::get<0>(my_input).get_item(std::get<0>(out), metainfo);
+        }
+
+        template<typename InputTuple, typename OutputTuple>
         static inline bool get_items(InputTuple &my_input, OutputTuple &out) {
             return get_my_item(my_input, out);
+        }
+
+        template <typename InputTuple, typename OutputTuple>
+        static inline bool get_items(InputTuple& my_input, OutputTuple& out, message_metainfo& metainfo) {
+            return get_my_item(my_input, out, metainfo);
         }
 
         template<typename InputTuple>
@@ -382,19 +403,26 @@
             T my_val;
             T* my_arg;
             graph_task* bypass_t;
+            message_metainfo* metainfo;
+
             // constructor for value parameter
-            queueing_port_operation(const T& e, op_type t) :
+            queueing_port_operation(const T& e, const message_metainfo& info, op_type t) :
                 type(char(t)), my_val(e), my_arg(nullptr)
-                , bypass_t(nullptr)
+                , bypass_t(nullptr), metainfo(const_cast<message_metainfo*>(&info))
             {}
+
             // constructor for pointer parameter
             queueing_port_operation(const T* p, op_type t) :
                 type(char(t)), my_arg(const_cast<T*>(p))
-                , bypass_t(nullptr)
+                , bypass_t(nullptr), metainfo(nullptr)
             {}
+
+            queueing_port_operation(const T* p, message_metainfo& info, op_type t)
+                : type(char(t)), my_arg(const_cast<T*>(p)), bypass_t(nullptr), metainfo(&info) {}
+
             // constructor with no parameter
             queueing_port_operation(op_type t) : type(char(t)), my_arg(nullptr)
-                , bypass_t(nullptr)
+                , bypass_t(nullptr), metainfo(nullptr)
             {}
         };
 
@@ -412,7 +440,7 @@
                 case try__put_task: {
                         graph_task* rtask = nullptr;
                         was_empty = this->buffer_empty();
-                        this->push_back(current->my_val);
+                        this->push_back(current->my_val, *(current->metainfo));
                         if (was_empty) rtask = my_join->decrement_port_count(false);
                         else
                             rtask = SUCCESSFULLY_ENQUEUED;
@@ -424,6 +452,9 @@
                     if(!this->buffer_empty()) {
                         __TBB_ASSERT(current->my_arg, nullptr);
                         *(current->my_arg) = this->front();
+                        auto& current_waiters = current->metainfo->waiters;
+                        auto& buffer_waiters = this->front_metainfo().waiters;
+                        current_waiters.insert(current_waiters.end(), buffer_waiters.begin(), buffer_waiters.end());
                         current->status.store( SUCCEEDED, std::memory_order_release);
                     }
                     else {
@@ -447,8 +478,12 @@
         template< typename R, typename B > friend class run_and_put_task;
         template<typename X, typename Y> friend class broadcast_cache;
         template<typename X, typename Y> friend class round_robin_cache;
-        graph_task* try_put_task(const T &v) override {
-            queueing_port_operation op_data(v, try__put_task);
+        graph_task* try_put_task(const T& v) override {
+            return try_put_task(v, message_metainfo{});
+        }
+
+        graph_task* try_put_task(const T& v, const message_metainfo& metainfo) override {
+            queueing_port_operation op_data(v, metainfo, try__put_task);
             my_aggregator.execute(&op_data);
             __TBB_ASSERT(op_data.status == SUCCEEDED || !op_data.bypass_t, "inconsistent return from aggregator");
             if(!op_data.bypass_t) return SUCCESSFULLY_ENQUEUED;
@@ -477,6 +512,12 @@
 
         bool get_item( T &v ) {
             queueing_port_operation op_data(&v, get__item);
+            my_aggregator.execute(&op_data);
+            return op_data.status == SUCCEEDED;
+        }
+
+        bool get_item( T& v, message_metainfo& metainfo ) {
+            queueing_port_operation op_data(&v, metainfo, get__item);
             my_aggregator.execute(&op_data);
             return op_data.status == SUCCEEDED;
         }
@@ -802,6 +843,11 @@
             return join_helper<N>::get_items(my_inputs, out);
         }
 
+        bool try_to_make_tuple(output_type &out, message_metainfo& metainfo) {
+            if(ports_with_no_items) return false;
+            return join_helper<N>::get_items(my_inputs, out, metainfo);
+        }
+
         void tuple_accepted() {
             reset_port_count();
             join_helper<N>::reset_ports(my_inputs);
@@ -1114,9 +1160,10 @@
                         // them from the input ports after forwarding is complete?
                         if(tuple_build_may_succeed()) {  // checks output queue of FE
                             do {
-                                build_succeeded = try_to_make_tuple(out);  // fetch front_end of queue
+                                message_metainfo info;
+                                build_succeeded = try_to_make_tuple(out, info);  // fetch front_end of queue
                                 if(build_succeeded) {
-                                    graph_task *new_task = my_successors.try_put_task(out);
+                                    graph_task *new_task = my_successors.try_put_task(out, info);
                                     last_task = combine_tasks(my_graph, last_task, new_task);
                                     if(new_task) {
                                         tuple_accepted();

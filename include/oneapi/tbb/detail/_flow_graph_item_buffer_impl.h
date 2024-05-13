@@ -39,7 +39,7 @@ public:
 protected:
     struct buffer_element_type {
         item_type item;
-        wait_context_node* msg_waiter;
+        message_metainfo metainfo;
         buffer_item_state state;
     };
 
@@ -80,15 +80,16 @@ protected:
     }
 
     // may be called with an empty slot or a slot that has already been constructed into.
-    void set_my_item(size_t i, const item_type& o, wait_context_node* waiter) {
+    void set_my_item(size_t i, const item_type& o, const message_metainfo& metainfo) {
         if (element(i).state != no_item) {
             destroy_item(i);
         }
         ::new(&element(i).item) item_type(o);
-        element(i).msg_waiter = waiter;
+        ::new(&element(i).metainfo) message_metainfo(metainfo);
         element(i).state = has_item;
 
-        if (waiter) {
+        for (auto& waiter : metainfo.waiters) {
+            std::cout << "Reserve on " << waiter << std::endl;
             waiter->reserve(1);
         }
     }
@@ -135,7 +136,12 @@ protected:
         __TBB_ASSERT(my_item_valid(i), "destruction of invalid item");
         auto& e = element(i);
         e.item.~item_type();
-        e.msg_waiter = nullptr;
+
+        for (auto& msg_waiter : e.metainfo.waiters) {
+            msg_waiter->release(1);
+        }
+
+        e.metainfo.~message_metainfo();
         e.state = no_item;
     }
 
@@ -146,10 +152,10 @@ protected:
         return get_my_item(my_head);
     }
 
-    wait_context_node* front_waiter() const
+    const message_metainfo& front_metainfo() const
     {
         __TBB_ASSERT(my_item_valid(my_head), "attempt to fetch head non-item");
-        return element(my_head).msg_waiter;
+        return element(my_head).metainfo;
     }
 
     // returns  the back element
@@ -157,6 +163,12 @@ protected:
     {
         __TBB_ASSERT(my_item_valid(my_tail - 1), "attempt to fetch head non-item");
         return get_my_item(my_tail - 1);
+    }
+
+    const message_metainfo& back_metainfo() const
+    {
+        __TBB_ASSERT(my_item_valid(my_tail - 1), "attempt to fetch head non-item");
+        return element(my_tail - 1).metainfo;
     }
 
     // following methods are for reservation of the front of a buffer.
@@ -191,8 +203,8 @@ protected:
             if(my_item_valid(i)) {  // sequencer_node may have empty slots
                 // placement-new copy-construct; could be std::move
                 char *new_space = (char *)&(new_array[i&(new_size-1)].begin()->item);
-                (void)new(new_space) item_type(get_my_item(i));
-                new_array[i & (new_size - 1)].begin()->msg_waiter = element(i).msg_waiter;
+                ::new(new_space) item_type(get_my_item(i));
+                ::new(&(new_array[i & (new_size - 1)].begin()->metainfo)) message_metainfo(element(i).metainfo);
                 new_array[i & (new_size - 1)].begin()->state = element(i).state;
             }
         }
@@ -203,11 +215,11 @@ protected:
         my_array_size = new_size;
     }
 
-    bool push_back(item_type& v, wait_context_node* waiter) {
+    bool push_back(item_type& v, const message_metainfo& metainfo) {
         if (buffer_full()) {
             grow_my_array(size() + 1);
         }
-        set_my_item(my_tail, v, waiter);
+        set_my_item(my_tail, v, metainfo);
         ++my_tail;
         return true;
     }
@@ -216,36 +228,24 @@ protected:
         return push_back(v, nullptr);
     }
 
-    bool pop_back(item_type &v, wait_context_node*& waiter) {
+    bool pop_back(item_type &v) {
         if (!my_item_valid(my_tail-1)) {
             return false;
         }
         auto& e = element(my_tail - 1);
         v = e.item;
-        waiter = e.msg_waiter;
         destroy_back();
         return true;
     }
 
-    bool pop_back(item_type& v) {
-        wait_context_node* dummy_waiter = nullptr;
-        return pop_back(v, dummy_waiter);
-    }
-
-    bool pop_front(item_type &v, wait_context_node*& waiter) {
+    bool pop_front(item_type &v) {
         if(!my_item_valid(my_head)) {
             return false;
         }
         auto& e = element(my_head);
         v = e.item;
-        waiter = e.msg_waiter;
         destroy_front();
         return true;
-    }
-
-    bool pop_front(item_type& v) {
-        wait_context_node* dummy_waiter = nullptr;
-        return pop_front(v, dummy_waiter);
     }
 
     // This is used both for reset and for grow_my_array.  In the case of grow_my_array
