@@ -191,7 +191,7 @@ See [Installation from Sources](../INSTALL.md) to learn how to install oneTBB.
 
 To install oneTBB from the release packages, use the following commands: 
 ```bash
-tar -xvf  tar -xvf oneapi-tbb-xxx.xx.x-*.tgz
+tar -xvf oneapi-tbb-xxx.xx.x-*.tgz
 source env/vars.sh
 ```
 
