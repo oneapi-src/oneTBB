@@ -187,7 +187,14 @@ cmake --build . --target test # currently does not work on Windows* OS
 ```
 
 ## Installation
-See [Installation from Sources](../INSTALL.md) to learn how to install oneTBB. 
+See [Installation from Sources](../INSTALL.md) to learn how to install oneTBB.
+
+To install oneTBB from the release packages, use the following commands: 
+```bash
+tar -xvf oneapi-tbb-xxx.xx.x-*.tgz
+source env/vars.sh
+```
+
 
 ## Sanitizers - Configure, Build, and Run
 

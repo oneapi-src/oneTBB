@@ -1,0 +1,16 @@
+# Where component owners are known, add them here.
+
+/oneTBB/src/tbb/ @pavelkumbrasev
+/oneTBB/src/tbb/ @dnmokhov
+/oneTBB/src/tbb/ @JhaShweta1
+/oneTBB/src/tbb/ @sarathnandu
+/oneTBB/src/doc @aepanchi
+/oneTBB/src/tbbbind/ @isaevil
+/oneTBB/src/tbbmalloc/ @lplewa
+/oneTBB/src/tbbmalloc_proxy/ @lplewa
+/oneTBB/cmake/ @isaevil
+/oneTBB/*CMakeLists.txt @isaevil
+/oneTBB/python/ @sarathnandu
+/oneTBB/python/ @isaevil
+
+
