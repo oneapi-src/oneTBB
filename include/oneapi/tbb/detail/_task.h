@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020-2023 Intel Corporation
+    Copyright (c) 2020-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -207,7 +207,11 @@ class task_traits {
 };
 
 //! Alignment for a task object
-static constexpr std::size_t task_alignment = 64;
+#if __ARM_ARCH_7A__ || __aarch64__
+constexpr std::size_t task_alignment = 128;
+#else /* Generic */
+constexpr std::size_t task_alignment = 64;
+#endif
 
 //! Base class for user-defined tasks.
 /** @ingroup task_scheduling */
@@ -220,7 +224,7 @@ public:
     virtual task* cancel(execution_data&) = 0;
 
 private:
-    std::uint64_t m_reserved[6]{};
+    std::uint64_t m_reserved[(task_alignment - sizeof(void*) - sizeof(task_traits)) / sizeof(std::uint64_t)]{};
     friend struct r1::task_accessor;
 };
 static_assert(sizeof(task) == task_alignment, "task size is broken");
