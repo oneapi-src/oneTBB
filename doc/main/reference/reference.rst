@@ -49,3 +49,4 @@ The key properties of a preview feature are:
     concurrent_lru_cache_cls
     task_group_extensions
     custom_mutex_chmap
+    rvalue_reduce
