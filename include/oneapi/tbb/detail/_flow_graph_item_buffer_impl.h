@@ -57,14 +57,16 @@ protected:
     bool buffer_empty() const { return my_head == my_tail; }
 
     buffer_element_type& element(size_type i) {
-        __TBB_ASSERT(!(size_type(&(my_array[i&(my_array_size-1)].begin()->second))%alignment_of<buffer_item_state>::value), nullptr);
-        __TBB_ASSERT(!(size_type(&(my_array[i&(my_array_size-1)].begin()->first))%alignment_of<item_type>::value), nullptr);
+        __TBB_ASSERT(!(size_type(&(my_array[i&(my_array_size-1)].begin()->item))%alignment_of<item_type>::value), nullptr);
+        __TBB_ASSERT(!(size_type(&(my_array[i&(my_array_size-1)].begin()->metainfo))%alignment_of<message_metainfo>::value), nullptr);
+        __TBB_ASSERT(!(size_type(&(my_array[i&(my_array_size-1)].begin()->state))%alignment_of<buffer_item_state>::value), nullptr);
         return *my_array[i & (my_array_size - 1) ].begin();
     }
 
     const buffer_element_type& element(size_type i) const {
-        __TBB_ASSERT(!(size_type(&(my_array[i&(my_array_size-1)].begin()->second))%alignment_of<buffer_item_state>::value), nullptr);
-        __TBB_ASSERT(!(size_type(&(my_array[i&(my_array_size-1)].begin()->first))%alignment_of<item_type>::value), nullptr);
+        __TBB_ASSERT(!(size_type(&(my_array[i&(my_array_size-1)].begin()->item))%alignment_of<item_type>::value), nullptr);
+        __TBB_ASSERT(!(size_type(&(my_array[i&(my_array_size-1)].begin()->metainfo))%alignment_of<message_metainfo>::value), nullptr);
+        __TBB_ASSERT(!(size_type(&(my_array[i&(my_array_size-1)].begin()->state))%alignment_of<buffer_item_state>::value), nullptr);
         return *my_array[i & (my_array_size-1)].begin();
     }
 
@@ -95,7 +97,7 @@ protected:
     }
 
     void set_my_item(size_t i, const item_type &o) {
-        set_my_item(i, o, nullptr);
+        set_my_item(i, o, message_metainfo{});
     }
 
     // destructively-fetch an object from the buffer
@@ -225,7 +227,7 @@ protected:
     }
 
     bool push_back(item_type &v) {
-        return push_back(v, nullptr);
+        return push_back(v, message_metainfo{});
     }
 
     bool pop_back(item_type &v) {
