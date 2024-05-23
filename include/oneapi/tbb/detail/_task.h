@@ -224,7 +224,11 @@ public:
     virtual task* cancel(execution_data&) = 0;
 
 private:
-    std::uint64_t m_reserved[(task_alignment - sizeof(void*) - sizeof(task_traits)) / sizeof(std::uint64_t)]{};
+#if __ARM_ARCH_7A__ || __aarch64__
+    std::uint64_t m_reserved[14]{};
+#else /* Generic */
+    std::uint64_t m_reserved[6]{};
+#endif
     friend struct r1::task_accessor;
 };
 static_assert(sizeof(task) == task_alignment, "task size is broken");
