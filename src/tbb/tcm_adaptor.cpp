@@ -108,7 +108,7 @@ public:
     }
 
     int update_concurrency(uint32_t concurrency) {
-        return my_arena.update_concurrency(concurrency);
+        return my_arena.update_concurrency(concurrency > my_arena.my_num_reserved_slots ? concurrency - my_arena.my_num_reserved_slots : 0);
     }
 
     unsigned priority_level() {
@@ -150,8 +150,8 @@ public:
     void request_permit(tcm_client_id_t client_id) {
         __TBB_ASSERT(tcm_request_permit, nullptr);
 
-        my_permit_request.max_sw_threads = max_workers();
-        my_permit_request.min_sw_threads = my_permit_request.max_sw_threads == 0 ? 0 : min_workers();
+        my_permit_request.max_sw_threads = max_workers() + my_arena.my_num_reserved_slots;
+        my_permit_request.min_sw_threads = min_workers() + my_arena.my_num_reserved_slots;
 
         if (my_permit_request.constraints_size > 0) {
             my_permit_request.cpu_constraints->min_concurrency = my_permit_request.min_sw_threads;
