@@ -759,6 +759,91 @@ protected:
 
 };  // multifunction_output
 
+struct CallbackInterface {
+    virtual void operator()() const = 0;
+};
+
+template <typename Callback>
+struct CallbackLeaf {
+    void operator()() const final {
+        callback();
+    }
+
+    Callback callback;
+};
+
+template <typename Output>
+class exp_multifunction_output : public multifunction_output<Output> {
+public:
+    typedef Output output_type;
+    typedef multifunction_output<output_type> base_type;
+
+    exp_multifunction_output(graph& g)
+        : base_type(g)
+        , suspend_callback(nullptr)
+        , resume_callback(nullptr)
+    {}
+
+    exp_multifunction_output(const exp_multifunction_output& other) = default;
+
+    bool try_put(const output_type &i) {
+        graph_task *res = try_put_task(i);
+        if( !res ) return false;
+        if( res != SUCCESSFULLY_ENQUEUED ) {
+            // wrapping in task_arena::execute() is not needed since the method is called from
+            // inside task::execute()
+            spawn_in_graph_arena(graph_reference(), *res);
+        }
+        return true;
+    }
+
+    bool try_get(output_type& v) override {
+        if (my_suspend_callback == nullptr ||
+            my_resume_callback == nullptr ||
+            !my_cached_item.has_value())
+        {
+            return false;
+        }
+
+        v = my_cached_item.value();
+        my_cached_item.reset();
+
+        my_resume_callback();
+        release_callbacks();
+        return true;
+    }
+
+    template <typename SuspendCallback, typename ResumeCallback>
+    void register_callbacks(SuspendCallback suspend_callback, ResumeCallback resume_callback) {
+        my_suspend_callback = new CallbackLeaf(suspend_callback);
+        my_resume_callback = new CallbackLeaf(resume_callback);
+    }
+
+    void release_callbacks() {
+        delete my_suspend_callback;
+        delete my_resume_callback;
+        my_suspend_callback = my_resume_callback = nullptr;
+    }
+
+    using base_type::graph_reference;
+
+protected:
+    graph_task* try_put_task(const output_type &i) {
+        graph_task* last_task = my_successors.try_put_task(i);
+
+        if (last_task == nullptr && my_suspend_callback != nullptr) {
+            my_suspend_callback();
+        }
+        return last_task;
+    }
+
+    template <int N> friend struct emit_element;
+
+    std::optional<output_type> my_cached_item = std::nullopt;
+    CallbackInterface* my_suspend_callback = nullptr;
+    CallbackInterface* my_resume_callback = nullptr;
+}; // class exp_multifunction_output
+
 //composite_node
 template<typename CompositeType>
 void add_nodes_impl(CompositeType*, bool) {}

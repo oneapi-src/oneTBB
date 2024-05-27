@@ -2906,6 +2906,11 @@ private:
             return my_node->try_put_impl(i);
         }
 
+        template <typename SuspendCallback, typename ResumeCallback>
+        void put(const Output& i, SuspendCallback suspend_callback, ResumeCallback resume_callback) override {
+            my_node->put_impl(i, suspend_callback, resume_callback);
+        }
+
     private:
         async_node* my_node;
     } my_gateway;
@@ -2929,6 +2934,22 @@ private:
         }
         fgt_async_try_put_end(this, &port_0);
         return is_at_least_one_put_successful;
+    }
+
+    template <typename SuspendCallback, typename ResumeCallback>
+    void put_impl(const Output& i, SuspendCallback suspend_callback, ResumeCallback resume_callback) {
+        multifunction_output<Output>& port_0 = output_port<0>(*this);
+        broadcast_cache<output_type>& port_successors = port_0.successors();
+        fgt_async_try_put_begin(this, &port_0);
+        // TODO revamp: change to std::list<graph_task*>
+        graph_task_list tasks;
+        port_0.register_callbacks(suspend_callback, resume_callback);
+        port_successors.gather_successful_try_puts(i, tasks);
+
+        while( !tasks.empty() ) {
+            enqueue_in_graph_arena(this->my_graph, tasks.pop_front());
+        }
+        fgt_async_try_put_end(this, &port_0);
     }
 
 public:
