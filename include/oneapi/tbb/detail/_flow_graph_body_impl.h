@@ -276,11 +276,11 @@ class apply_body_task_bypass : public graph_task {
     NodeType &my_node;
     Input my_input;
 public:
-
+    template <typename Waiters>
     apply_body_task_bypass( graph& g, small_object_allocator& allocator, NodeType &n, const Input &i,
-                            const std::list<wait_context_node*>& msg_waiters,
+                            Waiters&& msg_waiters,
                             node_priority_t node_priority = no_priority )
-        : graph_task(g, allocator, msg_waiters, node_priority),
+        : graph_task(g, allocator, std::forward<Waiters>(msg_waiters), node_priority),
           my_node(n), my_input(i) {}
 
     task* execute(execution_data& ed) override {

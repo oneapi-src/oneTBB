@@ -200,9 +200,10 @@ private:
         }
         else {
             input_type i;
-            if(my_predecessors.get_item(i)) {
+            message_metainfo metainfo;
+            if(my_predecessors.get_item(i, &metainfo)) {
                 ++my_concurrency;
-                new_task = create_body_task(i, message_metainfo{});
+                new_task = create_body_task(i, std::move(metainfo));
             }
         }
         return new_task;
@@ -317,18 +318,20 @@ private:
     }
 
     //! allocates a task to apply a body
-    graph_task* create_body_task( const input_type &input, const message_metainfo& metainfo) {
+    template <typename Metainfo>
+    graph_task* create_body_task( const input_type &input, Metainfo&& metainfo) {
         if (!is_graph_active(my_graph_ref)) {
             return nullptr;
         }
         // TODO revamp: extract helper for common graph task allocation part
         small_object_allocator allocator{};
         typedef apply_body_task_bypass<class_type, input_type> task_type;
-        graph_task* t = allocator.new_object<task_type>( my_graph_ref, allocator, *this, input, metainfo.waiters, my_priority );
+        graph_task* t = allocator.new_object<task_type>( my_graph_ref, allocator, *this, input, std::forward<Metainfo>(metainfo).waiters(), my_priority );
         t->reserve_on_reference_node();
-        // graph_reference().reserve_wait();
         return t;
     }
+
+
 
     //! This is executed by an enqueued task, the "forwarder"
     graph_task* forward_task() {

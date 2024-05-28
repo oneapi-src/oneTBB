@@ -127,6 +127,11 @@ class graph_task : public task {
 public:
     graph_task(graph& g, small_object_allocator& allocator
                , node_priority_t node_priority = no_priority);
+
+    graph_task(graph& g, small_object_allocator& allocator,
+               std::list<wait_context_node*>&& msg_waiters,
+               node_priority_t node_priority_t = no_priority);
+
     graph_task(graph& g, small_object_allocator& allocator,
                const std::list<wait_context_node*>& msg_waiters,
                node_priority_t node_priority_t = no_priority);
@@ -386,13 +391,20 @@ template<typename DerivedType>
 inline void graph_task::finalize(const execution_data& ed) {
     // graph& g = my_graph;
     wait_tree_node_interface* ref_node = my_reference_node;
+    auto msg_wait_context_nodes = std::move(my_msg_wait_context_nodes);
     auto msg_ref_nodes = std::move(my_msg_wait_reference_nodes);
 
     destruct_and_deallocate<DerivedType>(ed);
     ref_node->release(1, ed);
 
-    for (auto msg_waiter : msg_ref_nodes) {
-        msg_waiter->release(1, ed);
+    if (msg_ref_nodes.empty()) {
+        for (auto msg_wait_context_node : msg_wait_context_nodes) {
+            msg_wait_context_node->release(1);
+        }
+    } else {
+        for (auto msg_waiter : msg_ref_nodes) {
+            msg_waiter->release(1, ed);
+        }
     }
     // g.release_wait();
 }
@@ -403,29 +415,55 @@ inline graph_task::graph_task(graph& g, small_object_allocator& allocator,
     : my_graph(g)
     , priority(node_priority)
     , my_allocator(allocator)
-    // , my_reference_node(msg_wait_context_nodes.empty() ?
-    //                     r1::get_thread_reference_node(&my_graph.get_wait_context_node()) :
-    //                     r1::get_thread_reference_node(msg_wait_context_nodes.front()))
     , my_reference_node(r1::get_thread_reference_node(&my_graph.get_wait_context_node()))
     , my_msg_wait_context_nodes(msg_wait_context_nodes)
 {
-    // TODO: usable for splitting using one msg_wait_nodes instead of main one
-    // if (!msg_wait_context_nodes.empty()) {
-    //     msg_wait_context_nodes.front()->reserve();
-
-    //     for (auto it = std::next(msg_wait_context_nodes.begin()); it != msg_wait_context_nodes.end(); ++it) {
-    //         my_msg_wait_reference_nodes.emplace_back(r1::get_thread_reference_node(*it));
-    //     }
-    // }
     for (auto& msg_waiter : msg_wait_context_nodes) {
         my_msg_wait_reference_nodes.emplace_back(r1::get_thread_reference_node(msg_waiter));
-        my_msg_wait_reference_nodes.back()->reserve();
+        my_msg_wait_reference_nodes.back()->reserve(1);
     }
 }
 
+inline graph_task::graph_task(graph& g, small_object_allocator& allocator,
+                              std::list<wait_context_node*>&& msg_wait_context_nodes,
+                              node_priority_t node_priority)
+    : my_graph(g)
+    , priority(node_priority)
+    , my_allocator(allocator)
+    , my_reference_node(r1::get_thread_reference_node(&my_graph.get_wait_context_node()))
+    , my_msg_wait_context_nodes(std::move(msg_wait_context_nodes))
+{
+}
+
+// inline graph_task::graph_task(graph& g, small_object_allocator& allocator,
+//                               const std::list<wait_context_node*>& msg_wait_context_nodes,
+//                               node_priority_t node_priority)
+//     : my_graph(g)
+//     , priority(node_priority)
+//     , my_allocator(allocator)
+//     // , my_reference_node(msg_wait_context_nodes.empty() ?
+//     //                     r1::get_thread_reference_node(&my_graph.get_wait_context_node()) :
+//     //                     r1::get_thread_reference_node(msg_wait_context_nodes.front()))
+//     , my_reference_node(r1::get_thread_reference_node(&my_graph.get_wait_context_node()))
+//     , my_msg_wait_context_nodes(msg_wait_context_nodes)
+// {
+//     // TODO: usable for splitting using one msg_wait_nodes instead of main one
+//     // if (!msg_wait_context_nodes.empty()) {
+//     //     msg_wait_context_nodes.front()->reserve();
+
+//     //     for (auto it = std::next(msg_wait_context_nodes.begin()); it != msg_wait_context_nodes.end(); ++it) {
+//     //         my_msg_wait_reference_nodes.emplace_back(r1::get_thread_reference_node(*it));
+//     //     }
+//     // }
+//     for (auto& msg_waiter : msg_wait_context_nodes) {
+//         my_msg_wait_reference_nodes.emplace_back(r1::get_thread_reference_node(msg_waiter));
+//         my_msg_wait_reference_nodes.back()->reserve();
+//     }
+// }
+
 inline graph_task::graph_task(graph& g, small_object_allocator& allocator
                        , node_priority_t node_priority)
-    : graph_task(g, allocator, /*msg_waiters = */{}, node_priority) {}
+    : graph_task(g, allocator, /*msg_waiters = */std::list<wait_context_node*>{}, node_priority) {}
 
 //********************************************************************************
 // end of graph tasks helpers

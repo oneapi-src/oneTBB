@@ -99,6 +99,10 @@ public:
     }
 
     bool get_item( output_type& v ) {
+        return get_item(v, nullptr);
+    }
+
+    bool get_item( output_type& v, message_metainfo* metainfo_ptr ) {
 
         bool msg = false;
 
@@ -113,7 +117,7 @@ public:
             }
 
             // Try to get from this sender
-            msg = src->try_get( v );
+            msg = src->try_get( v, metainfo_ptr );
 
             if (msg == false) {
                 // Relinquish ownership of the edge

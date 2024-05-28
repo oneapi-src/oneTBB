@@ -90,8 +90,8 @@ protected:
         ::new(&element(i).metainfo) message_metainfo(metainfo);
         element(i).state = has_item;
 
-        for (auto& waiter : metainfo.waiters) {
-            std::cout << "Reserve on " << waiter << std::endl;
+        for (auto& waiter : metainfo.waiters()) {
+            std::cout << "Buffer: reserve on " << waiter << std::endl;
             waiter->reserve(1);
         }
     }
@@ -139,7 +139,8 @@ protected:
         auto& e = element(i);
         e.item.~item_type();
 
-        for (auto& msg_waiter : e.metainfo.waiters) {
+        for (auto& msg_waiter : e.metainfo.waiters()) {
+            std::cout << "Buffer: releasing " << msg_waiter << std::endl;
             msg_waiter->release(1);
         }
 
@@ -230,24 +231,38 @@ protected:
         return push_back(v, message_metainfo{});
     }
 
-    bool pop_back(item_type &v) {
+    bool pop_back(item_type &v, message_metainfo* metainfo_ptr) {
         if (!my_item_valid(my_tail-1)) {
             return false;
         }
         auto& e = element(my_tail - 1);
         v = e.item;
+        if (metainfo_ptr) {
+            *metainfo_ptr = std::move(e.metainfo);
+        }
         destroy_back();
         return true;
     }
 
-    bool pop_front(item_type &v) {
+    bool pop_back(item_type &v) {
+        return pop_back(v, nullptr);
+    }
+
+    bool pop_front(item_type &v, message_metainfo* metainfo_ptr) {
         if(!my_item_valid(my_head)) {
             return false;
         }
         auto& e = element(my_head);
         v = e.item;
+        if (metainfo_ptr) {
+            *metainfo_ptr = std::move(e.metainfo);
+        }
         destroy_front();
         return true;
+    }
+
+    bool pop_front(item_type &v) {
+        return pop_front(v, nullptr);
     }
 
     // This is used both for reset and for grow_my_array.  In the case of grow_my_array

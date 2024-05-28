@@ -315,6 +315,10 @@
             return nullptr;
         }
 
+        graph_task* try_put_task( const T &, const message_metainfo& ) override {
+            return nullptr;
+        }
+
         graph& graph_reference() const override {
             return my_join->graph_ref;
         }

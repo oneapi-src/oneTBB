@@ -187,6 +187,28 @@ static inline graph_task* combine_tasks(graph& g, graph_task* left, graph_task* 
     return left;
 }
 
+class message_metainfo {
+public:
+    using waiters_type = std::list<wait_context_node*>;
+
+    message_metainfo() = default;
+
+    message_metainfo(const waiters_type& waiters_list) : my_waiters(waiters_list) {}
+    message_metainfo(waiters_type&& waiters_list) : my_waiters(std::move(waiters_list)) {}
+
+    message_metainfo(const message_metainfo&) = default;
+    message_metainfo(message_metainfo&&) = default;
+
+    message_metainfo& operator=(const message_metainfo&) = default;
+    message_metainfo& operator=(message_metainfo&&) = default;
+
+    const waiters_type& waiters() const & { return my_waiters; }
+    waiters_type&& waiters() && { return std::move(my_waiters); }
+
+private:
+    waiters_type my_waiters;
+};
+
 //! Pure virtual template class that defines a sender of messages of type T
 template< typename T >
 class sender {
@@ -195,6 +217,8 @@ public:
 
     //! Request an item from the sender
     virtual bool try_get( T & ) { return false; }
+
+    virtual bool try_get( T &, message_metainfo* ) { return false; }
 
     //! Reserves an item in the sender
     virtual bool try_reserve( T & ) { return false; }
@@ -234,12 +258,6 @@ template<typename C>
 bool remove_successor(sender<C>& s, receiver<C>& r) {
     return s.remove_successor(r);
 }
-
-struct message_metainfo {
-    message_metainfo() = default;
-
-    std::list<wait_context_node*> waiters;
-};
 
 //! Pure virtual template class that defines a receiver of messages of type T
 template< typename T >
@@ -1219,7 +1237,10 @@ protected:
             : buffer_operation(e, t, nullptr)
         {}
 
-        buffer_operation(op_type t) : type(char(t)), elem(nullptr), ltask(nullptr), r(nullptr) {}
+        buffer_operation(op_type t, message_metainfo* info_ptr)
+            : type(char(t)), elem(nullptr), ltask(nullptr), r(nullptr), metainfo(info_ptr)
+        {}
+        buffer_operation(op_type t) : buffer_operation(t, nullptr) {}
     };
 
     bool forwarder_busy;
@@ -1458,13 +1479,19 @@ public:
     //! Request an item from the buffer_node
     /**  true = v contains the returned item<BR>
          false = no item has been returned */
-    bool try_get( T &v ) override {
-        buffer_operation op_data(req_item);
+    bool try_get(T& v) override {
+        return try_get(v, nullptr);
+    }
+
+private:
+    bool try_get(T &v, message_metainfo* metainfo_ptr) override {
+        buffer_operation op_data(req_item, metainfo_ptr);
         op_data.elem = &v;
         my_aggregator.execute(&op_data);
         (void)enqueue_forwarding_task(op_data);
         return (op_data.status==SUCCEEDED);
     }
+public:
 
     //! Reserves an item.
     /**  false = no item can be reserved<BR>
@@ -1556,15 +1583,11 @@ private:
     }
 
     void try_put_and_add_task(graph_task*& last_task) {
-        wait_context_node* waiter = this->front_waiter();
-        graph_task *new_task = this->my_successors.try_put_task(this->front(), waiter);
+        graph_task *new_task = this->my_successors.try_put_task(this->front(), this->front_metainfo());
         if (new_task) {
             // workaround for icc bug
             graph& graph_ref = this->graph_reference();
             last_task = combine_tasks(graph_ref, last_task, new_task);
-            if (waiter) {
-                waiter->release(1);
-            }
             this->destroy_front();
         }
     }
@@ -1579,7 +1602,7 @@ protected:
             op->status.store(FAILED, std::memory_order_release);
         }
         else {
-            this->pop_front(*(op->elem));
+            this->pop_front(*(op->elem), op->metainfo);
             op->status.store(SUCCEEDED, std::memory_order_release);
         }
     }
