@@ -205,8 +205,11 @@ public:
     using size_type = std::size_t;
     using difference_type = std::ptrdiff_t;
 
-    using iterator = solist_iterator<self_type, value_type>;
     using const_iterator = solist_iterator<self_type, const value_type>;
+    // iterator for unordered sets should be constant to prohibit modification of keys inside buckets
+    using iterator = typename std::conditional<std::is_same<value_type, key_type>::value,
+                                               const_iterator,
+                                               solist_iterator<self_type, value_type>>::type;
     using local_iterator = iterator;
     using const_local_iterator = const_iterator;
 
@@ -495,10 +498,6 @@ public:
         return iterator(first_value_node(internal_erase(pos.get_node_ptr())));
     }
 
-    iterator unsafe_erase( iterator pos ) {
-        return iterator(first_value_node(internal_erase(pos.get_node_ptr())));
-    }
-
     iterator unsafe_erase( const_iterator first, const_iterator last ) {
         while(first != last) {
             first = unsafe_erase(first);
@@ -524,10 +523,6 @@ public:
         return node_handle_accessor::construct<node_type>(pos.get_node_ptr());
     }
 
-    node_type unsafe_extract( iterator pos ) {
-        internal_extract(pos.get_node_ptr());
-        return node_handle_accessor::construct<node_type>(pos.get_node_ptr());
-    }
 
     node_type unsafe_extract( const key_type& key ) {
         iterator item = find(key);

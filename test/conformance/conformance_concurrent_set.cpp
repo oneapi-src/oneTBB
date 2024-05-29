@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2019-2021 Intel Corporation
+    Copyright (c) 2019-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -77,7 +77,7 @@ void test_member_types() {
 
     static_assert(utils::is_forward_iterator<typename container_type::iterator>::value,
                   "Incorrect container iterator member type");
-    static_assert(!std::is_const<typename container_type::iterator::value_type>::value,
+    static_assert(std::is_const<typename container_type::iterator::value_type>::value,
                   "Incorrect container iterator member type");
     static_assert(utils::is_forward_iterator<typename container_type::const_iterator>::value,
                   "Incorrect container const_iterator member type");
