@@ -21,7 +21,7 @@ As an open source project, we welcome community contributions to oneAPI Threadin
 
 Licensing is very important to open source projects. It helps ensure the software continues to be available under the terms that the author desired. The oneTBB project uses the [Apache 2.0 License](https://github.com/oneapi-src/oneTBB/blob/master/LICENSE.txt), a permissive open source license that allows you to freely use, modify, and distribute your own products that include Apache 2.0 licensed software. By contributing to the oneTBB project, you agree to the license and copyright terms therein and release your own contributions under these terms. 
 
-Some imported or reused components within oneTBB use other licenses, as described in [third-party-programs.txt](https://github.com/oneapi-src/oneTBB/blob/master/third-party-programs.txt). By carefully reviewing potential contributions and enforcing a [Developer Certification of Origin (DCO)](https://developercertificate.org/) for contributed code, we can ensure that the community can develop products with oneTBB without concerns over patent or copyright issues. 
+Some imported or reused components within oneTBB use other licenses, as described in [third-party-programs.txt](https://github.com/oneapi-src/oneTBB/blob/master/third-party-programs.txt). By carefully reviewing potential contributions, we can ensure that the community can develop products with oneTBB without concerns over patent or copyright issues. 
 
 ## Prerequisites 
 
