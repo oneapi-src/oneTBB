@@ -153,8 +153,8 @@ static std::uintptr_t get_stack_base(std::size_t stack_size) {
 
     // Points to the lowest addressable byte of a stack.
     void* stack_limit = nullptr;
-#if __linux__ && !__bg__
     size_t np_stack_size = 0;
+#if __linux__ && !__bg__
     pthread_attr_t np_attr_stack;
     if (0 == pthread_getattr_np(pthread_self(), &np_attr_stack)) {
         if (0 == pthread_attr_getstack(&np_attr_stack, &stack_limit, &np_stack_size)) {
@@ -165,7 +165,7 @@ static std::uintptr_t get_stack_base(std::size_t stack_size) {
 #endif /* __linux__ */
     std::uintptr_t stack_base{};
     if (stack_limit) {
-        stack_base = reinterpret_cast<std::uintptr_t>(stack_limit) + stack_size;
+        stack_base = reinterpret_cast<std::uintptr_t>(stack_limit) + np_stack_size;
     } else {
         // Use an anchor as a base stack address.
         int anchor{};
