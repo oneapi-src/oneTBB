@@ -299,19 +299,22 @@ int main(int argc, char* argv[]) {
         read_board(filename.c_str());
     // otherwise (if file name not specified), the default statically initialized board will be used.
     for (int p = threads.first; p <= threads.last; p = threads.step(p)) {
-        unsigned number = solve(p);
+        const unsigned NUM_INTERNAL_REPEATS = 1000;
+        for (size_t i = 0; i < NUM_INTERNAL_REPEATS; ++i) {
+            unsigned number = solve(p);
 
-        if (!silent) {
-            if (find_one) {
-                printf("Sudoku: Time to find first solution on %d threads: %6.6f seconds.\n",
-                       p,
-                       solve_time);
-            }
-            else {
-                printf("Sudoku: Time to find all %u solutions on %d threads: %6.6f seconds.\n",
-                       number,
-                       p,
-                       solve_time);
+            if (!silent) {
+                if (find_one) {
+                    printf("Sudoku: Time to find first solution on %d threads: %6.6f seconds.\n",
+                           p,
+                           solve_time);
+                }
+                else {
+                    printf("Sudoku: Time to find all %u solutions on %d threads: %6.6f seconds.\n",
+                           number,
+                           p,
+                           solve_time);
+                }
             }
         }
     }
