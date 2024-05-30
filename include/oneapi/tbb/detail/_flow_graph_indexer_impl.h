@@ -31,9 +31,9 @@
     // successor.
 
     template<typename IndexerNodeBaseType, typename T, size_t K>
-    graph_task* do_try_put(const T &v, void *p) {
+    graph_task* do_try_put(const T &v, void *p, const message_metainfo& metainfo) {
         typename IndexerNodeBaseType::output_type o(K, v);
-        return reinterpret_cast<IndexerNodeBaseType *>(p)->try_put_task(&o);
+        return reinterpret_cast<IndexerNodeBaseType *>(p)->try_put_task(&o, metainfo);
     }
 
     template<typename TupleTypes,int N>
@@ -41,7 +41,7 @@
         template<typename IndexerNodeBaseType, typename PortTuple>
         static inline void set_indexer_node_pointer(PortTuple &my_input, IndexerNodeBaseType *p, graph& g) {
             typedef typename std::tuple_element<N-1, TupleTypes>::type T;
-            graph_task* (*indexer_node_put_task)(const T&, void *) = do_try_put<IndexerNodeBaseType, T, N-1>;
+            graph_task* (*indexer_node_put_task)(const T&, void *, const message_metainfo&) = do_try_put<IndexerNodeBaseType, T, N-1>;
             std::get<N-1>(my_input).set_up(p, indexer_node_put_task, g);
             indexer_helper<TupleTypes,N-1>::template set_indexer_node_pointer<IndexerNodeBaseType,PortTuple>(my_input, p, g);
         }
@@ -52,7 +52,7 @@
         template<typename IndexerNodeBaseType, typename PortTuple>
         static inline void set_indexer_node_pointer(PortTuple &my_input, IndexerNodeBaseType *p, graph& g) {
             typedef typename std::tuple_element<0, TupleTypes>::type T;
-            graph_task* (*indexer_node_put_task)(const T&, void *) = do_try_put<IndexerNodeBaseType, T, 0>;
+            graph_task* (*indexer_node_put_task)(const T&, void *, const message_metainfo&) = do_try_put<IndexerNodeBaseType, T, 0>;
             std::get<0>(my_input).set_up(p, indexer_node_put_task, g);
         }
     };
@@ -61,7 +61,7 @@
     class indexer_input_port : public receiver<T> {
     private:
         void* my_indexer_ptr;
-        typedef graph_task* (* forward_function_ptr)(T const &, void* );
+        typedef graph_task* (* forward_function_ptr)(T const &, void*, const message_metainfo&);
         forward_function_ptr my_try_put_task;
         graph* my_graph;
     public:
@@ -75,8 +75,13 @@
         template< typename R, typename B > friend class run_and_put_task;
         template<typename X, typename Y> friend class broadcast_cache;
         template<typename X, typename Y> friend class round_robin_cache;
-        graph_task* try_put_task(const T &v) override {
-            return my_try_put_task(v, my_indexer_ptr);
+
+        graph_task* try_put_task(const T& v) override {
+            return try_put_task(v, message_metainfo{});
+        }
+
+        graph_task* try_put_task(const T &v, const message_metainfo& metainfo) override {
+            return my_try_put_task(v, my_indexer_ptr, metainfo);
         }
 
         graph& graph_reference() const override {
@@ -126,8 +131,12 @@
                 successor_type *my_succ;
                 graph_task* bypass_t;
             };
+            message_metainfo const* metainfo;
+
             indexer_node_base_operation(const output_type* e, op_type t) :
                 type(char(t)), my_arg(e) {}
+            indexer_node_base_operation(const output_type* e, op_type t, const message_metainfo& metainfo)
+                : type(char(t)), my_arg(e), metainfo(&metainfo) {}
             indexer_node_base_operation(const successor_type &s, op_type t) : type(char(t)),
                 my_succ(const_cast<successor_type *>(&s)) {}
         };
@@ -153,7 +162,7 @@
                     current->status.store( SUCCEEDED, std::memory_order_release);
                     break;
                 case try__put_task: {
-                        current->bypass_t = my_successors.try_put_task(*(current->my_arg));
+                        current->bypass_t = my_successors.try_put_task(*(current->my_arg), (*current->metainfo));
                         current->status.store( SUCCEEDED, std::memory_order_release);  // return of try_put_task actual return value
                     }
                     break;
@@ -186,8 +195,8 @@
             return op_data.status == SUCCEEDED;
         }
 
-        graph_task* try_put_task(output_type const *v) { // not a virtual method in this class
-            indexer_node_base_operation op_data(v, try__put_task);
+        graph_task* try_put_task(output_type const *v, const message_metainfo& metainfo) { // not a virtual method in this class
+            indexer_node_base_operation op_data(v, try__put_task, metainfo);
             my_aggregator.execute(&op_data);
             return op_data.bypass_t;
         }

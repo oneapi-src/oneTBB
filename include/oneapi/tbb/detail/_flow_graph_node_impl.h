@@ -605,6 +605,16 @@ struct emit_element {
         check_task_and_spawn(g, last_task);
         return emit_element<N-1>::emit_this(g,t,p);
     }
+
+    template <typename TupleType, typename PortsType>
+    static graph_task* emit_this(graph& g, const TupleType& t, PortsType& ports,
+                                 const message_metainfo& metainfo)
+    {
+        // TODO: consider to collect all the tasks in task_list and spawn them all at once
+        graph_task* last_task = std::get<N-1>(ports).try_put_task(std::get<N-1>(t), metainfo);
+        check_task_and_spawn(g, last_task);
+        return emit_element<N-1>::emit_this(g, t, ports, metainfo);
+    }
 };
 
 template<>
@@ -612,6 +622,15 @@ struct emit_element<1> {
     template<typename T, typename P>
     static graph_task* emit_this(graph& g, const T &t, P &p) {
         graph_task* last_task = std::get<0>(p).try_put_task(std::get<0>(t));
+        check_task_and_spawn(g, last_task);
+        return SUCCESSFULLY_ENQUEUED;
+    }
+
+    template <typename TupleType, typename PortsType>
+    static graph_task* emit_this(graph& g, const TupleType& t, PortsType& ports,
+                                 const message_metainfo& metainfo)
+    {
+        graph_task* last_task = std::get<0>(ports).try_put_task(std::get<0>(t), metainfo);
         check_task_and_spawn(g, last_task);
         return SUCCESSFULLY_ENQUEUED;
     }
@@ -781,6 +800,10 @@ protected:
 
     graph_task* try_put_task(const output_type &i) {
         return my_successors.try_put_task(i);
+    }
+
+    graph_task* try_put_task(const output_type& i, const message_metainfo& metainfo) {
+        return my_successors.try_put_task(i, metainfo);
     }
 
     template <int N> friend struct emit_element;

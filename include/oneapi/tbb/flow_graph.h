@@ -1011,6 +1011,13 @@ protected:
         // Also, we do not have successors here. So we just tell the task returned here is successful.
         return emit_element<N>::emit_this(this->my_graph, t, output_ports());
     }
+
+    graph_task* try_put_task(const TupleType& t, const message_metainfo& metainfo) override {
+        // Sending split messages in parallel is not justified, as overheads would prevail.
+        // Also, we do not have successors here. So we just tell the task returned here is successful.
+        return emit_element<N>::emit_this(this->my_graph, t, output_ports(), metainfo);
+    }
+
     void reset_node(reset_flags f) override {
         if (f & rf_clear_edges)
             clear_element<N>::clear_this(my_output_ports);
@@ -2156,7 +2163,7 @@ protected:
     template<typename X, typename Y> friend class broadcast_cache;
     template<typename X, typename Y> friend class round_robin_cache;
     //! Puts an item to this receiver
-    graph_task* try_put_task( const T &t ) override {
+    graph_task* try_put_task( const T &t, const message_metainfo& metainfo ) override {
         {
             spin_mutex::scoped_lock lock(my_mutex);
             if ( my_count + my_tries >= my_threshold )

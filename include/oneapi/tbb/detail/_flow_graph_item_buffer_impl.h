@@ -91,7 +91,6 @@ protected:
         element(i).state = has_item;
 
         for (auto& waiter : metainfo.waiters()) {
-            std::cout << "Buffer: reserve on " << waiter << std::endl;
             waiter->reserve(1);
         }
     }
@@ -140,7 +139,6 @@ protected:
         e.item.~item_type();
 
         for (auto& msg_waiter : e.metainfo.waiters()) {
-            std::cout << "Buffer: releasing " << msg_waiter << std::endl;
             msg_waiter->release(1);
         }
 
