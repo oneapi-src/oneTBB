@@ -299,7 +299,7 @@ int main(int argc, char* argv[]) {
         read_board(filename.c_str());
     // otherwise (if file name not specified), the default statically initialized board will be used.
     for (int p = threads.first; p <= threads.last; p = threads.step(p)) {
-        const unsigned NUM_INTERNAL_REPEATS = 1000;
+        const unsigned NUM_INTERNAL_REPEATS = 100;
         for (size_t i = 0; i < NUM_INTERNAL_REPEATS; ++i) {
             unsigned number = solve(p);
 
