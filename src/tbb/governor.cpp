@@ -37,7 +37,7 @@
 #include <atomic>
 #include <algorithm>
 
-#if EMSCRIPTEN
+#ifdef EMSCRIPTEN
 #include <emscripten/stack.h>
 #endif
 
@@ -149,7 +149,7 @@ static std::uintptr_t get_stack_base(std::size_t stack_size) {
     NT_TIB* pteb = (NT_TIB*)NtCurrentTeb();
     __TBB_ASSERT(&pteb < pteb->StackBase && &pteb > pteb->StackLimit, "invalid stack info in TEB");
     return reinterpret_cast<std::uintptr_t>(pteb->StackBase);
-#elif EMSCRIPTEN
+#elif defined(EMSCRIPTEN)
     suppress_unused_warning(stack_size);
     return reinterpret_cast<std::uintptr_t>(emscripten_stack_get_base());
 #else

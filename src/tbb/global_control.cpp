@@ -104,7 +104,7 @@ class alignas(max_nfs_size) stack_size_control : public control_storage {
             return hi - lo;
         }();
         return ThreadStackSizeDefault;
-#elif EMSCRIPTEN
+#elif defined(EMSCRIPTEN)
         return __TBB_EMSCRIPTEN_STACK_SIZE;
 #else
         return ThreadStackSize;
