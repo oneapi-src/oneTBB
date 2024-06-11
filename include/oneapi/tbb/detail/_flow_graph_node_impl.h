@@ -34,6 +34,12 @@ public:
         return this->item_buffer<T, A>::front();
     }
 
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    const message_metainfo& front_metainfo() const {
+        return this->item_buffer<T,A>::front_metainfo();
+    }
+#endif
+
     void pop() {
         this->destroy_front();
     }
@@ -41,6 +47,12 @@ public:
     bool push( T& t ) {
         return this->push_back( t );
     }
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    bool push( T& t, const message_metainfo& metainfo ) {
+        return this->push_back(t, metainfo);
+    }
+#endif
 };
 
 //! Input and scheduling for a function node that takes a type Input as input
@@ -87,11 +99,14 @@ public:
     }
 
     graph_task* try_put_task( const input_type& t) override {
-        if ( my_is_no_throw )
-            return try_put_task_impl(t, has_policy<lightweight, Policy>());
-        else
-            return try_put_task_impl(t, std::false_type());
+        return try_put_task_base(t);
     }
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    graph_task* try_put_task( const input_type& t, const message_metainfo& metainfo ) override {
+        return try_put_task_base(t, metainfo);
+    }
+#endif // __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
 
     //! Adds src to the list of cached predecessors.
     bool register_predecessor( predecessor_type &src ) override {
@@ -148,6 +163,9 @@ protected:
 private:
 
     friend class apply_body_task_bypass< class_type, input_type >;
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    friend class apply_body_task_bypass< class_type, input_type, message_metainfo >;
+#endif
     friend class forward_task_bypass< class_type >;
 
     class operation_type : public d1::aggregated_operation< operation_type > {
@@ -158,8 +176,16 @@ private:
             predecessor_type *r;
         };
         graph_task* bypass_t;
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        message_metainfo* metainfo;
+#endif
         operation_type(const input_type& e, op_type t) :
-            type(char(t)), elem(const_cast<input_type*>(&e)), bypass_t(nullptr) {}
+            type(char(t)), elem(const_cast<input_type*>(&e)), bypass_t(nullptr), metainfo(nullptr) {}
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        operation_type(const input_type& e, op_type t, const message_metainfo& info) :
+            type(char(t)), elem(const_cast<input_type*>(&e)), bypass_t(nullptr),
+            metainfo(const_cast<message_metainfo*>(&info)) {}
+#endif
         operation_type(op_type t) : type(char(t)), r(nullptr), bypass_t(nullptr) {}
     };
 
@@ -173,7 +199,18 @@ private:
         if(my_queue) {
             if(!my_queue->empty()) {
                 ++my_concurrency;
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+                // TODO: consider removing metainfo from the queue using move semantics to avoid
+                // ref counter increase
+                message_metainfo queued_metainfo = my_queue->front_metainfo();
+                if (queued_metainfo.empty()) {
+                    new_task = create_body_task(my_queue->front());
+                } else {
+                    new_task = create_body_task(my_queue->front(), queued_metainfo);
+                }
+#else
                 new_task = create_body_task(my_queue->front());
+#endif
 
                 my_queue->pop();
             }
@@ -233,10 +270,12 @@ private:
         __TBB_ASSERT(my_max_concurrency != 0, nullptr);
         if (my_concurrency < my_max_concurrency) {
             ++my_concurrency;
-            graph_task * new_task = create_body_task(*(op->elem));
+            graph_task* new_task = op->metainfo != nullptr ? create_body_task(*(op->elem), *(op->metainfo))
+                                                           : create_body_task(*(op->elem));
             op->bypass_t = new_task;
             op->status.store(SUCCEEDED, std::memory_order_release);
-        } else if ( my_queue && my_queue->push(*(op->elem)) ) {
+        } else if ( my_queue && (op->metainfo != nullptr ? my_queue->push(*(op->elem), *(op->metainfo))
+                                                         : my_queue->push(*(op->elem))) ) {
             op->bypass_t = SUCCESSFULLY_ENQUEUED;
             op->status.store(SUCCEEDED, std::memory_order_release);
         } else {
@@ -258,8 +297,9 @@ private:
         }
     }
 
-    graph_task* internal_try_put_bypass( const input_type& t ) {
-        operation_type op_data(t, tryput_bypass);
+    template <typename... Metainfo>
+    graph_task* internal_try_put_bypass( const input_type& t, const Metainfo&... metainfo) {
+        operation_type op_data(t, tryput_bypass, metainfo...);
         my_aggregator.execute(&op_data);
         if( op_data.status == SUCCEEDED ) {
             return op_data.bypass_t;
@@ -267,42 +307,54 @@ private:
         return nullptr;
     }
 
-    graph_task* try_put_task_impl( const input_type& t, /*lightweight=*/std::true_type ) {
+    template <typename... Metainfo>
+    graph_task* try_put_task_base(const input_type& t, const Metainfo&... metainfo) {
+        if ( my_is_no_throw )
+            return try_put_task_impl(t, has_policy<lightweight, Policy>(), metainfo...);
+        else
+            return try_put_task_impl(t, std::false_type(), metainfo...);
+    }
+
+    template <typename... Metainfo>
+    graph_task* try_put_task_impl( const input_type& t, /*lightweight=*/std::true_type, const Metainfo&... metainfo) {
         if( my_max_concurrency == 0 ) {
-            return apply_body_bypass(t);
+            return apply_body_bypass(t, metainfo...);
         } else {
             operation_type check_op(t, occupy_concurrency);
             my_aggregator.execute(&check_op);
             if( check_op.status == SUCCEEDED ) {
-                return apply_body_bypass(t);
+                return apply_body_bypass(t, metainfo...);
             }
-            return internal_try_put_bypass(t);
+            return internal_try_put_bypass(t, metainfo...);
         }
     }
 
-    graph_task* try_put_task_impl( const input_type& t, /*lightweight=*/std::false_type ) {
+    template <typename... Metainfo>
+    graph_task* try_put_task_impl( const input_type& t, /*lightweight=*/std::false_type, const Metainfo&... metainfo) {
         if( my_max_concurrency == 0 ) {
-            return create_body_task(t);
+            return create_body_task(t, metainfo...);
         } else {
-            return internal_try_put_bypass(t);
+            return internal_try_put_bypass(t, metainfo...);
         }
     }
 
     //! Applies the body to the provided input
     //  then decides if more work is available
-    graph_task* apply_body_bypass( const input_type &i ) {
-        return static_cast<ImplType *>(this)->apply_body_impl_bypass(i);
+    template <typename... Metainfo>
+    graph_task* apply_body_bypass( const input_type &i, const Metainfo&... metainfo ) {
+        return static_cast<ImplType *>(this)->apply_body_impl_bypass(i, metainfo...);
     }
 
     //! allocates a task to apply a body
-    graph_task* create_body_task( const input_type &input ) {
+    template <typename... Metainfo>
+    graph_task* create_body_task( const input_type &input, const Metainfo&... metainfo) {
         if (!is_graph_active(my_graph_ref)) {
             return nullptr;
         }
         // TODO revamp: extract helper for common graph task allocation part
         d1::small_object_allocator allocator{};
-        typedef apply_body_task_bypass<class_type, input_type> task_type;
-        graph_task* t = allocator.new_object<task_type>( my_graph_ref, allocator, *this, input, my_priority );
+        typedef apply_body_task_bypass<class_type, input_type, Metainfo...> task_type;
+        graph_task* t = allocator.new_object<task_type>( my_graph_ref, allocator, *this, input, my_priority, metainfo...);
         return t;
     }
 
@@ -396,7 +448,8 @@ public:
     }
 
     //TODO: consider moving into the base class
-    graph_task* apply_body_impl_bypass( const input_type &i) {
+    template <typename... Metainfo>
+    graph_task* apply_body_impl_bypass( const input_type &i, const Metainfo&... metainfo) {
         output_type v = apply_body_impl(i);
         graph_task* postponed_task = nullptr;
         if( base_type::my_max_concurrency != 0 ) {
@@ -408,7 +461,7 @@ public:
             // execution policy
             spawn_in_graph_arena(base_type::graph_reference(), *postponed_task);
         }
-        graph_task* successor_task = successors().try_put_task(v);
+        graph_task* successor_task = successors().try_put_task(v, metainfo...);
 #if _MSC_VER && !__INTEL_COMPILER
 #pragma warning (push)
 #pragma warning (disable: 4127)  /* suppress conditional expression is constant */

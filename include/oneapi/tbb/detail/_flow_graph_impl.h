@@ -146,6 +146,41 @@ private:
     friend graph_task* prioritize_task(graph& g, graph_task& gt);
 };
 
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+class graph_task_with_message_waiters : public graph_task {
+public:
+    graph_task_with_message_waiters(graph& g, d1::small_object_allocator& allocator,
+                                    const std::forward_list<d1::wait_context_vertex*>& msg_waiters,
+                                    node_priority_t node_priority = no_priority)
+        : graph_task(g, allocator, node_priority)
+        , my_msg_wait_context_vertexes(msg_waiters)
+    {
+        for (auto& msg_waiter : msg_waiters) {
+            my_msg_reference_vertexes.emplace_back(r1::get_thread_reference_vertex(msg_waiter));
+            my_msg_reference_vertexes.back()->reserve(1);
+        }
+    }
+
+    const std::forward_list<d1::wait_context_vertex*> get_msg_wait_context_vertexes() const {
+        return my_msg_wait_context_vertexes;
+    }
+
+protected:
+    template <typename DerivedType>
+    void finalize(const d1::execution_data& ed) {
+        auto msg_reference_vertexes = std::move(my_msg_reference_vertexes);
+        graph_task::finalize<DerivedType>(ed);
+
+        for (auto& msg_waiter : msg_reference_vertexes) {
+            msg_waiter->release(1);
+        }
+    }
+private:
+    std::forward_list<d1::wait_context_vertex*> my_msg_wait_context_vertexes;
+    std::list<d1::wait_tree_vertex_interface*> my_msg_reference_vertexes;
+}; // class graph_task_with_message_waiters
+#endif // __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+
 struct graph_task_comparator {
     bool operator()(const graph_task* left, const graph_task* right) {
         return left->priority < right->priority;
@@ -357,6 +392,9 @@ private:
 
     friend class task_arena_base;
     friend class graph_task;
+
+    template <typename T>
+    friend class receiver;
 };  // class graph
 
 template<typename DerivedType>

@@ -268,6 +268,9 @@ public:
     }
 
     virtual graph_task* try_put_task( const T& t ) = 0;
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    virtual graph_task* try_put_task( const T& t, const message_metainfo& metainfo) = 0;
+#endif
 };  // successor_cache<T>
 
 //! An abstract cache of successors, specialized to continue_msg
@@ -327,6 +330,9 @@ public:
     }
 
     virtual graph_task* try_put_task( const continue_msg& t ) = 0;
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    virtual graph_task* try_put_task( const continue_msg& t, const message_metainfo& metainfo ) = 0;
+#endif
 };  // successor_cache< continue_msg >
 
 //! A cache of successors that are broadcast to
@@ -336,19 +342,13 @@ class broadcast_cache : public successor_cache<T, M> {
     typedef M mutex_type;
     typedef typename successor_cache<T,M>::successors_type successors_type;
 
-public:
-
-    broadcast_cache( typename base_type::owner_type* owner ): base_type(owner) {
-        // Do not work with the passed pointer here as it may not be fully initialized yet
-    }
-
-    // as above, but call try_put_task instead, and return the last task we received (if any)
-    graph_task* try_put_task( const T &t ) override {
+    template <typename... Metainfo>
+    graph_task* try_put_task_impl( const T& t, const Metainfo&... metainfo) {
         graph_task * last_task = nullptr;
         typename mutex_type::scoped_lock l(this->my_mutex, /*write=*/true);
         typename successors_type::iterator i = this->my_successors.begin();
         while ( i != this->my_successors.end() ) {
-            graph_task *new_task = (*i)->try_put_task(t);
+            graph_task *new_task = (*i)->try_put_task(t, metainfo...);
             // workaround for icc bug
             graph& graph_ref = (*i)->graph_reference();
             last_task = combine_tasks(graph_ref, last_task, new_task);  // enqueue if necessary
@@ -364,6 +364,20 @@ public:
             }
         }
         return last_task;
+    }
+public:
+
+    broadcast_cache( typename base_type::owner_type* owner ): base_type(owner) {
+        // Do not work with the passed pointer here as it may not be fully initialized yet
+    }
+
+    // as above, but call try_put_task instead, and return the last task we received (if any)
+    graph_task* try_put_task( const T &t ) override {
+        return try_put_task_impl(t);
+    }
+
+    graph_task* try_put_task( const T &t, const message_metainfo& metainfo ) override {
+        return try_put_task_impl(t, metainfo);
     }
 
     // call try_put_task and return list of received tasks
@@ -429,6 +443,11 @@ public:
         }
         return nullptr;
     }
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    // TODO: add support for round robin cache
+    graph_task* try_put_task(const T&, const message_metainfo&) { return nullptr; }
+#endif
 };
 
 #endif // __TBB__flow_graph_cache_impl_H
