@@ -282,9 +282,11 @@ struct harness_counting_receiver : public tbb::flow::receiver<T> {
       return const_cast<tbb::detail::d2::graph_task*>(SUCCESSFULLY_ENQUEUED);
     }
 
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
     tbb::detail::d2::graph_task *try_put_task( const T &t, const tbb::detail::d2::message_metainfo&) override {
       return try_put_task(t);
     }
+#endif
 
     void validate() {
         size_t n = my_count;
@@ -336,9 +338,11 @@ struct harness_mapped_receiver : public tbb::flow::receiver<T> {
       return const_cast<tbb::detail::d2::graph_task*>(SUCCESSFULLY_ENQUEUED);
     }
 
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
     tbb::detail::d2::graph_task *try_put_task( const T &t, const tbb::detail::d2::message_metainfo&) override {
       return try_put_task(t);
     }
+#endif
 
     tbb::flow::graph& graph_reference() const override {
         return my_graph;

@@ -180,7 +180,11 @@ private:
         message_metainfo* metainfo;
 #endif
         operation_type(const input_type& e, op_type t) :
-            type(char(t)), elem(const_cast<input_type*>(&e)), bypass_t(nullptr), metainfo(nullptr) {}
+            type(char(t)), elem(const_cast<input_type*>(&e)), bypass_t(nullptr)
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+            , metainfo(nullptr)
+#endif
+        {}
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
         operation_type(const input_type& e, op_type t, const message_metainfo& info) :
             type(char(t)), elem(const_cast<input_type*>(&e)), bypass_t(nullptr),
@@ -270,12 +274,20 @@ private:
         __TBB_ASSERT(my_max_concurrency != 0, nullptr);
         if (my_concurrency < my_max_concurrency) {
             ++my_concurrency;
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
             graph_task* new_task = op->metainfo != nullptr ? create_body_task(*(op->elem), *(op->metainfo))
                                                            : create_body_task(*(op->elem));
+#else
+            graph_task* new_task = create_body_task(*(op->elem));
+#endif
             op->bypass_t = new_task;
             op->status.store(SUCCEEDED, std::memory_order_release);
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
         } else if ( my_queue && (op->metainfo != nullptr ? my_queue->push(*(op->elem), *(op->metainfo))
                                                          : my_queue->push(*(op->elem))) ) {
+#else
+        } else if ( my_queue && my_queue->push(*(op->elem)) ) {
+#endif
             op->bypass_t = SUCCESSFULLY_ENQUEUED;
             op->status.store(SUCCEEDED, std::memory_order_release);
         } else {

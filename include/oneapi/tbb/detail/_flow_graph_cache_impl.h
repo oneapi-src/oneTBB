@@ -376,9 +376,11 @@ public:
         return try_put_task_impl(t);
     }
 
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
     graph_task* try_put_task( const T &t, const message_metainfo& metainfo ) override {
         return try_put_task_impl(t, metainfo);
     }
+#endif
 
     // call try_put_task and return list of received tasks
     bool gather_successful_try_puts( const T &t, graph_task_list& tasks ) {
