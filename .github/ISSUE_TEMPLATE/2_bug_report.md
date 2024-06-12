@@ -20,12 +20,12 @@ The following information could be important:
 * OS name and version
 * Compiler version
 
-# Steps to reproduce
-Please check that the issue is reproducible with the latest revision on
-master. Include all the steps to reproduce the issue.
-
 # Observed behavior
 Document behavior you observe.
 
 # Expected behavior
 Document behavior you expect.
+
+# Steps to reproduce
+Please check that the issue is reproducible with the latest revision on
+master. Include all the steps to reproduce the issue.
