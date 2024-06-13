@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2023 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -110,7 +110,7 @@ concept join_node_function_object = std::copy_constructible<FunctionObject> &&
 
 template <typename Body, typename Output>
 concept input_node_body = std::copy_constructible<Body> &&
-                          requires( Body& body, tbb::detail::d2::flow_control& fc ) {
+                          requires( Body& body, tbb::detail::d1::flow_control& fc ) {
                               { body(fc) } -> adaptive_same_as<Output>;
                           };
 
