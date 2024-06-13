@@ -92,8 +92,8 @@ class affinity_partitioner_base: no_copy {
     /** Retains values if resulting size is the same. */
     void resize(unsigned factor) {
         // Check factor to avoid asking for number of workers while there might be no arena.
-        unsigned max_threads_in_arena = std::min(static_cast<std::size_t>(max_concurrency()),
-            tbb::global_control::active_value(tbb::global_control::max_allowed_parallelism));
+        unsigned max_threads_in_arena = unsigned(std::min(static_cast<std::size_t>(max_concurrency()),
+            tbb::global_control::active_value(tbb::global_control::max_allowed_parallelism)));
         std::size_t new_size = factor ? factor * max_threads_in_arena : 0;
         if (new_size != my_size) {
             if (my_array) {
