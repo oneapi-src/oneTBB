@@ -378,7 +378,7 @@ protected:
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
     // TODO: add support for limiter_node
-    graph_task* try_put_task(const DecrementType&, const message_metainfo&) { return nullptr; }
+    graph_task* try_put_task(const DecrementType&, const message_metainfo&) override { return nullptr; }
 #endif
 
     graph& graph_reference() const override {

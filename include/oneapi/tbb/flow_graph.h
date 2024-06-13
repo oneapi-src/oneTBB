@@ -1007,7 +1007,7 @@ protected:
     }
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
     // TODO: add support for split_node
-    graph_task* try_put_task(const TupleType&, const message_metainfo&) { return nullptr; }
+    graph_task* try_put_task(const TupleType&, const message_metainfo&) override { return nullptr; }
 #endif
 
     void reset_node(reset_flags f) override {
@@ -1180,7 +1180,7 @@ protected:
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
     // TODO: add support for broadcast_node
-    graph_task* try_put_task(const T&, const message_metainfo&) { return nullptr; }
+    graph_task* try_put_task(const T&, const message_metainfo&) override { return nullptr; }
 #endif
 
     graph& graph_reference() const override {
@@ -1533,7 +1533,7 @@ protected:
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
     // TODO: add support for buffer_node
-    graph_task* try_put_task(const T&, const message_metainfo&) { return nullptr; }
+    graph_task* try_put_task(const T&, const message_metainfo&) override { return nullptr; }
 #endif
 
     graph& graph_reference() const override {
@@ -2172,7 +2172,7 @@ protected:
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
     // TODO: add support for limiter_node
-    graph_task* try_put_task(const T&, const message_metainfo&) { return nullptr; }
+    graph_task* try_put_task(const T&, const message_metainfo&) override { return nullptr; }
 #endif
 
     graph& graph_reference() const override { return my_graph; }
@@ -3171,7 +3171,7 @@ protected:
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
     // TODO: add support for overwrite_node
-    graph_task* try_put_task(const input_type&, const message_metainfo&) { return nullptr; }
+    graph_task* try_put_task(const input_type&, const message_metainfo&) override { return nullptr; }
 #endif
 
     graph_task * try_put_task_impl(const input_type &v) {
@@ -3266,7 +3266,7 @@ protected:
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
     // TODO: add support for write_once_node
-    graph_task* try_put_task(const T&, const message_metainfo&) { return nullptr; }
+    graph_task* try_put_task(const T&, const message_metainfo&) override { return nullptr; }
 #endif
 }; // write_once_node
 
