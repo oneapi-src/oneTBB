@@ -70,3 +70,9 @@ if (TBB_WINDOWS_DRIVER)
 endif()
 
 set(TBB_OPENMP_FLAG /openmp)
+
+if (TBB_FILE_TRIM)
+    add_compile_options(
+        "$<$<COMPILE_LANGUAGE:CXX>:/d1trimfile:${NATIVE_TBB_PROJECT_ROOT_DIR}\\>"
+        "$<$<COMPILE_LANGUAGE:CXX>:/d1trimfile:${CMAKE_SOURCE_DIR}/>")
+endif()
