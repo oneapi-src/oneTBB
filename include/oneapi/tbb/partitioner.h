@@ -46,6 +46,7 @@
 #include "cache_aligned_allocator.h"
 #include "task_group.h" // task_group_context
 #include "task_arena.h"
+#include "global_control.h"
 
 #include <algorithm>
 #include <atomic>
@@ -70,7 +71,8 @@ class affinity_partitioner_base;
 
 inline std::size_t get_initial_auto_partitioner_divisor() {
     const std::size_t factor = 4;
-    return factor * static_cast<std::size_t>(max_concurrency());
+    return factor * std::min(static_cast<std::size_t>(max_concurrency()),
+        tbb::global_control::active_value(tbb::global_control::max_allowed_parallelism));
 }
 
 //! Defines entry point for affinity partitioner into oneTBB run-time library.
@@ -90,7 +92,8 @@ class affinity_partitioner_base: no_copy {
     /** Retains values if resulting size is the same. */
     void resize(unsigned factor) {
         // Check factor to avoid asking for number of workers while there might be no arena.
-        unsigned max_threads_in_arena = static_cast<unsigned>(max_concurrency());
+        unsigned max_threads_in_arena = std::min(static_cast<std::size_t>(max_concurrency()),
+            tbb::global_control::active_value(tbb::global_control::max_allowed_parallelism));
         std::size_t new_size = factor ? factor * max_threads_in_arena : 0;
         if (new_size != my_size) {
             if (my_array) {
