@@ -587,7 +587,8 @@ public:
     // for multifunction nodes we do not have a single successor as such.  So we just tell
     // the task we were successful.
     //TODO: consider moving common parts with implementation in function_input into separate function
-    graph_task* apply_body_impl_bypass( const input_type &i ) {
+    template <typename... Metainfo>
+    graph_task* apply_body_impl_bypass( const input_type &i, const Metainfo&... ) {
         fgt_begin_body( my_body );
         (*my_body)(i, my_output_ports);
         fgt_end_body( my_body );

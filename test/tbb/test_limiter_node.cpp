@@ -53,6 +53,12 @@ struct serial_receiver : public tbb::flow::receiver<T>, utils::NoAssign {
        return const_cast<graph_task*>(SUCCESSFULLY_ENQUEUED);
    }
 
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    graph_task * try_put_task( const T &v, const tbb::detail::d2::message_metainfo& ) override {
+        return try_put_task(v);
+    }
+#endif
+
     tbb::flow::graph& graph_reference() const override {
         return my_graph;
     }
@@ -70,6 +76,12 @@ struct parallel_receiver : public tbb::flow::receiver<T>, utils::NoAssign {
        ++my_count;
        return const_cast<graph_task*>(SUCCESSFULLY_ENQUEUED);
     }
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    graph_task * try_put_task( const T &v, const tbb::detail::d2::message_metainfo& ) override {
+        return try_put_task(v);
+    }
+#endif
 
     tbb::flow::graph& graph_reference() const override {
         return my_graph;
