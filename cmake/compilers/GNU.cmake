@@ -67,11 +67,22 @@ set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} "-D__TBB_GNU_ASM_VERSIO
 message(STATUS "GNU Assembler version: ${_tbb_gnu_asm_major_version}.${_tbb_gnu_asm_minor_version}  (${_tbb_gnu_asm_version_number})")
 
 # Enable Intel(R) Transactional Synchronization Extensions (-mrtm) and WAITPKG instructions support (-mwaitpkg) on relevant processors
-if (CMAKE_SYSTEM_PROCESSOR MATCHES "(AMD64|amd64|i.86|x86)")
+# Like with Apple Clang case, use CMAKE_OSX_ARCHITECTURES if it is defined. Defaulting to CMAKE_SYSTEM_PROCESSOR breaks build on Rosetta.
+if (CMAKE_OSX_ARCHITECTURES)
+    set(_tbb_target_architectures "${CMAKE_OSX_ARCHITECTURES}")
+else()
+    set(_tbb_target_architectures "${CMAKE_SYSTEM_PROCESSOR}")
+endif()
+if ("${_tbb_target_architectures}" MATCHES "(AMD64|amd64|i.86|x86)")
     set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -mrtm $<$<AND:$<NOT:$<CXX_COMPILER_ID:Intel>>,$<NOT:$<VERSION_LESS:${CMAKE_CXX_COMPILER_VERSION},11.0>>>:-mwaitpkg>)
 endif()
 
 set(TBB_COMMON_LINK_LIBS ${CMAKE_DL_LIBS})
+
+# At least on macOS, GCC does not automatically link to libatomic.
+if (APPLE)
+    set(TBB_COMMON_LINK_FLAGS -latomic -lpthread)
+endif()
 
 # Ignore -Werror set through add_compile_options() or added to CMAKE_CXX_FLAGS if TBB_STRICT is disabled.
 if (NOT TBB_STRICT AND COMMAND tbb_remove_compile_flag)
