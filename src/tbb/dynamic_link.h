@@ -29,7 +29,12 @@
     and CLOSE_INTERNAL_NAMESPACE to override the following default definitions. **/
 
 #include <cstddef>
+
+#include "literal_const_string.h"
 #ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include <windows.h>
 #endif /* _WIN32 */
 
@@ -92,7 +97,7 @@ const int DYNAMIC_LINK_DEFAULT       = DYNAMIC_LINK_GLOBAL | DYNAMIC_LINK_LOAD |
     'flags' is the set of DYNAMIC_LINK_* flags. Each of the DYNAMIC_LINK_* flags
     allows its corresponding linking stage.
 **/
-bool dynamic_link( const char* library,
+bool dynamic_link( const literal_const_string& library,
                    const dynamic_link_descriptor descriptors[],
                    std::size_t required,
                    dynamic_link_handle* handle = nullptr,
