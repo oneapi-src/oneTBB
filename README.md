@@ -1,7 +1,6 @@
 # oneAPI Threading Building Blocks (oneTBB) <img align="right" width="200" height="100" src="https://raw.githubusercontent.com/uxlfoundation/artwork/e98f1a7a3d305c582d02c5f532e41487b710d470/foundation/uxl-foundation-logo-horizontal-color.svg">
 [![Apache License Version 2.0](https://img.shields.io/badge/license-Apache_2.0-green.svg)](LICENSE.txt) [![oneTBB CI](https://github.com/oneapi-src/oneTBB/actions/workflows/ci.yml/badge.svg)](https://github.com/oneapi-src/oneTBB/actions/workflows/ci.yml?query=branch%3Amaster)
 [![Join the community on GitHub Discussions](https://badgen.net/badge/join%20the%20discussion/on%20github/blue?icon=github)](https://github.com/oneapi-src/oneTBB/discussions)
-
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9125/badge)](https://www.bestpractices.dev/projects/9125)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/oneapi-src/oneTBB/badge)](https://securityscorecards.dev/viewer/?uri=github.com/oneapi-src/oneTBB)
 
