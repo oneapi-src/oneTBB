@@ -355,6 +355,9 @@ private:
     friend void spawn_in_graph_arena(graph& g, graph_task& arena_task);
     friend void enqueue_in_graph_arena(graph &g, graph_task& arena_task);
 
+    template <typename Body>
+    friend void execute_in_graph_arena(graph& g, const Body& body);
+
     friend class task_arena_base;
     friend class graph_task;
 };  // class graph
@@ -475,6 +478,15 @@ inline void enqueue_in_graph_arena(graph &g, graph_task& arena_task) {
         // TODO revamp: decide on the approach that does not postpone critical task
         if( d1::task* gt = prioritize_task(g, arena_task) )
             submit( *gt, *g.my_task_arena, *g.my_context, /*as_critical=*/false);
+    }
+}
+
+template <typename Body>
+void execute_in_graph_arena(graph &g, const Body& body ) {
+    if (is_graph_active(g)) {
+        __TBB_ASSERT( g.my_task_arena && g.my_task_arena->is_active(), "Is graph's arena initialized and active?" );
+
+        g.my_task_arena->execute(body);
     }
 }
 
