@@ -455,6 +455,84 @@ void test_deduction_guides() {
 }
 #endif
 
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+void test_try_put_and_wait_push() {
+    tbb::task_arena arena(1);
+
+    arena.execute([] {
+        tbb::flow::graph g;
+
+        std::vector<int> start_work_items;
+        std::vector<int> processed_items;
+        std::vector<int> new_work_items;
+        int wait_message = 10;
+
+        for (int i = 0; i < wait_message; ++i) {
+            start_work_items.emplace_back(i);
+            if (i != 0) {
+                new_work_items.emplace_back(i + 10);
+            }
+        }
+
+        using buffer_node_type = tbb::flow::buffer_node<int>;
+        using function_node_type = tbb::flow::function_node<int, int>;
+
+        buffer_node_type buffer1(g);
+        buffer_node_type buffer2(g);
+
+        function_node_type function(g, tbb::flow::unlimited,
+            [&](int input) noexcept {
+                if (input == wait_message) {
+                    for (int item : new_work_items) {
+                        buffer1.try_put(item);
+                    }
+                }
+                return input;
+            });
+
+        buffer_node_type buffer3(g);
+
+        function_node_type writer(g, tbb::flow::unlimited,
+            [&](int input) noexcept {
+                processed_items.emplace_back(input);
+                return 0;
+            });
+
+        tbb::flow::make_edge(buffer1, buffer2);
+        tbb::flow::make_edge(buffer2, function);
+        tbb::flow::make_edge(function, buffer3);
+        tbb::flow::make_edge(buffer3, writer);
+
+        for (auto item : start_work_items) {
+            buffer1.try_put(item);
+        }
+
+        buffer1.try_put_and_wait(wait_message);
+
+        // TODO: add comments
+        // std::size_t check_index = 0;
+
+        for (auto item : processed_items) {
+            std::cout << item << " ";
+        }
+        std::cout << std::endl;
+
+        g.wait_for_all();
+
+        for (auto item : processed_items) {
+            std::cout << item << " ";
+        }
+        std::cout << std::endl;
+    });
+}
+
+void test_try_put_and_wait() {
+    test_try_put_and_wait_push();
+    // test_try_put_and_wait_pull();
+    // test_try_put_and_wait_reserve();
+}
+#endif // __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+
 #include <iomanip>
 
 //! Test buffer_node with parallel and serial neighbours
@@ -489,8 +567,15 @@ TEST_CASE("Follows and precedes API"){
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 //! Test deduction guides
-//! \brief requirement
+//! \brief \ref requirement
 TEST_CASE("Deduction guides"){
     test_deduction_guides();
+}
+#endif
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+//! \brief \ref error_guessing
+TEST_CASE("test buffer_node try_put_and_wait") {
+    test_try_put_and_wait();
 }
 #endif

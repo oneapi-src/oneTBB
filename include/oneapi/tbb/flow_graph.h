@@ -220,8 +220,16 @@ public:
     //! Request an item from the sender
     virtual bool try_get( T & ) { return false; }
 
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    virtual bool try_get( T &, message_metainfo* ) { return false; }
+#endif
+
     //! Reserves an item in the sender
     virtual bool try_reserve( T & ) { return false; }
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    virtual bool try_reserve( T &, message_metainfo* ) { return false; }
+#endif
 
     //! Releases the reserved item
     virtual bool try_release( ) { return false; }
@@ -683,6 +691,18 @@ public:
             return false;
         }
     }
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+private:
+    bool try_reserve(output_type& v, message_metainfo*) override {
+        return try_reserve(v);
+    }
+
+    bool try_get( output_type& v, message_metainfo* ) override {
+        return try_get(v);
+    }
+public:
+#endif
 
     //! Release a reserved item.
     /** true = item has been released and so remains in sender, dest must request or reserve future items */
@@ -1238,11 +1258,24 @@ protected:
         T* elem;
         graph_task* ltask;
         successor_type *r;
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        message_metainfo* metainfo;
+#endif
 
         buffer_operation(const T& e, op_type t) : type(char(t))
                                                   , elem(const_cast<T*>(&e)) , ltask(nullptr)
                                                   , r(nullptr)
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+                                                  , metainfo(nullptr)
+#endif
         {}
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        buffer_operation(const T& e, op_type t, const message_metainfo& info)
+            : type(char(t)), elem(const_cast<T*>(&e)), ltask(nullptr), r(nullptr)
+            , metainfo(const_cast<message_metainfo*>(&info))
+        {}
+#endif
         buffer_operation(op_type t) : type(char(t)), elem(nullptr), ltask(nullptr), r(nullptr) {}
     };
 
@@ -1349,7 +1382,17 @@ private:
     }
 
     void try_put_and_add_task(graph_task*& last_task) {
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        graph_task* new_task;
+
+        if (this->front_metainfo().empty()) {
+            new_task = this->my_successors.try_put_task(this->front());
+        } else {
+            new_task = this->my_successors.try_put_task(this->front(), this->front_metainfo());
+        }
+#else
         graph_task *new_task = my_successors.try_put_task(this->back());
+#endif
         if (new_task) {
             // workaround for icc bug
             graph& g = this->my_graph;
@@ -1391,7 +1434,12 @@ protected:
 
     virtual bool internal_push(buffer_operation *op) {
         __TBB_ASSERT(op->elem, nullptr);
-        this->push_back(*(op->elem));
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        if (op->metainfo) {
+            this->push_back(*(op->elem), (*op->metainfo));
+        } else
+#endif
+            this->push_back(*(op->elem));
         op->status.store(SUCCEEDED, std::memory_order_release);
         return true;
     }
@@ -1499,6 +1547,19 @@ public:
         return (op_data.status==SUCCEEDED);
     }
 
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+private:
+    // TODO: add real implementation
+    bool try_reserve(output_type& v, message_metainfo*) override {
+        return try_reserve(v);
+    }
+
+    bool try_get( T& v, message_metainfo* ) override {
+        return try_get(v);
+    }
+public:
+#endif
+
     //! Release a reserved item.
     /**  true = item has been released and so remains in sender */
     bool try_release() override {
@@ -1517,14 +1578,10 @@ public:
         return true;
     }
 
-protected:
-
-    template< typename R, typename B > friend class run_and_put_task;
-    template<typename X, typename Y> friend class broadcast_cache;
-    template<typename X, typename Y> friend class round_robin_cache;
-    //! receive an item, return a task *if possible
-    graph_task *try_put_task(const T &t) override {
-        buffer_operation op_data(t, put_item);
+private:
+    template <typename... Metainfo>
+    graph_task* try_put_task_impl(const T& t, const Metainfo&... metainfo) {
+        buffer_operation op_data(t, put_item, metainfo...);
         my_aggregator.execute(&op_data);
         graph_task *ft = grab_forwarding_task(op_data);
         // sequencer_nodes can return failure (if an item has been previously inserted)
@@ -1542,10 +1599,19 @@ protected:
         return ft;
     }
 
+protected:
+
+    template< typename R, typename B > friend class run_and_put_task;
+    template<typename X, typename Y> friend class broadcast_cache;
+    template<typename X, typename Y> friend class round_robin_cache;
+    //! receive an item, return a task *if possible
+    graph_task *try_put_task(const T &t) override {
+        return try_put_task_impl(t);
+    }
+
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    // TODO: add support for buffer_node
-    graph_task* try_put_task(const T& t, const message_metainfo&) override {
-        return try_put_task(t);
+    graph_task* try_put_task(const T& t, const message_metainfo& metainfo) override {
+        return try_put_task_impl(t, metainfo);
     }
 #endif
 
@@ -1581,7 +1647,17 @@ private:
     }
 
     void try_put_and_add_task(graph_task*& last_task) {
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        graph_task* new_task;
+
+        if (this->front_metainfo().empty()) {
+            new_task = this->my_successors.try_put_task(this->front());
+        } else {
+            new_task = this->my_successors.try_put_task(this->front(), this->front_metainfo());
+        }
+#else
         graph_task *new_task = this->my_successors.try_put_task(this->front());
+#endif
         if (new_task) {
             // workaround for icc bug
             graph& graph_ref = this->graph_reference();
@@ -3157,6 +3233,19 @@ public:
     bool try_reserve( T &v ) override {
         return try_get(v);
     }
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+private:
+    // TODO: add real implementation
+    bool try_reserve(T& v, message_metainfo*) override {
+        return try_reserve(v);
+    }
+
+    bool try_get( input_type& v, message_metainfo* ) override {
+        return try_get(v);
+    }
+public:
+#endif
 
     //! Releases the reserved item
     bool try_release() override { return true; }
