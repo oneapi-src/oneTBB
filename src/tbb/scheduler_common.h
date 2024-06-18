@@ -512,12 +512,12 @@ public:
             cache_aligned_deallocate(m_suspend_point);
         }
 
-        // for (auto& elem : m_reference_vertex_map) {
-        //     d1::reference_vertex*& node = elem.second;
-        //     node->~reference_vertex();
-        //     cache_aligned_deallocate(node);
-        //     poison_pointer(node);
-        // }
+        for (auto& elem : m_reference_vertex_map) {
+            d1::reference_vertex*& node = elem.second;
+            node->~reference_vertex();
+            cache_aligned_deallocate(node);
+            poison_pointer(node);
+        }
 
         poison_pointer(m_thread_data);
         poison_pointer(m_suspend_point);

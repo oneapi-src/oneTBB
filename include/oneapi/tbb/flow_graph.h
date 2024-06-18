@@ -244,7 +244,10 @@ public:
 
     //! Put an item to the receiver
     bool try_put( const T& t ) {
-        graph_task *res = try_put_task(t);
+        graph_task* res = nullptr;
+
+        execute_in_graph_arena(graph_reference(), [&]{ res = try_put_task(t); });
+
         if (!res) return false;
         if (res != SUCCESSFULLY_ENQUEUED) spawn_in_graph_arena(graph_reference(), *res);
         return true;
