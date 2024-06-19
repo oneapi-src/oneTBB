@@ -90,9 +90,11 @@ void governor::release_resources () {
         runtime_warning("failed to destroy task scheduler TLS: %s", std::strerror(status));
     clear_address_waiter_table();
 
+#if TBB_USE_ASSERT
     if (the_observer_proxy_count != 0) {
             runtime_warning("Leaked %ld observer_proxy objects\n", long(the_observer_proxy_count));
     }
+#endif /* TBB_USE_ASSERT */
 
     system_topology::destroy();
     dynamic_unlink_all();
