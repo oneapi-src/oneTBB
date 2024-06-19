@@ -2,16 +2,18 @@
 name: Request a feature
 about: Use this template to request new functionality or change the behavior of the library
 title: ''
-labels: ''
+labels: 'new feature'
 assignees: ''
 ---
 
 # Summary
-Include a short summary of the request. Sections below provide guidance on
-what factors are considered important for a feature request.
+Include a short summary of the request. 
 
-# Problem statement
-Describe the problem you are trying to solve with reasonable level of details.
+See the sections below
+for factors important for a feature request.
 
-# Preferred solution
-Document your thoughts on what solution may look like.
+# Problem Statement
+Describe the problem you want to solve with a reasonable level of detail.
+
+# Preferred Solution
+Provide your ideas regarding problem solutions.

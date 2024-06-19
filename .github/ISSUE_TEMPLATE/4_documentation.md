@@ -7,13 +7,14 @@ assignees: ''
 ---
 
 # Summary
-Include a short summary of the issue or request. Sections below provide
-guidance on what factors are considered important for a documentation
+Include a short summary of the issue or request. 
+See the sections below
+for factors important for a documentation
 issue.
 
 # URLs
 Include pointers to documents that are impacted.
 
-# Additional details
-Provide detailed description of the expected changes in documentation
+# Additional Details
+Provide a detailed description of the expected changes in documentation
 and suggestions you have.
