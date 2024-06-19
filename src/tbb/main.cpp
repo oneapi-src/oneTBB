@@ -72,21 +72,6 @@ void ITT_DoUnsafeOneTimeInitialization();
 static __TBB_InitOnce __TBB_InitOnceHiddenInstance;
 #endif
 
-#if TBB_USE_ASSERT
-std::atomic<int> the_observer_proxy_count;
-
-struct check_observer_proxy_count {
-    ~check_observer_proxy_count() {
-        if (the_observer_proxy_count != 0) {
-            runtime_warning("Leaked %ld observer_proxy objects\n", long(the_observer_proxy_count));
-        }
-    }
-};
-// The proxy count checker shall be defined after __TBB_InitOnceHiddenInstance to check the count
-// after auto termination.
-static check_observer_proxy_count the_check_observer_proxy_count;
-#endif /* TBB_USE_ASSERT */
-
 //------------------------------------------------------------------------
 // __TBB_InitOnce
 //------------------------------------------------------------------------
