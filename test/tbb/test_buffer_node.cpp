@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#include <iostream>
 #include "common/config.h"
 
 #include "tbb/flow_graph.h"
@@ -24,10 +25,10 @@
 #include "common/graph_utils.h"
 #include "common/test_follows_and_precedes_api.h"
 
+#include "test_buffering_try_put_and_wait.h"
 
 //! \file test_buffer_node.cpp
 //! \brief Test for [flow_graph.buffer_node] specification
-
 
 #define N 1000
 #define C 10
@@ -456,80 +457,117 @@ void test_deduction_guides() {
 #endif
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-void test_try_put_and_wait_push() {
-    tbb::task_arena arena(1);
+void test_buffer_node_try_put_and_wait() {
+    using namespace test_try_put_and_wait;
 
-    arena.execute([] {
-        tbb::flow::graph g;
+    std::vector<int> start_work_items;
+    std::vector<int> new_work_items;
+    int wait_message = 10;
 
-        std::vector<int> start_work_items;
+    for (int i = 0; i < wait_message; ++i) {
+        start_work_items.emplace_back(i);
+        if (i != 0) {
+            new_work_items.emplace_back(i + 10);
+        }
+    }
+
+    // Test push
+    // test_buffer_push tests the graph
+    // buffer1 -> function -> buffer2 -> writer
+    //     function is a queueing serial function_node that submits new_work_items once wait_message arrives
+    //     writer is an unlimited function_node that writes an item into the processed_items vector
+    // Test steps
+    //     1. push start_work_items into the buffer1
+    //     2. buffer1.try_put_and_wait(wait_message);
+    //     3. g.wait_for_all()
+    // test_buffer_push returns the index from which the items processed during wait_for_all() starts
+    {
         std::vector<int> processed_items;
-        std::vector<int> new_work_items;
-        int wait_message = 10;
 
-        for (int i = 0; i < wait_message; ++i) {
-            start_work_items.emplace_back(i);
-            if (i != 0) {
-                new_work_items.emplace_back(i + 10);
-            }
+        std::size_t after_start = test_buffer_push<tbb::flow::buffer_node<int>>(start_work_items, wait_message,
+                                                                                new_work_items, processed_items);
+
+        // Expected effect:
+        // During buffer1.try_put_and_wait()
+        //     1. start_work_items would be pushed to buffer1
+        //     2. wait_message would be pushed to buffer1
+        //     3. forward_task on buffer1 would transfer all of the items to the function_node in LIFO order
+        //     4. wait_message would occupy concurrency of function, other items would be pushed to the queue
+        //     5. function would process wait_message and add new_work_items to the buffer1
+        //     6. forward_task for new_work_items would be spawned, wait_message would be buffered in the buffer2
+        //     7. function task for next FIFO item in the queue would be spawned
+        //     8. forward_task for wait_message in buffer2 would be executed without spawning
+        //     9. writer task for wait_message would be executed without spawning and write wait_message to the buffer
+        //     10. try_put_and_wait exits since wait_message is completed
+        // During g.wait_for_all()
+        //     10. forward_task for new_work_items in buffer1 would be spawned and put items in function in LIFO order
+        //     11. function_node would process and push forward items from the queue in FIFO order
+        // Expected items processing - { wait_message, start_work_items LIFO, new_work_items LIFO }
+
+        std::size_t check_index = 0;
+        CHECK_MESSAGE(after_start == 1, "try_put_and_wait should process only the wait_message");
+        CHECK_MESSAGE(processed_items[check_index++] == wait_message, "try_put_and_wait should process only the wait_message");
+
+        for (std::size_t index = start_work_items.size(); index != 0; --index) {
+            CHECK_MESSAGE(processed_items[check_index++] == start_work_items[index - 1],
+                          "wait_for_all should process start_work_items LIFO");
         }
-
-        using buffer_node_type = tbb::flow::buffer_node<int>;
-        using function_node_type = tbb::flow::function_node<int, int>;
-
-        buffer_node_type buffer1(g);
-        buffer_node_type buffer2(g);
-
-        function_node_type function(g, tbb::flow::unlimited,
-            [&](int input) noexcept {
-                if (input == wait_message) {
-                    for (int item : new_work_items) {
-                        buffer1.try_put(item);
-                    }
-                }
-                return input;
-            });
-
-        buffer_node_type buffer3(g);
-
-        function_node_type writer(g, tbb::flow::unlimited,
-            [&](int input) noexcept {
-                processed_items.emplace_back(input);
-                return 0;
-            });
-
-        tbb::flow::make_edge(buffer1, buffer2);
-        tbb::flow::make_edge(buffer2, function);
-        tbb::flow::make_edge(function, buffer3);
-        tbb::flow::make_edge(buffer3, writer);
-
-        for (auto item : start_work_items) {
-            buffer1.try_put(item);
+        for (std::size_t index = new_work_items.size(); index != 0; --index) {
+            CHECK_MESSAGE(processed_items[check_index++] == new_work_items[index - 1],
+                          "wait_for_all should process new_work_items LIFO");
         }
+        CHECK(check_index == processed_items.size());
+    } // Test push
 
-        buffer1.try_put_and_wait(wait_message);
+    // Test pull
+    // test_buffer_pull tests the graph
+    // buffer -> function
+    //     function is a rejecting serial function_node that submits new_work_items once wait_message arrives
+    //     and writes the processed item into the processed_items
+    // Test steps
+    //     1. push the occupier message to the function
+    //     2. push start_work_items into the buffer
+    //     3. buffer.try_put_and_wait(wait_message)
+    //     4. g.wait_for_all()
+    // test_buffer_pull returns the index from which the items processed during wait_for_all() starts
 
-        // TODO: add comments
-        // std::size_t check_index = 0;
+    {
+        std::vector<int> processed_items;
+        int occupier = 42;
 
-        for (auto item : processed_items) {
-            std::cout << item << " ";
+        std::size_t after_start = test_buffer_pull<tbb::flow::buffer_node<int>>(start_work_items, wait_message, occupier,
+                                                                                new_work_items, processed_items);
+
+        // Expected effect
+        // 0. task for occupier processing would be spawned by the function
+        // During buffer.try_put_and_wait()
+        //     1. start_work_items would be pushed to the buffer
+        //     2. wait_message would be pushed to the buffer
+        //     3. forward_task would try to push items to the function, but would fail
+        //        and set the edge to the pull state
+        //     4. occupier would be processed
+        //     5. items would be taken from the buffer by function in LIFO order
+        //     6. wait_message would be taken first and push new_work_items to the buffer
+        // Expected items processing { occupier, wait_message, new_work_items LIFO, start_work_items LIFO }
+
+        std::size_t check_index = 0;
+
+        CHECK_MESSAGE(after_start == 2, "Only wait_message and occupier should be processed by try_put_and_wait");
+        CHECK_MESSAGE(processed_items[check_index++] == occupier, "Unexpected items processing by try_put_and_wait");
+        CHECK_MESSAGE(processed_items[check_index++] == wait_message, "Unexpected items processing by try_put_and_wait");
+
+        for (std::size_t index = new_work_items.size(); index != 0; --index) {
+            CHECK_MESSAGE(processed_items[check_index++] == new_work_items[index - 1],
+                          "wait_for_all should process new_work_items LIFO");
         }
-        std::cout << std::endl;
-
-        g.wait_for_all();
-
-        for (auto item : processed_items) {
-            std::cout << item << " ";
+        for (std::size_t index = start_work_items.size(); index != 0; --index) {
+            CHECK_MESSAGE(processed_items[check_index++] == start_work_items[index - 1],
+                          "wait_for_all should process start_work_items LIFO");
         }
-        std::cout << std::endl;
-    });
-}
+        CHECK(check_index == processed_items.size());
+    }
 
-void test_try_put_and_wait() {
-    test_try_put_and_wait_push();
-    // test_try_put_and_wait_pull();
-    // test_try_put_and_wait_reserve();
+    // TODO: add try_reserve tests after implementing limiter_node
 }
 #endif // __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
 
@@ -576,6 +614,6 @@ TEST_CASE("Deduction guides"){
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
 //! \brief \ref error_guessing
 TEST_CASE("test buffer_node try_put_and_wait") {
-    test_try_put_and_wait();
+    test_buffer_node_try_put_and_wait();
 }
 #endif

@@ -98,7 +98,13 @@ public:
         // Do not work with the passed pointer here as it may not be fully initialized yet
     }
 
-    bool get_item( output_type& v ) {
+private:
+    bool get_item_impl( output_type& v
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+                      , message_metainfo* metainfo = nullptr
+#endif
+                      )
+    {
 
         bool msg = false;
 
@@ -113,7 +119,15 @@ public:
             }
 
             // Try to get from this sender
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+            if (metainfo) {
+                msg = src->try_get( v, *metainfo );
+            } else {
+                msg = src->try_get( v );
+            }
+#else
             msg = src->try_get( v );
+#endif
 
             if (msg == false) {
                 // Relinquish ownership of the edge
@@ -125,6 +139,16 @@ public:
         } while ( msg == false );
         return msg;
     }
+public:
+    bool get_item( output_type& v ) {
+        return get_item_impl(v);
+    }
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    bool get_item( output_type& v, message_metainfo& metainfo ) {
+        return get_item_impl(v, &metainfo);
+    }
+#endif
 
     // If we are removing arcs (rf_clear_edges), call clear() rather than reset().
     void reset() {
@@ -426,11 +450,14 @@ public:
         return this->my_successors.size();
     }
 
-    graph_task* try_put_task( const T &t ) override {
+private:
+
+    template <typename... Metainfo>
+    graph_task* try_put_task_impl( const T &t, const Metainfo&... metainfo ) {
         typename mutex_type::scoped_lock l(this->my_mutex, /*write=*/true);
         typename successors_type::iterator i = this->my_successors.begin();
         while ( i != this->my_successors.end() ) {
-            graph_task* new_task = (*i)->try_put_task(t);
+            graph_task* new_task = (*i)->try_put_task(t, metainfo...);
             if ( new_task ) {
                 return new_task;
             } else {
@@ -445,10 +472,14 @@ public:
         return nullptr;
     }
 
+public:
+    graph_task* try_put_task(const T& t) override {
+        return try_put_task_impl(t);
+    }
+
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    // TODO: add support for round robin cache
-    graph_task* try_put_task(const T& t, const message_metainfo&) override {
-        return try_put_task(t);
+    graph_task* try_put_task(const T& t, const message_metainfo& metainfo) override {
+        return try_put_task_impl(t, metainfo);
     }
 #endif
 };

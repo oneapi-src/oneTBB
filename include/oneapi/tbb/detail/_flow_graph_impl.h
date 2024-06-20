@@ -165,6 +165,14 @@ public:
         }
     }
 
+    graph_task_with_message_waiters(graph& g, d1::small_object_allocator& allocator,
+                                    std::forward_list<d1::wait_context_vertex*>&& msg_waiters,
+                                    node_priority_t node_priority = no_priority)
+        : graph_task(g, allocator, node_priority)
+        , my_msg_wait_context_vertices(std::move(msg_waiters))
+    {
+    }
+
     const std::forward_list<d1::wait_context_vertex*> get_msg_wait_context_vertices() const {
         return my_msg_wait_context_vertices;
     }
@@ -172,11 +180,21 @@ public:
 protected:
     template <typename DerivedType>
     void finalize(const d1::execution_data& ed) {
+        auto wait_context_vertices = std::move(my_msg_wait_context_vertices);
         auto msg_reference_vertices = std::move(my_msg_reference_vertices);
         graph_task::finalize<DerivedType>(ed);
 
-        for (auto& msg_waiter : msg_reference_vertices) {
-            msg_waiter->release(1);
+        // If there is no thread reference vertices associated with the task
+        // then this task was created by transferring the ownership from other metainfo
+        // instance (e.g. while taking from the buffer)
+        if (msg_reference_vertices.empty()) {
+            for (auto& msg_waiter : wait_context_vertices) {
+                msg_waiter->release(1);
+            }
+        } else {
+            for (auto& msg_waiter : msg_reference_vertices) {
+                msg_waiter->release(1);
+            }
         }
     }
 private:

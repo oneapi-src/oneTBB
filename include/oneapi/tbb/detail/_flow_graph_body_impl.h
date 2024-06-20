@@ -281,6 +281,9 @@ template <typename... Metainfo>
 using graph_task_base_t = typename graph_task_base<Metainfo...>::type;
 #endif
 
+template <typename... Metainfo>
+using graph_task_base_t = typename graph_task_base<Metainfo...>::type;
+
 //! A task that calls a node's apply_body_bypass function, passing in an input of type Input
 //  return the task* unless it is SUCCESSFULLY_ENQUEUED, in which case return nullptr
 template< typename NodeType, typename Input, typename BaseTaskType = graph_task>
