@@ -49,10 +49,23 @@ You have the option to contribute a new example that you deem significant.
 Alternatively, you can check library APIs that have not yet been covered and provide an example that addresses them.
 Any example you provide should adhere to the style of the existing benchmarks.
 
+### Stabilize examples performance.
+Several oneTBB examples serve as performance benchmarks for the library. It's recommended to check the relative error for these examples.
+If the error exceeds 5%, consider stabilizing the example to improve the reproducibility of results, while still maintaining a reasonable execution time.
+
 ## Intermediate
 
-### NUMA improvements
-In the current state 
+### C++ 20 Modules
+With the introduction of C++ 20 Modules, it is worth analyzing the applicability of this feature to the oneTBB library.
+Modules provide a more efficient and scalable way of organizing and managing code dependencies.
+To get started, you can refer to the C++ 20 Modules documentation and familiarize yourself with the syntax and concepts.
+Then, analyze the oneTBB codebase and propose a modularization strategy that aligns with the library's architecture.
+Please do not forget to document your finding into oneTBB discussion page.
+
+### NUMA related improvements
+The oneTBB scheduler, by default, does not incorporate platform characteristics into its task scheduling.
+You might want to enhance the scheduler's logic to take into account these platform characteristics.
+For instance, you could refer to Hierarchical task stealing (#523) as a starting point.
 
 ## Expert
 
