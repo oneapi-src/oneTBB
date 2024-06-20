@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2023 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include "common/spin_barrier.h"
 #include "common/utils_concurrency_limit.h"
 #include "common/cpu_usertime.h"
+#include "common/memory_usage.h"
 
 #include "tbb/task.h"
 #include "tbb/task_group.h"
@@ -839,4 +840,29 @@ TEST_CASE("Check correct arena destruction with enqueue") {
         }
         tbb::finalize(handle, std::nothrow_t{});
     }
+}
+
+//! \brief \ref regression
+TEST_CASE("Check that memory does not leak with static_partitioner + global_control") {
+    tbb::global_control gbl_ctrl{ tbb::global_control::max_allowed_parallelism, std::size_t(tbb::this_task_arena::max_concurrency() / 2) };
+
+    size_t current_memory_usage = 0, previous_memory_usage = 0, stability_counter = 0;
+    bool no_memory_leak = false;
+    std::size_t num_iterations = 100;
+    for (std::size_t i = 0; i < num_iterations; ++i) {
+        for (std::size_t j = 0; j < 100; ++j) {
+            tbb::parallel_for(0, 1000, [] (int) {}, tbb::static_partitioner{});
+        }
+
+        current_memory_usage = utils::GetMemoryUsage();
+        stability_counter = current_memory_usage==previous_memory_usage ? stability_counter + 1 : 0;
+        // If the amount of used memory has not changed during 5% of executions,
+        // then we can assume that the check was successful
+        if (stability_counter > num_iterations / 20) {
+            no_memory_leak = true;
+            break;
+        }
+        previous_memory_usage = current_memory_usage;
+    }
+    REQUIRE_MESSAGE(no_memory_leak, "Seems we get memory leak here.");
 }
