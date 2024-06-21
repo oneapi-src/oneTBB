@@ -857,7 +857,7 @@ TEST_CASE("Try to force Leaked proxy observers warning") {
 
     arena.enqueue([] {
         tbb::parallel_for(0, 100000, [] (int) {
-            for (volatile int i = 0; i < 1000; ++i);
+            utils::doDummyWork(1000);
         });
     });
 }
