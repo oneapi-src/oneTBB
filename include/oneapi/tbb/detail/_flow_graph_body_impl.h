@@ -301,9 +301,11 @@ class apply_body_task_bypass
         return my_node.apply_body_bypass(my_input);
     }
 
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
     graph_task* call_apply_body_bypass_impl(std::false_type) {
-        return my_node.apply_body_bypass(my_input, this->get_msg_wait_context_vertexes());
+        return my_node.apply_body_bypass(my_input, message_metainfo{this->get_msg_wait_context_vertices()});
     }
+#endif
 
     graph_task* call_apply_body_bypass() {
         return call_apply_body_bypass_impl(std::is_same<base_type, graph_task>{});

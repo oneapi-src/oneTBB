@@ -18,7 +18,6 @@
 #pragma warning(disable : 2586) // decorated name length exceeded, name was truncated
 #endif
 
-#include <iostream>
 #include "common/config.h"
 
 #include "tbb/flow_graph.h"

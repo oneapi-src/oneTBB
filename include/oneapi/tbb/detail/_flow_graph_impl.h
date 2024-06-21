@@ -153,31 +153,31 @@ public:
                                     const std::forward_list<d1::wait_context_vertex*>& msg_waiters,
                                     node_priority_t node_priority = no_priority)
         : graph_task(g, allocator, node_priority)
-        , my_msg_wait_context_vertexes(msg_waiters)
+        , my_msg_wait_context_vertices(msg_waiters)
     {
         for (auto& msg_waiter : msg_waiters) {
-            my_msg_reference_vertexes.emplace_back(r1::get_thread_reference_vertex(msg_waiter));
-            my_msg_reference_vertexes.back()->reserve(1);
+            my_msg_reference_vertices.emplace_back(r1::get_thread_reference_vertex(msg_waiter));
+            my_msg_reference_vertices.back()->reserve(1);
         }
     }
 
-    const std::forward_list<d1::wait_context_vertex*> get_msg_wait_context_vertexes() const {
-        return my_msg_wait_context_vertexes;
+    const std::forward_list<d1::wait_context_vertex*> get_msg_wait_context_vertices() const {
+        return my_msg_wait_context_vertices;
     }
 
 protected:
     template <typename DerivedType>
     void finalize(const d1::execution_data& ed) {
-        auto msg_reference_vertexes = std::move(my_msg_reference_vertexes);
+        auto msg_reference_vertices = std::move(my_msg_reference_vertices);
         graph_task::finalize<DerivedType>(ed);
 
-        for (auto& msg_waiter : msg_reference_vertexes) {
+        for (auto& msg_waiter : msg_reference_vertices) {
             msg_waiter->release(1);
         }
     }
 private:
-    std::forward_list<d1::wait_context_vertex*> my_msg_wait_context_vertexes;
-    std::list<d1::wait_tree_vertex_interface*> my_msg_reference_vertexes;
+    std::forward_list<d1::wait_context_vertex*> my_msg_wait_context_vertices;
+    std::list<d1::wait_tree_vertex_interface*> my_msg_reference_vertices;
 }; // class graph_task_with_message_waiters
 #endif // __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
 
