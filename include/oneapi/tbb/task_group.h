@@ -551,7 +551,7 @@ public:
     task_group_status wait() {
         bool cancellation_status = false;
         try_call([&] {
-            d1::wait( m_wait_vertex.get_context(), context());
+            d1::wait(m_wait_vertex.get_context(), context());
         }).on_completion([&] {
             // TODO: the reset method is not thread-safe. Ensure the correct behavior.
             cancellation_status = m_context.is_group_execution_cancelled();
