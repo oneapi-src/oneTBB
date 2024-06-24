@@ -60,11 +60,13 @@ ctest
 
 # Limitations
 
-While you can successfully build your application with oneTBB using WASM, you may not achieve optimal performance immediately. This is due to the limitation of nested Web Workers, where a Web Worker cannot schedule another worker without the participation of a browser thread. This can lead to unexpected performance outcomes, such as the application running in serial.
-This issue is [discussed](https://github.com/emscripten-core/emscripten/discussions/21963) in the Emscripten repository, which you can refer to for more information.
-There are two potential workarounds for this issue:
-1. The recommended solution is to use the ``-sPROXY_TO_PTHREAD`` flag. This flag splits the initial thread into a browser thread and a main thread (proxied by a Web Worker), effectively resolving the issue as the browser thread is always present in the event loop and can participate in Web Workers scheduling. Please refer to the Emscripten documentation for more details on using ``-sPROXY_TO_PTHREAD``, as in some cases, using this flag may require you to refactor your code.
-2. Another solution is to warm up the oneTBB thread pool before the first call to oneTBB. This approach forces the browser thread to participate in Web Workers scheduling.
+You can successfully build your application with oneTBB using WASM, but you may not achieve optimal performance immediately. This is due to the limitation with nested Web Workers: a Web Worker cannot schedule another worker without help from a browser thread. This can lead to unexpected performance outcomes, such as the application running in serial.
+Find more information in the [issue](https://github.com/emscripten-core/emscripten/discussions/21963) in the Emscripten repository.
+To workaround this issue, try one of the following ways:
+1. **Recommended Solution: Use the ``-sPROXY_TO_PTHREAD`` Flag**. 
+This flag splits the initial thread into a browser thread and a main thread (proxied by a Web Worker), effectively resolving the issue as the browser thread is always present in the event loop and can participate in Web Workers scheduling. Refer to the [Emscripten documentation](https://emscripten.org/docs/porting/pthreads.html) for more details about ``-sPROXY_TO_PTHREAD`` since using this flag may require refactoring the code.
+2. **Alternative Solution: Warm Up the oneTBB Thread Pool**
+Initialize the oneTBB thread pool before making the first call to oneTBB. This approach forces the browser thread to participate in Web Workers scheduling.
 ```cpp
     int num_threads = tbb::this_task_arena::max_concurrency();
     std::atomic<int> barrier{num_threads};
@@ -76,4 +78,4 @@ There are two potential workarounds for this issue:
         }
     }, tbb::static_partitioner{});
 ```
-However, be aware that this might cause delays on the browser side.
+> **_NOTE:_** Be aware that it might cause delays on the browser side.
