@@ -33,7 +33,7 @@ namespace d1 {
 #endif
 
 template <typename F>
-class function_stack_task : public task {
+class collaborative_call_stack_task : public task {
     const F& m_func;
     wait_context& m_wait_ctx;
 
@@ -50,7 +50,7 @@ class function_stack_task : public task {
         return nullptr;
     }
 public:
-    function_stack_task(const F& f, wait_context& wctx) : m_func(f), m_wait_ctx(wctx) {}
+    collaborative_call_stack_task(const F& f, wait_context& wctx) : m_func(f), m_wait_ctx(wctx) {}
 };
 
 constexpr std::uintptr_t collaborative_once_max_references = max_nfs_size;
@@ -124,7 +124,7 @@ public:
                 task_group_context context{ task_group_context::bound,
                     task_group_context::default_traits | task_group_context::concurrent_wait };
 
-                function_stack_task<F> t{ std::forward<F>(f), m_storage.m_wait_context };
+                collaborative_call_stack_task<F> t{ std::forward<F>(f), m_storage.m_wait_context };
 
                 // Set the ready flag after entering the execute body to prevent
                 // moonlighting threads from occupying all slots inside the arena.
