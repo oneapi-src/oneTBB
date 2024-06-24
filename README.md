@@ -57,6 +57,8 @@ See our [documentation](./SUPPORT.md) to learn how to request help.
 We welcome community contributions, so check our [Contributing Guidelines](CONTRIBUTING.md)
 to learn more.
 
+Use GitHub Issues for feature requests, bug reports, and minor inquiries. For broader questions and development-related discussions, use GitHub Discussions.
+
 ## License
 oneAPI Threading Building Blocks is licensed under [Apache License, Version 2.0](LICENSE.txt).
 By its terms, contributions submitted to the project are also done under that license.
