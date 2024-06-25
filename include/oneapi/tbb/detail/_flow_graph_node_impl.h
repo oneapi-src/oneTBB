@@ -746,7 +746,7 @@ protected:
 #if _MSC_VER && !__INTEL_COMPILER
 #pragma warning (pop)
 #endif
-            return apply_body_bypass( continue_msg() );
+            return apply_body_bypass( continue_msg() __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo{}) );
         }
         else {
             d1::small_object_allocator allocator{};
