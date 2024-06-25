@@ -592,7 +592,7 @@ public:
     // the task we were successful.
     //TODO: consider moving common parts with implementation in function_input into separate function
     graph_task* apply_body_impl_bypass( const input_type &i
-                                        __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo) )
+                                        __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo&) )
     {
         fgt_begin_body( my_body );
         (*my_body)(i, my_output_ports);
