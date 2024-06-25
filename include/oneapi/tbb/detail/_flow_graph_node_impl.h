@@ -647,6 +647,18 @@ struct emit_element {
         check_task_and_spawn(g, last_task);
         return emit_element<N-1>::emit_this(g,t,p);
     }
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    template <typename TupleType, typename PortsType>
+    static graph_task* emit_this(graph& g, const TupleType& t, PortsType& p,
+                                 const message_metainfo& metainfo)
+    {
+        // TODO: consider to collect all the tasks in task_list and spawn them all at once
+        graph_task* last_task = std::get<N-1>(p).try_put_task(std::get<N-1>(t), metainfo);
+        check_task_and_spawn(g, last_task);
+        return emit_element<N-1>::emit_this(g, t, p, metainfo);
+    }
+#endif
 };
 
 template<>
@@ -657,6 +669,17 @@ struct emit_element<1> {
         check_task_and_spawn(g, last_task);
         return SUCCESSFULLY_ENQUEUED;
     }
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    template <typename TupleType, typename PortsType>
+    static graph_task* emit_this(graph& g, const TupleType& t, PortsType& ports,
+                                 const message_metainfo& metainfo)
+    {
+        graph_task* last_task = std::get<0>(ports).try_put_task(std::get<0>(t), metainfo);
+        check_task_and_spawn(g, last_task);
+        return SUCCESSFULLY_ENQUEUED;
+    }
+#endif
 };
 
 //! Implements methods for an executable node that takes continue_msg as input
@@ -822,6 +845,12 @@ protected:
     graph_task* try_put_task(const output_type &i) {
         return my_successors.try_put_task(i);
     }
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    graph_task* try_put_task(const output_type& i, const message_metainfo& metainfo) {
+        return my_successors.try_put_task(i, metainfo);
+    }
+#endif
 
     template <int N> friend struct emit_element;
 
