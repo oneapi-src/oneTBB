@@ -86,10 +86,8 @@ protected:
 
     // may be called with an empty slot or a slot that has already been constructed into.
     void set_my_item(size_t i, const item_type &o
-#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-        , const message_metainfo& metainfo
-#endif
-        ) {
+                     __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo))
+    {
         if(element(i).state != no_item) {
             destroy_item(i);
         }
@@ -103,12 +101,6 @@ protected:
 #endif
         element(i).state = has_item;
     }
-
-#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    void set_my_item(size_t i, const item_type&o) {
-        set_my_item(i, o, message_metainfo{});
-    }
-#endif
 
     // destructively-fetch an object from the buffer
     void fetch_item(size_t i, item_type &o) {
@@ -237,73 +229,66 @@ protected:
         my_array_size = new_size;
     }
 
-    bool push_back(item_type &v) {
-        if(buffer_full()) {
-            grow_my_array(size() + 1);
-        }
-        set_my_item(my_tail, v);
-        ++my_tail;
-        return true;
-    }
-
-#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    bool push_back(item_type& v, const message_metainfo& metainfo) {
+    bool push_back(item_type& v
+                   __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo))
+    {
         if (buffer_full()) {
             grow_my_array(size() + 1);
         }
-        set_my_item(my_tail, v, metainfo);
+        set_my_item(my_tail, v __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo));
         ++my_tail;
         return true;
     }
-#endif
 
-    bool pop_back(item_type &v) {
-        if (!my_item_valid(my_tail-1)) {
-            return false;
-        }
-        v = this->back();
-        destroy_back();
-        return true;
-    }
-
-#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    bool pop_back(item_type& v, message_metainfo* metainfo_ptr) {
-        __TBB_ASSERT(metainfo_ptr != nullptr, nullptr);
-
+    bool pop_back(item_type& v
+                  __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo& metainfo))
+    {
         if (!my_item_valid(my_tail - 1)) {
             return false;
         }
         auto& e = element(my_tail - 1);
         v = e.item;
-        *metainfo_ptr = std::move(e.metainfo);
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        metainfo = std::move(e.metainfo);
+#endif
 
         destroy_back();
         return true;
     }
-#endif
 
-    bool pop_front(item_type &v) {
-        if(!my_item_valid(my_head)) {
-            return false;
-        }
-        v = this->front();
-        destroy_front();
-        return true;
-    }
-
-#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    bool pop_front(item_type& v, message_metainfo* metainfo_ptr) {
-        __TBB_ASSERT(metainfo_ptr != nullptr, nullptr);
-
+    bool pop_front(item_type& v
+                   __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo& metainfo))
+    {
         if (!my_item_valid(my_head)) {
             return false;
         }
         auto& e = element(my_head);
         v = e.item;
-        *metainfo_ptr = std::move(e.metainfo);
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        metainfo = std::move(e.metainfo);
+#endif
 
         destroy_front();
         return true;
+    }
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    void set_my_item(size_t i, const item_type&o) {
+        set_my_item(i, o, message_metainfo{});
+    }
+
+    bool push_back(item_type& v) {
+        return push_back(v, message_metainfo{});
+    }
+
+    bool pop_back(item_type& v) {
+        message_metainfo metainfo;
+        return pop_back(v, metainfo);
+    }
+
+    bool pop_front(item_type& v) {
+        message_metainfo metainfo;
+        return pop_front(v, metainfo);
     }
 #endif
 

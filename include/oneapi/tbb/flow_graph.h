@@ -204,6 +204,11 @@ public:
 private:
     waiters_type my_waiters;
 }; // class message_metainfo
+
+#define __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo) , metainfo
+
+#else
+#define __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo)
 #endif // __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
 
 //! Pure virtual template class that defines a sender of messages of type T
@@ -391,7 +396,9 @@ protected:
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
     // TODO: add metainfo support for continue_receiver
-    graph_task* try_put_task( const input_type&, const message_metainfo& ) override { return nullptr; }
+    graph_task* try_put_task( const input_type& input, const message_metainfo& ) override {
+        return try_put_task(input);
+    }
 #endif
 
     spin_mutex my_mutex;
@@ -1007,7 +1014,9 @@ protected:
     }
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
     // TODO: add support for split_node
-    graph_task* try_put_task(const TupleType&, const message_metainfo&) override { return nullptr; }
+    graph_task* try_put_task(const TupleType& t, const message_metainfo&) override {
+        return try_put_task(t);
+    }
 #endif
 
     void reset_node(reset_flags f) override {
@@ -1180,7 +1189,9 @@ protected:
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
     // TODO: add support for broadcast_node
-    graph_task* try_put_task(const T&, const message_metainfo&) override { return nullptr; }
+    graph_task* try_put_task(const T& t, const message_metainfo&) override {
+        return try_put_task(t);
+    }
 #endif
 
     graph& graph_reference() const override {
@@ -1533,7 +1544,9 @@ protected:
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
     // TODO: add support for buffer_node
-    graph_task* try_put_task(const T&, const message_metainfo&) override { return nullptr; }
+    graph_task* try_put_task(const T& t, const message_metainfo&) override {
+        return try_put_task(t);
+    }
 #endif
 
     graph& graph_reference() const override {
@@ -2172,7 +2185,9 @@ protected:
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
     // TODO: add support for limiter_node
-    graph_task* try_put_task(const T&, const message_metainfo&) override { return nullptr; }
+    graph_task* try_put_task(const T& t, const message_metainfo&) override {
+        return try_put_task(t);
+    }
 #endif
 
     graph& graph_reference() const override { return my_graph; }
@@ -3171,7 +3186,9 @@ protected:
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
     // TODO: add support for overwrite_node
-    graph_task* try_put_task(const input_type&, const message_metainfo&) override { return nullptr; }
+    graph_task* try_put_task(const input_type& v, const message_metainfo&) override {
+        return try_put_task(v);
+    }
 #endif
 
     graph_task * try_put_task_impl(const input_type &v) {
@@ -3266,7 +3283,9 @@ protected:
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
     // TODO: add support for write_once_node
-    graph_task* try_put_task(const T&, const message_metainfo&) override { return nullptr; }
+    graph_task* try_put_task(const T& v, const message_metainfo&) override {
+        return try_put_task(v);
+    }
 #endif
 }; // write_once_node
 

@@ -81,7 +81,9 @@
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
         // TODO: add support for indexer_node
-        graph_task* try_put_task(const T&, const message_metainfo&) override { return nullptr; }
+        graph_task* try_put_task(const T& v, const message_metainfo&) override {
+            return try_put_task(v);
+        }
 #endif
 
         graph& graph_reference() const override {

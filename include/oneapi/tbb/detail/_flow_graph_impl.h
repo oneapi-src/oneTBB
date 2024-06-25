@@ -155,9 +155,13 @@ public:
         : graph_task(g, allocator, node_priority)
         , my_msg_wait_context_vertices(msg_waiters)
     {
-        for (auto& msg_waiter : msg_waiters) {
-            my_msg_reference_vertices.emplace_back(r1::get_thread_reference_vertex(msg_waiter));
-            my_msg_reference_vertices.back()->reserve(1);
+        auto last_iterator = my_msg_reference_vertices.cbefore_begin();
+
+        for (auto& msg_waiter : my_msg_wait_context_vertices) {
+            d1::wait_tree_vertex_interface* ref_vertex = r1::get_thread_reference_vertex(msg_waiter);
+            last_iterator = my_msg_reference_vertices.emplace_after(last_iterator,
+                                                                    ref_vertex);
+            ref_vertex->reserve(1);
         }
     }
 
@@ -177,7 +181,7 @@ protected:
     }
 private:
     std::forward_list<d1::wait_context_vertex*> my_msg_wait_context_vertices;
-    std::list<d1::wait_tree_vertex_interface*> my_msg_reference_vertices;
+    std::forward_list<d1::wait_tree_vertex_interface*> my_msg_reference_vertices;
 }; // class graph_task_with_message_waiters
 #endif // __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
 

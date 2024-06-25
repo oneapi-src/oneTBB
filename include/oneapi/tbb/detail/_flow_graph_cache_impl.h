@@ -342,13 +342,12 @@ class broadcast_cache : public successor_cache<T, M> {
     typedef M mutex_type;
     typedef typename successor_cache<T,M>::successors_type successors_type;
 
-    template <typename... Metainfo>
-    graph_task* try_put_task_impl( const T& t, const Metainfo&... metainfo) {
+    graph_task* try_put_task_impl( const T& t __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo)) {
         graph_task * last_task = nullptr;
         typename mutex_type::scoped_lock l(this->my_mutex, /*write=*/true);
         typename successors_type::iterator i = this->my_successors.begin();
         while ( i != this->my_successors.end() ) {
-            graph_task *new_task = (*i)->try_put_task(t, metainfo...);
+            graph_task *new_task = (*i)->try_put_task(t __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo));
             // workaround for icc bug
             graph& graph_ref = (*i)->graph_reference();
             last_task = combine_tasks(graph_ref, last_task, new_task);  // enqueue if necessary
@@ -373,7 +372,11 @@ public:
 
     // as above, but call try_put_task instead, and return the last task we received (if any)
     graph_task* try_put_task( const T &t ) override {
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        return try_put_task_impl(t, message_metainfo{});
+#else
         return try_put_task_impl(t);
+#endif
     }
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
@@ -448,7 +451,9 @@ public:
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
     // TODO: add support for round robin cache
-    graph_task* try_put_task(const T&, const message_metainfo&) override { return nullptr; }
+    graph_task* try_put_task(const T& t, const message_metainfo&) override {
+        return try_put_task(t);
+    }
 #endif
 };
 

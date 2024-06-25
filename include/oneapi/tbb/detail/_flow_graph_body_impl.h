@@ -276,29 +276,23 @@ struct graph_task_base : std::conditional<sizeof...(Metainfo) != 0,
                                           graph_task_with_message_waiters,
                                           graph_task>
 {};
+
+template <typename... Metainfo>
+using graph_task_base_t = typename graph_task_base<Metainfo...>::type;
 #endif
 
 //! A task that calls a node's apply_body_bypass function, passing in an input of type Input
 //  return the task* unless it is SUCCESSFULLY_ENQUEUED, in which case return nullptr
-template< typename NodeType, typename Input, typename... Metainfo >
+template< typename NodeType, typename Input, typename BaseTaskType = graph_task>
 class apply_body_task_bypass
-#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    : public graph_task_base<Metainfo...>::type
-#else
-    : public graph_task
-#endif
+    : public BaseTaskType
 {
     NodeType &my_node;
     Input my_input;
 
-#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    using base_type = typename graph_task_base<Metainfo...>::type;
-#else
-    using base_type = graph_task;
-#endif
-
     graph_task* call_apply_body_bypass_impl(std::true_type) {
-        return my_node.apply_body_bypass(my_input);
+        return my_node.apply_body_bypass(my_input
+                                         __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo{}));
     }
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
@@ -308,15 +302,23 @@ class apply_body_task_bypass
 #endif
 
     graph_task* call_apply_body_bypass() {
-        return call_apply_body_bypass_impl(std::is_same<base_type, graph_task>{});
+        return call_apply_body_bypass_impl(std::is_same<BaseTaskType, graph_task>{});
     }
 
 public:
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    template <typename Metainfo,
+              typename BaseT = BaseTaskType,
+              typename = typename std::enable_if<std::is_same<BaseT, graph_task_with_message_waiters>::value>::type>
     apply_body_task_bypass( graph& g, d1::small_object_allocator& allocator, NodeType &n, const Input &i,
-                            node_priority_t node_priority = no_priority,
-                            const Metainfo&... metainfo )
-        : base_type(g, allocator, metainfo.waiters()..., node_priority),
-          my_node(n), my_input(i) {}
+                            node_priority_t node_priority, Metainfo&& metainfo )
+        : BaseTaskType(g, allocator, std::forward<Metainfo>(metainfo).waiters(), node_priority)
+        , my_node(n), my_input(i) {}
+#endif
+
+    apply_body_task_bypass( graph& g, d1::small_object_allocator& allocator, NodeType& n, const Input& i,
+                            node_priority_t node_priority = no_priority )
+        : BaseTaskType(g, allocator, node_priority), my_node(n), my_input(i) {}
 
     d1::task* execute(d1::execution_data& ed) override {
         graph_task* next_task = call_apply_body_bypass();
@@ -324,12 +326,12 @@ public:
             next_task = nullptr;
         else if (next_task)
             next_task = prioritize_task(my_node.graph_reference(), *next_task);
-        base_type::template finalize<apply_body_task_bypass>(ed);
+        BaseTaskType::template finalize<apply_body_task_bypass>(ed);
         return next_task;
     }
 
     d1::task* cancel(d1::execution_data& ed) override {
-        base_type::template finalize<apply_body_task_bypass>(ed);
+        BaseTaskType::template finalize<apply_body_task_bypass>(ed);
         return nullptr;
     }
 };
@@ -380,7 +382,9 @@ protected:
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
     // TODO: add support for limiter_node
-    graph_task* try_put_task(const DecrementType&, const message_metainfo&) override { return nullptr; }
+    graph_task* try_put_task(const DecrementType& value, const message_metainfo&) override {
+        return try_put_task(value);
+    }
 #endif
 
     graph& graph_reference() const override {
