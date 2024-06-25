@@ -725,7 +725,7 @@ protected:
     friend class apply_body_task_bypass< class_type, continue_msg >;
 
     //! Applies the body to the provided input
-    graph_task* apply_body_bypass( input_type ) {
+    graph_task* apply_body_bypass( input_type__TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo&) ) {
         // There is an extra copied needed to capture the
         // body execution without the try_put
         fgt_begin_body( my_body );
