@@ -162,7 +162,7 @@ protected:
 
 private:
 
-    friend class apply_body_task_bypass< class_type, input_type >;
+    friend class apply_body_task_bypass< class_type, input_type>;
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
     friend class apply_body_task_bypass< class_type, input_type, graph_task_with_message_waiters>;
 #endif
@@ -213,10 +213,18 @@ private:
         }
         else {
             input_type i;
-            if(my_predecessors.get_item(i)) {
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+            message_metainfo metainfo;
+            if(my_predecessors.get_item(i, metainfo)) {
+                ++my_concurrency;
+                new_task = create_body_task(i, std::move(metainfo));
+            }
+#else
+            if (my_predecessors.get_item(i)) {
                 ++my_concurrency;
                 new_task = create_body_task(i __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo{}));
             }
+#endif
         }
         return new_task;
     }
@@ -351,8 +359,11 @@ private:
     }
 
     //! allocates a task to apply a body
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    template <typename Metainfo>
+#endif
     graph_task* create_body_task( const input_type &input
-                                  __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo))
+                                  __TBB_FLOW_GRAPH_METAINFO_ARG(Metainfo&& metainfo))
     {
         if (!is_graph_active(my_graph_ref)) {
             return nullptr;
@@ -363,7 +374,7 @@ private:
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
         if (!metainfo.empty()) {
             using task_type = apply_body_task_bypass<class_type, input_type, graph_task_with_message_waiters>;
-            t = allocator.new_object<task_type>(my_graph_ref, allocator, *this, input, my_priority, metainfo);
+            t = allocator.new_object<task_type>(my_graph_ref, allocator, *this, input, my_priority, std::forward<Metainfo>(metainfo));
         } else
 #endif
         {
@@ -725,7 +736,8 @@ protected:
     friend class apply_body_task_bypass< class_type, continue_msg >;
 
     //! Applies the body to the provided input
-    graph_task* apply_body_bypass( input_type __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo&) ) {
+    graph_task* apply_body_bypass( input_type __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo&) )
+    {
         // There is an extra copied needed to capture the
         // body execution without the try_put
         fgt_begin_body( my_body );
