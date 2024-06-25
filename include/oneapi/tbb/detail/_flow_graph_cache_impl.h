@@ -372,11 +372,7 @@ public:
 
     // as above, but call try_put_task instead, and return the last task we received (if any)
     graph_task* try_put_task( const T &t ) override {
-#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-        return try_put_task_impl(t, message_metainfo{});
-#else
-        return try_put_task_impl(t);
-#endif
+        return try_put_task_impl(t __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo{}));
     }
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
