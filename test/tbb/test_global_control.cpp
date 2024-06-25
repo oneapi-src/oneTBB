@@ -275,7 +275,7 @@ TEST_CASE("test concurrent task_scheduler_handle destruction") {
 }
 
 //! \brief \ref regression
-TEST_CASE("Thread should sleep with when soft_limit is zero") {
+TEST_CASE("Thread should sleep when soft_limit is zero") {
     int num_threads = int(utils::get_platform_max_threads());
     std::atomic<int> barrier{num_threads};
 
