@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2022 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -145,6 +145,45 @@ private:
     friend class graph_task_list;
     friend graph_task* prioritize_task(graph& g, graph_task& gt);
 };
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+class graph_task_with_message_waiters : public graph_task {
+public:
+    graph_task_with_message_waiters(graph& g, d1::small_object_allocator& allocator,
+                                    const std::forward_list<d1::wait_context_vertex*>& msg_waiters,
+                                    node_priority_t node_priority = no_priority)
+        : graph_task(g, allocator, node_priority)
+        , my_msg_wait_context_vertices(msg_waiters)
+    {
+        auto last_iterator = my_msg_reference_vertices.cbefore_begin();
+
+        for (auto& msg_waiter : my_msg_wait_context_vertices) {
+            d1::wait_tree_vertex_interface* ref_vertex = r1::get_thread_reference_vertex(msg_waiter);
+            last_iterator = my_msg_reference_vertices.emplace_after(last_iterator,
+                                                                    ref_vertex);
+            ref_vertex->reserve(1);
+        }
+    }
+
+    const std::forward_list<d1::wait_context_vertex*> get_msg_wait_context_vertices() const {
+        return my_msg_wait_context_vertices;
+    }
+
+protected:
+    template <typename DerivedType>
+    void finalize(const d1::execution_data& ed) {
+        auto msg_reference_vertices = std::move(my_msg_reference_vertices);
+        graph_task::finalize<DerivedType>(ed);
+
+        for (auto& msg_waiter : msg_reference_vertices) {
+            msg_waiter->release(1);
+        }
+    }
+private:
+    std::forward_list<d1::wait_context_vertex*> my_msg_wait_context_vertices;
+    std::forward_list<d1::wait_tree_vertex_interface*> my_msg_reference_vertices;
+}; // class graph_task_with_message_waiters
+#endif // __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
 
 struct graph_task_comparator {
     bool operator()(const graph_task* left, const graph_task* right) {
@@ -357,6 +396,9 @@ private:
 
     friend class task_arena_base;
     friend class graph_task;
+
+    template <typename T>
+    friend class receiver;
 };  // class graph
 
 template<typename DerivedType>

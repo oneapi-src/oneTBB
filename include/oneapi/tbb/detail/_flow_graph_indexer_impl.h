@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -78,6 +78,13 @@
         graph_task* try_put_task(const T &v) override {
             return my_try_put_task(v, my_indexer_ptr);
         }
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        // TODO: add support for indexer_node
+        graph_task* try_put_task(const T& v, const message_metainfo&) override {
+            return try_put_task(v);
+        }
+#endif
 
         graph& graph_reference() const override {
             return *my_graph;

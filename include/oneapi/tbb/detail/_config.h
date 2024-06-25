@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2023 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -519,6 +519,10 @@
 
 #ifndef __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
 #define __TBB_PREVIEW_FLOW_GRAPH_NODE_SET       (TBB_PREVIEW_FLOW_GRAPH_FEATURES)
+#endif
+
+#ifndef __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+#define __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT (TBB_PREVIEW_FLOW_GRAPH_FEATURES)
 #endif
 
 #if TBB_PREVIEW_CONCURRENT_HASH_MAP_EXTENSIONS
