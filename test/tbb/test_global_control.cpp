@@ -275,7 +275,7 @@ TEST_CASE("test concurrent task_scheduler_handle destruction") {
 }
 
 //! \brief \ref regression
-TEST_CASE("Thread should sleep when soft_limit is zero") {
+TEST_CASE("Test worker threads remain inactive in enforced serial execution mode") {
     int num_threads = int(utils::get_platform_max_threads());
     std::atomic<int> barrier{num_threads};
 
@@ -295,7 +295,7 @@ TEST_CASE("Thread should sleep when soft_limit is zero") {
         });
     });
 
-    // Workers should sleep because of the soft_limit
+    // Workers should sleep because of global_control enforced serial execution of tasks
     TestCPUUserTime(utils::get_platform_max_threads() - 1);
 
     thr.join();
