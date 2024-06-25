@@ -22,6 +22,7 @@
 #include "common/utils.h"
 #include "common/spin_barrier.h"
 #include "common/utils_concurrency_limit.h"
+#include "common/cpu_usertime.h"
 
 #include "tbb/global_control.h"
 #include "tbb/parallel_for.h"
@@ -271,4 +272,31 @@ TEST_CASE("test concurrent task_scheduler_handle destruction") {
     }
     stop = true;
     thr1.join();
+}
+
+//! \brief \ref regression
+TEST_CASE("Thread should sleep with when soft_limit is zero") {
+    int num_threads = int(utils::get_platform_max_threads());
+    std::atomic<int> barrier{num_threads};
+
+    // Warm-up threads
+    tbb::parallel_for(0, num_threads, [&] (int) {
+        --barrier;
+        while (barrier > 0) {
+            std::this_thread::yield();
+        }
+    });
+
+    tbb::global_control control(tbb::global_control::max_allowed_parallelism, 1);
+
+    std::thread thr([&] {
+        tbb::parallel_for(0, 100000, [&] (int) {
+            utils::doDummyWork(100);
+        });
+    });
+
+    // Workers should sleep because of the soft_limit
+    TestCPUUserTime(utils::get_platform_max_threads() - 1);
+
+    thr.join();
 }
