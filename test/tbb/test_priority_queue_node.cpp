@@ -16,8 +16,6 @@
 
 // TODO: Add overlapping put / receive tests
 
-#include <iostream>
-
 #include "common/config.h"
 
 #include "tbb/flow_graph.h"

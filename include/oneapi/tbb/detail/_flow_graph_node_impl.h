@@ -162,7 +162,7 @@ protected:
 
 private:
 
-    friend class apply_body_task_bypass< class_type, input_type, graph_task>;
+    friend class apply_body_task_bypass< class_type, input_type>;
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
     friend class apply_body_task_bypass< class_type, input_type, graph_task_with_message_waiters>;
 #endif
@@ -217,11 +217,7 @@ private:
             message_metainfo metainfo;
             if(my_predecessors.get_item(i, metainfo)) {
                 ++my_concurrency;
-                if (metainfo.empty()) {
-                    new_task = create_body_task(i);
-                } else {
-                    new_task = create_body_task(i, std::move(metainfo));
-                }
+                new_task = create_body_task(i, std::move(metainfo));
             }
 #else
             if (my_predecessors.get_item(i)) {
@@ -369,8 +365,6 @@ private:
     graph_task* create_body_task( const input_type &input
                                   __TBB_FLOW_GRAPH_METAINFO_ARG(Metainfo&& metainfo))
     {
-    template <typename... Metainfo>
-    graph_task* create_body_task( const input_type &input, Metainfo&&... metainfo) {
         if (!is_graph_active(my_graph_ref)) {
             return nullptr;
         }
@@ -742,7 +736,8 @@ protected:
     friend class apply_body_task_bypass< class_type, continue_msg >;
 
     //! Applies the body to the provided input
-    graph_task* apply_body_bypass( input_type __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo&) ) {
+    graph_task* apply_body_bypass( input_type __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo&) )
+    {
         // There is an extra copied needed to capture the
         // body execution without the try_put
         fgt_begin_body( my_body );

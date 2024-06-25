@@ -1392,17 +1392,8 @@ private:
     }
 
     void try_put_and_add_task(graph_task*& last_task) {
-#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-        graph_task* new_task;
-
-        if (this->front_metainfo().empty()) {
-            new_task = this->my_successors.try_put_task(this->back());
-        } else {
-            new_task = this->my_successors.try_put_task(this->back(), this->back_metainfo());
-        }
-#else
-        graph_task *new_task = my_successors.try_put_task(this->back());
-#endif
+        graph_task* new_task = my_successors.try_put_task(this->back()
+                                                          __TBB_FLOW_GRAPH_METAINFO_ARG(this->back_metainfo()));
         if (new_task) {
             // workaround for icc bug
             graph& g = this->my_graph;
@@ -1601,9 +1592,8 @@ public:
     }
 
 private:
-    template <typename... Metainfo>
-    graph_task* try_put_task_impl(const T& t, const Metainfo&... metainfo) {
-        buffer_operation op_data(t, put_item, metainfo...);
+    graph_task* try_put_task_impl(const T& t __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo)) {
+        buffer_operation op_data(t, put_item __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo));
         my_aggregator.execute(&op_data);
         graph_task *ft = grab_forwarding_task(op_data);
         // sequencer_nodes can return failure (if an item has been previously inserted)
@@ -1628,7 +1618,7 @@ protected:
     template<typename X, typename Y> friend class round_robin_cache;
     //! receive an item, return a task *if possible
     graph_task *try_put_task(const T &t) override {
-        return try_put_task_impl(t);
+        return try_put_task_impl(t __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo{}));
     }
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
@@ -1669,17 +1659,9 @@ private:
     }
 
     void try_put_and_add_task(graph_task*& last_task) {
-#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-        graph_task* new_task;
+        graph_task* new_task = this->my_successors.try_put_task(this->front()
+                                                                __TBB_FLOW_GRAPH_METAINFO_ARG(this->front_metainfo()));
 
-        if (this->front_metainfo().empty()) {
-            new_task = this->my_successors.try_put_task(this->front());
-        } else {
-            new_task = this->my_successors.try_put_task(this->front(), this->front_metainfo());
-        }
-#else
-        graph_task *new_task = this->my_successors.try_put_task(this->front());
-#endif
         if (new_task) {
             // workaround for icc bug
             graph& graph_ref = this->graph_reference();
@@ -1962,18 +1944,8 @@ private:
     }
 
     void try_put_and_add_task(graph_task*& last_task) {
-#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-        message_metainfo metainfo = this->prio_metainfo();
-        graph_task* new_task = nullptr;
-
-        if (metainfo.empty()) {
-            new_task = this->my_successors.try_put_task(this->prio());
-        } else {
-            new_task = this->my_successors.try_put_task(this->prio(), metainfo);
-        }
-#else
-        graph_task * new_task = this->my_successors.try_put_task(this->prio());
-#endif
+        graph_task* new_task = this->my_successors.try_put_task(this->prio()
+                                                                __TBB_FLOW_GRAPH_METAINFO_ARG(this->prio_metainfo()));
         if (new_task) {
             // workaround for icc bug
             graph& graph_ref = this->graph_reference();
@@ -1995,21 +1967,17 @@ private:
     }
 
     // prio_push: checks that the item will fit, expand array if necessary, put at end
-    void prio_push(const T &src) {
+    void prio_push(const T &src __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo)) {
         if ( this->my_tail >= this->my_array_size )
             this->grow_my_array( this->my_tail + 1 );
-        (void) this->place_item(this->my_tail, src);
+        (void) this->place_item(this->my_tail, src __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo));
         ++(this->my_tail);
         __TBB_ASSERT(mark < this->my_tail, "mark outside bounds after push");
     }
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    void prio_push(const T& src, const message_metainfo& metainfo) {
-        if ( this->my_tail >= this->my_array_size )
-            this->grow_my_array( this->my_tail + 1 );
-        (void) this->place_item(this->my_tail, src, metainfo);
-        ++(this->my_tail);
-        __TBB_ASSERT(mark < this->my_tail, "mark outside bounds after push");
+    void prio_push(const T& src) {
+        return prio_push(src, message_metainfo{});
     }
 #endif
 
@@ -2071,11 +2039,7 @@ private:
                 this->move_item(cur_pos, parent);
                 cur_pos = parent;
             } while( cur_pos );
-#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-            this->place_item(cur_pos, to_place, std::move(metainfo));
-#else
-            (void) this->place_item(cur_pos, to_place);
-#endif
+            this->place_item(cur_pos, to_place __TBB_FLOW_GRAPH_METAINFO_ARG(std::move(metainfo)));
         }
     }
 

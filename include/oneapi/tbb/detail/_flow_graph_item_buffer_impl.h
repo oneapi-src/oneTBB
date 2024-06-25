@@ -118,10 +118,6 @@ protected:
         new(&element(i).metainfo) message_metainfo(std::move(metainfo));
         element(i).state = has_item;
     }
-
-    void set_my_item(size_t i, const item_type& o) {
-        set_my_item(i, o, message_metainfo{});
-    }
 #endif
 
     // destructively-fetch an object from the buffer
