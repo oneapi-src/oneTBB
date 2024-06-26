@@ -557,7 +557,49 @@ void test_seq_node_try_put_and_wait() {
         CHECK(check_index == processed_items.size());
     }
 
-    // TODO: add try_reserve tests after implementing limiter_node
+    // Test reserve
+    {
+        int thresholds[] = { 1, 2 };
+
+        for (int threshold : thresholds) {
+            std::vector<int> processed_items;
+
+            // test_buffer_reserve tests the following graph
+            // buffer -> limiter -> function
+            //  function is a rejecting serial function_node that puts an item to the decrementer port
+            //  of the limiter inside of the body
+
+            std::size_t after_start = test_buffer_reserve<tbb::flow::sequencer_node<int>>(threshold,
+                start_work_items, wait_message, new_work_items, processed_items, simple_sequencer);
+
+            // Expected effect:
+            // 1. start_work_items would be pushed to the buffer
+            // 2. wait_message_would be pushed to the buffer
+            // 3. forward task of the buffer would push the first message to the limiter node.
+            //    Since the limiter threshold is not reached, it would be directly passed to the function
+            // 4. function would spawn the task for the first message processing
+            // 5. the first would be processed
+            // 6. decrementer.try_put() would be called and the limiter node would
+            //    process all of the items from the buffer using the try_reserve/try_consume/try_release semantics
+            // 7. When the wait_message would be taken from the buffer, the try_put_and_wait would exit
+
+            std::size_t check_index = 0;
+
+            CHECK_MESSAGE(after_start == start_work_items.size() + 1,
+                      "start_work_items, occupier and wait_message should be processed by try_put_and_wait");
+            for (auto item : start_work_items) {
+                CHECK_MESSAGE(processed_items[check_index++] == item,
+                            "try_put_and_wait should process start_work_items FIFO");
+            }
+            CHECK_MESSAGE(processed_items[check_index++] == wait_message, "Unexpected items processing by try_put_and_wait");
+
+            for (auto item : new_work_items) {
+                CHECK_MESSAGE(processed_items[check_index++] == item,
+                            "try_put_and_wait should process new_work_items FIFO");
+            }
+            CHECK(check_index == processed_items.size());
+        }
+    }
 }
 #endif // __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
 

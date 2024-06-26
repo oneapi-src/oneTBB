@@ -381,7 +381,9 @@ protected:
     }
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    // TODO: add support for limiter_node
+    // Intentially ignore the metainformation
+    // If there are more items associated with passed metainfo to be processed
+    // They should be stored in the buffer before the limiter_node
     graph_task* try_put_task(const DecrementType& value, const message_metainfo&) override {
         return try_put_task(value);
     }
