@@ -98,9 +98,16 @@ class thread_data : public ::rml::job
                   , public d1::intrusive_list_node
                   , no_copy {
 public:
+    enum class slot_type {
+        worker,
+        master,
+        undefined
+    };
+
     thread_data(unsigned short index, bool is_worker)
         : my_arena_index{ index }
         , my_is_worker{ is_worker }
+        , my_worker_slot_type{ slot_type::undefined }
         , my_task_dispatcher{ nullptr }
         , my_arena{ nullptr }
         , my_last_client{ nullptr }
@@ -131,7 +138,7 @@ public:
 #endif /* __TBB_RESUMABLE_TASKS */
     }
 
-    void attach_arena(arena& a, std::size_t index);
+    void attach_arena(arena& a, std::size_t index, bool is_worker_slot);
     bool is_attached_to(arena*);
     void attach_task_dispatcher(task_dispatcher&);
     void detach_task_dispatcher();
@@ -144,6 +151,9 @@ public:
 
     //! Indicates if the thread is created by RML
     const bool my_is_worker;
+
+    //! Is the slot occupied in arena begongs to workers' quota?
+    slot_type my_worker_slot_type;
 
     //! The current task dipsatcher
     task_dispatcher* my_task_dispatcher;
@@ -202,9 +212,10 @@ public:
     d1::task_group_context my_default_context;
 };
 
-inline void thread_data::attach_arena(arena& a, std::size_t index) {
+inline void thread_data::attach_arena(arena& a, std::size_t index, bool is_worker_slot) {
     my_arena = &a;
     my_arena_index = static_cast<unsigned short>(index);
+    my_worker_slot_type = is_worker_slot? slot_type::worker : slot_type::master;
     my_arena_slot = a.my_slots + index;
     // Read the current slot mail_outbox and attach it to the mail_inbox (remove inbox later maybe)
     my_inbox.attach(my_arena->mailbox(index));

@@ -149,34 +149,27 @@ void arena::on_thread_leaving(unsigned ref_param) {
     }
 }
 
-std::size_t arena::occupy_free_slot_in_range( thread_data& tls, std::size_t lower, std::size_t upper ) {
-    if ( lower >= upper ) return out_of_arena;
+std::size_t arena::occupy_free_slot(thread_data& tls) {
     // Start search for an empty slot from the one we occupied the last time
     std::size_t index = tls.my_arena_index;
-    if ( index < lower || index >= upper ) index = tls.my_random.get() % (upper - lower) + lower;
-    __TBB_ASSERT( index >= lower && index < upper, nullptr);
+    std::size_t locked_slot = out_of_arena;
+    if ( index >= my_num_slots ) index = tls.my_random.get() % my_num_slots;
     // Find a free slot
-    for ( std::size_t i = index; i < upper; ++i )
-        if (my_slots[i].try_occupy()) return i;
-    for ( std::size_t i = lower; i < index; ++i )
-        if (my_slots[i].try_occupy()) return i;
-    return out_of_arena;
-}
+    for ( std::size_t i = index; i < my_num_slots; ++i )
+        if (my_slots[i].try_occupy()) {
+            locked_slot = i;
+            break;
+        }
+    if ( locked_slot == out_of_arena )
+        for ( std::size_t i = 0; i < index; ++i )
+            if (my_slots[i].try_occupy()) {
+                locked_slot = i;
+                break;
+            }
 
-template <bool as_worker>
-std::size_t arena::occupy_free_slot(thread_data& tls) {
-    // Firstly, external threads try to occupy reserved slots
-    std::size_t index = as_worker ? out_of_arena : occupy_free_slot_in_range( tls,  0, my_num_reserved_slots );
-    if ( index == out_of_arena ) {
-        // Secondly, all threads try to occupy all non-reserved slots
-        index = occupy_free_slot_in_range(tls, my_num_reserved_slots, my_num_slots );
-        // Likely this arena is already saturated
-        if ( index == out_of_arena )
-            return out_of_arena;
-    }
-
-    atomic_update( my_limit, (unsigned)(index + 1), std::less<unsigned>() );
-    return index;
+    if ( locked_slot != out_of_arena )
+        atomic_update( my_limit, (unsigned)(locked_slot + 1), std::less<unsigned>() );
+    return locked_slot;
 }
 
 std::uintptr_t arena::calculate_stealing_threshold() {
@@ -189,7 +182,7 @@ void arena::process(thread_data& tls) {
     __TBB_ASSERT( is_alive(my_guard), nullptr);
     __TBB_ASSERT( my_num_slots >= 1, nullptr);
 
-    std::size_t index = occupy_free_slot</*as_worker*/true>(tls);
+    std::size_t index = occupy_free_slot(tls);
     if (index == out_of_arena) {
         on_thread_leaving(ref_worker);
         return;
@@ -197,8 +190,8 @@ void arena::process(thread_data& tls) {
 
     my_tc_client.get_pm_client()->register_thread();
 
-    __TBB_ASSERT( index >= my_num_reserved_slots, "Workers cannot occupy reserved slots" );
-    tls.attach_arena(*this, index);
+    // remeber that we occupied a slot from workers' quota
+    tls.attach_arena(*this, index, /*is_worker_slot*/ true);
     // worker thread enters the dispatch loop to look for a work
     tls.my_inbox.set_is_idle(true);
     if (tls.my_arena_slot->is_task_pool_published()) {
@@ -396,7 +389,14 @@ bool arena::is_top_priority() const {
 
 bool arena::try_join() {
     if (is_joinable()) {
-        my_references += arena::ref_worker;
+        // check quota for number of workers in arena
+        unsigned curr = my_references.fetch_add(arena::ref_worker);
+        curr += arena::ref_worker;
+        unsigned workers = curr >> arena::ref_external_bits;
+        if (workers > my_num_slots - my_num_reserved_slots) {
+            my_references -= arena::ref_worker;
+            return false;
+        }
         return true;
     }
     return false;
@@ -626,16 +626,18 @@ void task_arena_impl::enqueue(d1::task& t, d1::task_group_context* c, d1::task_a
 
 class nested_arena_context : no_copy {
 public:
-    nested_arena_context(thread_data& td, arena& nested_arena, std::size_t slot_index)
+    nested_arena_context(thread_data& td, arena& nested_arena, std::size_t slot_index, bool is_worker_slot)
         : m_orig_execute_data_ext(td.my_task_dispatcher->m_execute_data_ext)
     {
         if (td.my_arena != &nested_arena) {
             m_orig_arena = td.my_arena;
             m_orig_slot_index = td.my_arena_index;
+            __TBB_ASSERT(td.my_worker_slot_type != thread_data::slot_type::undefined, "Invalid slot type");
+            m_orig_is_worker_slot = td.my_worker_slot_type == thread_data::slot_type::worker;
             m_orig_last_observer = td.my_last_observer;
 
             td.detach_task_dispatcher();
-            td.attach_arena(nested_arena, slot_index);
+            td.attach_arena(nested_arena, slot_index, is_worker_slot);
             if (td.my_inbox.is_idle_state(true))
                 td.my_inbox.set_is_idle(false);
             task_dispatcher& task_disp = td.my_arena_slot->default_task_dispatcher();
@@ -643,7 +645,7 @@ public:
 
             // If the calling thread occupies the slots out of external thread reserve we need to notify the
             // market that this arena requires one worker less.
-            if (td.my_arena_index >= td.my_arena->my_num_reserved_slots) {
+            if (td.my_worker_slot_type == thread_data::slot_type::worker) {
                 td.my_arena->request_workers(/* mandatory_delta = */ 0, /* workers_delta = */ -1);
             }
 
@@ -679,7 +681,7 @@ public:
 
             // Notify the market that this thread releasing a one slot
             // that can be used by a worker thread.
-            if (td.my_arena_index >= td.my_arena->my_num_reserved_slots) {
+            if (td.my_worker_slot_type == thread_data::slot_type::worker) {
                 td.my_arena->request_workers(/* mandatory_delta = */ 0, /* workers_delta = */ 1);
             }
 
@@ -687,7 +689,7 @@ public:
             td.my_arena_slot->release();
             td.my_arena->my_exit_monitors.notify_one(); // do not relax!
 
-            td.attach_arena(*m_orig_arena, m_orig_slot_index);
+            td.attach_arena(*m_orig_arena, m_orig_slot_index, m_orig_is_worker_slot);
             td.attach_task_dispatcher(*m_orig_execute_data_ext.task_disp);
             __TBB_ASSERT(td.my_inbox.is_idle_state(false), nullptr);
         }
@@ -700,6 +702,7 @@ private:
     observer_proxy*     m_orig_last_observer{ nullptr };
     task_dispatcher*    m_task_dispatcher{ nullptr };
     unsigned            m_orig_slot_index{};
+    bool                m_orig_is_worker_slot{};
     bool                m_orig_fifo_tasks_allowed{};
     bool                m_orig_critical_task_allowed{};
 };
@@ -757,8 +760,11 @@ void task_arena_impl::execute(d1::task_arena_base& ta, d1::delegate_base& d) {
 
     bool same_arena = td->my_arena == a;
     std::size_t index1 = td->my_arena_index;
+    __TBB_ASSERT(td->my_worker_slot_type != thread_data::slot_type::undefined, "Invalid slot type");
+    bool is_worker_slot = td->my_worker_slot_type == thread_data::slot_type::worker;
     if (!same_arena) {
-        index1 = a->occupy_free_slot</*as_worker */false>(*td);
+        index1 = a->occupy_free_slot(*td);
+        is_worker_slot = false;
         if (index1 == arena::out_of_arena) {
             concurrent_monitor::thread_context waiter((std::uintptr_t)&d);
             d1::wait_context wo(1);
@@ -774,10 +780,10 @@ void task_arena_impl::execute(d1::task_arena_base& ta, d1::delegate_base& d) {
                     a->my_exit_monitors.cancel_wait(waiter);
                     break;
                 }
-                index2 = a->occupy_free_slot</*as_worker*/false>(*td);
+                index2 = a->occupy_free_slot(*td);
                 if (index2 != arena::out_of_arena) {
                     a->my_exit_monitors.cancel_wait(waiter);
-                    nested_arena_context scope(*td, *a, index2 );
+                    nested_arena_context scope(*td, *a, index2, /*is_worker_slot=*/false);
                     r1::wait(wo, exec_context);
                     __TBB_ASSERT(!exec_context.my_exception.load(std::memory_order_relaxed), nullptr); // exception can be thrown above, not deferred
                     break;
@@ -802,7 +808,7 @@ void task_arena_impl::execute(d1::task_arena_base& ta, d1::delegate_base& d) {
 
     context_guard_helper</*report_tasks=*/false> context_guard;
     context_guard.set_ctx(a->my_default_ctx);
-    nested_arena_context scope(*td, *a, index1);
+    nested_arena_context scope(*td, *a, index1, is_worker_slot);
 #if _WIN64
     try {
 #endif

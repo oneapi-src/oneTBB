@@ -366,10 +366,7 @@ public:
 
     static const std::size_t out_of_arena = ~size_t(0);
     //! Tries to occupy a slot in the arena. On success, returns the slot index; if no slot is available, returns out_of_arena.
-    template <bool as_worker>
     std::size_t occupy_free_slot(thread_data&);
-    //! Tries to occupy a slot in the specified range.
-    std::size_t occupy_free_slot_in_range(thread_data& tls, std::size_t lower, std::size_t upper);
 
     std::uintptr_t calculate_stealing_threshold();
 
