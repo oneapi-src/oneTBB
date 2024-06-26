@@ -348,6 +348,30 @@ TEST_CASE("simple prolong lifetime 3") {
     tbb::parallel_for(0, 10, utils::DummyBody());
 }
 
+//! \brief \ref regression \ref interface \ref requirement
+TEST_CASE("Test worker threads remain inactive in enforced serial execution mode") {
+    auto num_threads = utils::get_platform_max_threads();
+    utils::SpinBarrier barrier{num_threads};
+
+    // Warm-up threads
+    tbb::parallel_for(std::size_t(0), num_threads, [&] (std::size_t) {
+        barrier.wait();
+    });
+
+    tbb::global_control control(tbb::global_control::max_allowed_parallelism, 1);
+
+    std::thread thr([&] {
+        tbb::parallel_for(0, 100000, [&] (int) {
+            utils::doDummyWork(100);
+        });
+    });
+
+    // Workers should sleep because of global_control enforced serial execution of tasks
+    TestCPUUserTime(utils::get_platform_max_threads() - 1);
+
+    thr.join();
+}
+
 // The test cannot work correctly with statically linked runtime.
 // TODO: investigate a failure in debug with MSVC
 #if (!_MSC_VER || (defined(_DLL) && !defined(_DEBUG))) && !EMSCRIPTEN
@@ -407,27 +431,3 @@ TEST_CASE("terminate_on_exception: enabled") {
     CHECK(terminate_handler_called);
 }
 #endif
-
-//! \brief \ref regression \ref interface \ref requirement
-TEST_CASE("Test worker threads remain inactive in enforced serial execution mode") {
-    auto num_threads = utils::get_platform_max_threads();
-    utils::SpinBarrier barrier{num_threads};
-
-    // Warm-up threads
-    tbb::parallel_for(std::size_t(0), num_threads, [&] (std::size_t) {
-        barrier.wait();
-    });
-
-    tbb::global_control control(tbb::global_control::max_allowed_parallelism, 1);
-
-    std::thread thr([&] {
-        tbb::parallel_for(0, 100000, [&] (int) {
-            utils::doDummyWork(100);
-        });
-    });
-
-    // Workers should sleep because of global_control enforced serial execution of tasks
-    TestCPUUserTime(utils::get_platform_max_threads() - 1);
-
-    thr.join();
-}
