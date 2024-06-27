@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2023 Intel Corporation
+    Copyright (c) 2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -133,7 +133,9 @@ void test_try_put_and_wait_queueing() {
         tbb::flow::input_port<1>(join).try_put(wait_message);
         tbb::flow::input_port<2>(join).try_put_and_wait(wait_message);
 
-        // TODO: add comments on expectatons
+        // It is expected that the join_node would push the tuple of three copies of first element in start_work_items
+        // And occupy the concurrency of function. Other tuples would be rejected and taken using push-pull protocol
+        // in FIFO order
         std::size_t check_index = 0;
 
         for (auto item : start_work_items) {
@@ -208,7 +210,9 @@ void test_try_put_and_wait_reserving() {
         buffer2.try_put(wait_message);
         buffer3.try_put_and_wait(wait_message);
 
-        // TODO: add comments on expectatons
+        // It is expected that the join_node would push the tuple of three copies of first element in start_work_items
+        // And occupy the concurrency of function. Other tuples would be rejected and taken using push-pull protocol
+        // between function and join_node and between join_node and each buffer in FIFO order because queue_node is used
         std::size_t check_index = 0;
 
         for (auto item : start_work_items) {
