@@ -1467,7 +1467,7 @@ protected:
         bool reserve_result = op->metainfo ? this->reserve_front(*(op->elem), *(op->metainfo))
                                            : this->reserve_front(*(op->elem));
 #else
-        bool reserve_result = this->reserve_front(*(op_elem));
+        bool reserve_result = this->reserve_front(*(op->elem));
 #endif
         if (reserve_result) {
             op->status.store(SUCCEEDED, std::memory_order_release);
