@@ -546,6 +546,68 @@ void test_decrement_while_try_put_task() {
     CHECK_MESSAGE(processed.load() == threshold, "decrementer terminate flow graph work");
 }
 
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+void test_try_put_and_wait() {
+    tbb::task_arena arena(1);
+
+    arena.execute([] {
+        tbb::flow::graph g;
+
+        std::vector<int> start_work_items;
+        std::vector<int> processed_items;
+        std::vector<int> new_work_items;
+        int wait_message = 10;
+
+        for (int i = 0; i < wait_message; ++i) {
+            start_work_items.emplace_back(i);
+            if (i != 0) {
+                new_work_items.emplace_back(i + 10);
+            }
+        }
+
+        std::size_t threshold = start_work_items.size() + 1;
+        CHECK_MESSAGE(new_work_items.size() < threshold, "Incorrect test setup");
+
+        tbb::flow::limiter_node<int> limiter(g, threshold);
+        tbb::flow::function_node<int, tbb::flow::continue_msg> function(g, tbb::flow::serial,
+            [&](int input) {
+                if (input == wait_message) {
+                    for (auto item : new_work_items) {
+                        limiter.try_put(item);
+                    }
+                }
+                processed_items.emplace_back(input);
+            });
+
+        tbb::flow::make_edge(limiter, function);
+        tbb::flow::make_edge(function, limiter.decrementer());
+
+        for (auto item : start_work_items) {
+            limiter.try_put(item);
+        }
+
+        limiter.try_put_and_wait(wait_message);
+
+        // Since function is a serial queueing function_node, all start_work_items would be added to the queue
+        // and processed in FIFO order. wait_message would be added and processed last. Each item in start_work_items
+        // should put an item to a decrementer edge and hence new_work_items should not be missed as well
+
+        std::size_t check_index = 0;
+
+        for (auto item : start_work_items) {
+            CHECK_MESSAGE(processed_items[check_index++] == item, "Unexpected start_work_items processing");
+        }
+        CHECK_MESSAGE(processed_items[check_index++] == wait_message, "Unexpected wait_message processing");
+
+        g.wait_for_all();
+
+        for (auto item : new_work_items) {
+            CHECK_MESSAGE(processed_items[check_index++] == item, "Unexpected new_work_items processing");
+        }
+        CHECK(check_index == processed_items.size());
+    });
+}
+#endif
 
 //! Test puts on limiter_node with decrements and varying parallelism levels
 //! \brief \ref error_guessing
@@ -635,3 +697,10 @@ TEST_CASE("Test correct node deallocation while using small_object_pool") {
     tbb::task_scheduler_handle handle{ tbb::attach{} };
     tbb::finalize( handle, std::nothrow );
 }
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+//! \brief \ref error_guessing
+TEST_CASE("test limiter_node try_put_and_wait") {
+    test_try_put_and_wait();
+}
+#endif

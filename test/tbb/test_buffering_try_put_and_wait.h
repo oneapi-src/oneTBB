@@ -133,6 +133,59 @@ std::size_t test_buffer_pull(const std::vector<int>& start_work_items,
     return after_try_put_and_wait_start_index;
 }
 
+template <typename BufferingNode, typename... Args>
+std::size_t test_buffer_reserve(std::size_t limiter_threshold,
+                                const std::vector<int>& start_work_items,
+                                int wait_message,
+                                const std::vector<int>& new_work_items,
+                                std::vector<int>& processed_items,
+                                Args... args)
+{
+    tbb::task_arena arena(1);
+    std::size_t after_try_put_and_wait_start_index = 0;
+
+    arena.execute([&] {
+        tbb::flow::graph g;
+
+        BufferingNode buffer(g, args...);
+
+        // auto function_threshold = limiter_threshold == 1 ? tbb::flow::unlimited
+        //                                                  : tbb::flow::serial;
+
+        tbb::flow::limiter_node<int, int> limiter(g, limiter_threshold);
+        tbb::flow::function_node<int, int, tbb::flow::rejecting> function(g, tbb::flow::serial,
+            [&](int input) {
+                if (input == wait_message) {
+                    for (auto item : new_work_items) {
+                        buffer.try_put(item);
+                    }
+                }
+                // Explicitly put to the decrementer instead of making edge
+                // to guarantee that the next task would be spawned and not returned
+                // to the current thread as the next task
+                // Otherwise, all elements would be processed during the try_put_and_wait
+                limiter.decrementer().try_put(1);
+                processed_items.emplace_back(input);
+                return 0;
+            });
+
+        tbb::flow::make_edge(buffer, limiter);
+        tbb::flow::make_edge(limiter, function);
+
+        for (auto item : start_work_items) {
+            buffer.try_put(item);
+        }
+
+        buffer.try_put_and_wait(wait_message);
+
+        after_try_put_and_wait_start_index = processed_items.size();
+
+        g.wait_for_all();
+    });
+
+    return after_try_put_and_wait_start_index;
+}
+
 } // test_try_put_and_wait
 
 #endif // __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
