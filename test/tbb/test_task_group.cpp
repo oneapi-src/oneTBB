@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2023 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -397,7 +397,7 @@ class test_exception : public std::exception
 public:
     test_exception ( const char* descr ) : m_strDescription(descr) {}
 
-    const char* what() const throw() override { return m_strDescription; }
+    const char* what() const noexcept override { return m_strDescription; }
 };
 
 using TestException = test_exception;
@@ -1204,4 +1204,3 @@ TEST_CASE("task_handle cannot be scheduled into other task_group of the same con
 }
 
 #endif // TBB_USE_EXCEPTIONS
-
