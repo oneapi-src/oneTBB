@@ -756,6 +756,8 @@
                     if (!find_result) {
                         __TBB_ASSERT(false, "Failed to find item corresponding to current_key.");
                     }
+#else
+                    tbb::detail::suppress_unused_warning(find_result);
 #endif
                     current->status.store( SUCCEEDED, std::memory_order_release);
                     }
