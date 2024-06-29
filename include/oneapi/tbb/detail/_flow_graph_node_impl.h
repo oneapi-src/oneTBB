@@ -722,19 +722,27 @@ protected:
 
     virtual broadcast_cache<output_type > &successors() = 0;
 
-    friend class apply_body_task_bypass< class_type, continue_msg >;
+    friend class apply_body_task_bypass< class_type, continue_msg __TBB_FLOW_GRAPH_METAINFO_ARG(graph_task_with_message_waiters) >;
 
     //! Applies the body to the provided input
-    graph_task* apply_body_bypass( input_type __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo&) ) {
+    graph_task* apply_body_bypass( input_type __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo) ) {
         // There is an extra copied needed to capture the
         // body execution without the try_put
         fgt_begin_body( my_body );
         output_type v = (*my_body)( continue_msg() );
         fgt_end_body( my_body );
-        return successors().try_put_task( v );
+        return successors().try_put_task( v __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo) );
     }
 
     graph_task* execute() override {
+#if !__TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        message_metainfo metainfo{};
+#else
+        return execute(message_metainfo{});
+    }
+
+    graph_task* execute(const message_metainfo& metainfo) override {
+#endif
         if(!is_graph_active(my_graph_ref)) {
             return nullptr;
         }
@@ -746,12 +754,13 @@ protected:
 #if _MSC_VER && !__INTEL_COMPILER
 #pragma warning (pop)
 #endif
-            return apply_body_bypass( continue_msg() __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo{}) );
+            return apply_body_bypass( continue_msg() __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo) );
         }
         else {
             d1::small_object_allocator allocator{};
-            typedef apply_body_task_bypass<class_type, continue_msg> task_type;
-            graph_task* t = allocator.new_object<task_type>( graph_reference(), allocator, *this, continue_msg(), my_priority );
+            typedef apply_body_task_bypass<class_type, continue_msg __TBB_FLOW_GRAPH_METAINFO_ARG(graph_task_with_message_waiters)> task_type;
+            graph_task* t = allocator.new_object<task_type>( graph_reference(), allocator, *this, continue_msg(),
+                                                             my_priority __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo));
             return t;
         }
     }
