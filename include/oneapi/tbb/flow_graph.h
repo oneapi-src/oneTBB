@@ -394,8 +394,10 @@ protected:
     template< typename R, typename B > friend class run_and_put_task;
     template<typename X, typename Y> friend class broadcast_cache;
     template<typename X, typename Y> friend class round_robin_cache;
+
+private:
     // execute body is supposed to be too small to create a task for.
-    graph_task* try_put_task( const input_type & ) override {
+    graph_task* try_put_task_impl( const input_type& __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo) ) {
         {
             spin_mutex::scoped_lock l(my_mutex);
             if ( ++my_current_count < my_predecessor_count )
@@ -403,14 +405,22 @@ protected:
             else
                 my_current_count = 0;
         }
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        graph_task* res = execute(metainfo);
+#else
         graph_task* res = execute();
+#endif
         return res? res : SUCCESSFULLY_ENQUEUED;
     }
 
+protected:
+    graph_task* try_put_task( const input_type& input ) override {
+        return try_put_task_impl(input __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo{}));
+    }
+
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    // TODO: add metainfo support for continue_receiver
-    graph_task* try_put_task( const input_type& input, const message_metainfo& ) override {
-        return try_put_task(input);
+    graph_task* try_put_task( const input_type& input, const message_metainfo& metainfo ) override {
+        return try_put_task_impl(input, metainfo);
     }
 #endif
 
@@ -434,6 +444,9 @@ protected:
     /** This should be very fast or else spawn a task.  This is
         called while the sender is blocked in the try_put(). */
     virtual graph_task* execute() = 0;
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    virtual graph_task* execute(const message_metainfo& metainfo) = 0;
+#endif
     template<typename TT, typename M> friend class successor_cache;
     bool is_continue_receiver() override { return true; }
 

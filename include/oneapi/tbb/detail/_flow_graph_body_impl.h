@@ -402,6 +402,12 @@ class threshold_regulator<T, continue_msg, void> : public continue_receiver, no_
         return my_node->decrement_counter( 1 );
     }
 
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    graph_task* execute(const message_metainfo&) override {
+        return execute();
+    }
+#endif
+
 protected:
 
     graph& graph_reference() const override {
