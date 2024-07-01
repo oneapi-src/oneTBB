@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2022 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -96,6 +96,7 @@ class observer_proxy {
     friend class d1::task_scheduler_observer;
     friend class observer_list;
     friend void observe(d1::task_scheduler_observer&, bool);
+    friend void observe(d1::task_scheduler_observer &t, arena&);
     //! Reference count used for garbage collection.
     /** 1 for reference from my task_scheduler_observer.
         1 for each task dispatcher's last observer pointer.
