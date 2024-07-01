@@ -1161,7 +1161,9 @@
                     else {
                         *(current->my_output) = this->front();
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-                        *(current->metainfo) = this->front_metainfo();
+                        if (current->metainfo) {
+                            *(current->metainfo) = this->front_metainfo();
+                        }
 #endif
                         current->status.store( SUCCEEDED, std::memory_order_release);
                     }
