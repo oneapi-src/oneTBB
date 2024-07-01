@@ -155,20 +155,24 @@ std::size_t arena::occupy_free_slot(thread_data& tls) {
     std::size_t locked_slot = out_of_arena;
     if ( index >= my_num_slots ) index = tls.my_random.get() % my_num_slots;
     // Find a free slot
-    for ( std::size_t i = index; i < my_num_slots; ++i )
+    for (std::size_t i = index; i < my_num_slots; ++i) {
         if (my_slots[i].try_occupy()) {
             locked_slot = i;
             break;
         }
-    if ( locked_slot == out_of_arena )
-        for ( std::size_t i = 0; i < index; ++i )
+    }
+    if (locked_slot == out_of_arena) {
+        for (std::size_t i = 0; i < index; ++i) {
             if (my_slots[i].try_occupy()) {
                 locked_slot = i;
                 break;
             }
+        }
+    }
 
-    if ( locked_slot != out_of_arena )
+    if (locked_slot != out_of_arena) {
         atomic_update( my_limit, (unsigned)(locked_slot + 1), std::less<unsigned>() );
+    }
     return locked_slot;
 }
 
@@ -390,8 +394,7 @@ bool arena::is_top_priority() const {
 bool arena::try_join() {
     if (is_joinable()) {
         // check quota for number of workers in arena
-        unsigned curr = my_references.fetch_add(arena::ref_worker);
-        curr += arena::ref_worker;
+        unsigned curr = my_references.fetch_add(arena::ref_worker) + arena::ref_worker;
         unsigned workers = curr >> arena::ref_external_bits;
         if (workers > my_num_slots - my_num_reserved_slots) {
             my_references -= arena::ref_worker;
@@ -632,8 +635,7 @@ public:
         if (td.my_arena != &nested_arena) {
             m_orig_arena = td.my_arena;
             m_orig_slot_index = td.my_arena_index;
-            __TBB_ASSERT(td.my_worker_slot_type != thread_data::slot_type::undefined, "Invalid slot type");
-            m_orig_is_worker_slot = td.my_worker_slot_type == thread_data::slot_type::worker;
+            m_orig_is_worker_slot = td.my_is_workers_slot_occupied;
             m_orig_last_observer = td.my_last_observer;
 
             td.detach_task_dispatcher();
@@ -645,7 +647,7 @@ public:
 
             // If the calling thread occupies the slots out of external thread reserve we need to notify the
             // market that this arena requires one worker less.
-            if (td.my_worker_slot_type == thread_data::slot_type::worker) {
+            if (td.my_is_workers_slot_occupied) {
                 td.my_arena->request_workers(/* mandatory_delta = */ 0, /* workers_delta = */ -1);
             }
 
@@ -681,7 +683,7 @@ public:
 
             // Notify the market that this thread releasing a one slot
             // that can be used by a worker thread.
-            if (td.my_worker_slot_type == thread_data::slot_type::worker) {
+            if (td.my_is_workers_slot_occupied) {
                 td.my_arena->request_workers(/* mandatory_delta = */ 0, /* workers_delta = */ 1);
             }
 
@@ -760,8 +762,7 @@ void task_arena_impl::execute(d1::task_arena_base& ta, d1::delegate_base& d) {
 
     bool same_arena = td->my_arena == a;
     std::size_t index1 = td->my_arena_index;
-    __TBB_ASSERT(td->my_worker_slot_type != thread_data::slot_type::undefined, "Invalid slot type");
-    bool is_worker_slot = td->my_worker_slot_type == thread_data::slot_type::worker;
+    bool is_worker_slot = td->my_is_workers_slot_occupied;
     if (!same_arena) {
         index1 = a->occupy_free_slot(*td);
         is_worker_slot = false;
