@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020-2023 Intel Corporation
+    Copyright (c) 2020-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -101,6 +101,7 @@ public:
     thread_data(unsigned short index, bool is_worker)
         : my_arena_index{ index }
         , my_is_worker{ is_worker }
+        , my_is_workers_slot_occupied{ false }
         , my_task_dispatcher{ nullptr }
         , my_arena{ nullptr }
         , my_last_client{ nullptr }
@@ -131,7 +132,7 @@ public:
 #endif /* __TBB_RESUMABLE_TASKS */
     }
 
-    void attach_arena(arena& a, std::size_t index);
+    void attach_arena(arena& a, std::size_t index, bool is_worker_slot);
     bool is_attached_to(arena*);
     void attach_task_dispatcher(task_dispatcher&);
     void detach_task_dispatcher();
@@ -144,6 +145,9 @@ public:
 
     //! Indicates if the thread is created by RML
     const bool my_is_worker;
+
+    //! Is the slot occupied in arena belongs to workers' quota?
+    bool my_is_workers_slot_occupied;
 
     //! The current task dipsatcher
     task_dispatcher* my_task_dispatcher;
@@ -202,9 +206,10 @@ public:
     d1::task_group_context my_default_context;
 };
 
-inline void thread_data::attach_arena(arena& a, std::size_t index) {
+inline void thread_data::attach_arena(arena& a, std::size_t index, bool is_worker_slot) {
     my_arena = &a;
     my_arena_index = static_cast<unsigned short>(index);
+    my_is_workers_slot_occupied = is_worker_slot;
     my_arena_slot = a.my_slots + index;
     // Read the current slot mail_outbox and attach it to the mail_inbox (remove inbox later maybe)
     my_inbox.attach(my_arena->mailbox(index));

@@ -216,7 +216,7 @@ void governor::init_external_thread() {
     arena& a = arena::create(thr_control, num_slots, num_reserved_slots, arena_priority_level);
     // External thread always occupies the first slot
     thread_data& td = *new(cache_aligned_allocate(sizeof(thread_data))) thread_data(0, false);
-    td.attach_arena(a, /*slot index*/ 0);
+    td.attach_arena(a, /*slot index*/ 0, /*is_worker_slot*/ false);
     __TBB_ASSERT(td.my_inbox.is_idle_state(false), nullptr);
 
     stack_size = a.my_threading_control->worker_stack_size();
