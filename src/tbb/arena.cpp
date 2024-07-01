@@ -190,7 +190,7 @@ void arena::process(thread_data& tls) {
 
     my_tc_client.get_pm_client()->register_thread();
 
-    // remeber that we occupied a slot from workers' quota
+    // remember that we occupied a slot from workers' quota
     tls.attach_arena(*this, index, /*is_worker_slot*/ true);
     // worker thread enters the dispatch loop to look for a work
     tls.my_inbox.set_is_idle(true);

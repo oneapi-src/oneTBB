@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2023 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -439,12 +439,11 @@ void TestArenaEntryConsistency() {
 class TestArenaConcurrencyBody : utils::NoAssign {
     tbb::task_arena &my_a;
     int my_max_concurrency;
-    int my_reserved_slots;
     utils::SpinBarrier *my_barrier;
     utils::SpinBarrier *my_worker_barrier;
 public:
-    TestArenaConcurrencyBody( tbb::task_arena &a, int max_concurrency, int reserved_slots, utils::SpinBarrier *b = nullptr, utils::SpinBarrier *wb = nullptr )
-    : my_a(a), my_max_concurrency(max_concurrency), my_reserved_slots(reserved_slots), my_barrier(b), my_worker_barrier(wb) {}
+    TestArenaConcurrencyBody( tbb::task_arena &a, int max_concurrency, utils::SpinBarrier *b = nullptr, utils::SpinBarrier *wb = nullptr )
+    : my_a(a), my_max_concurrency(max_concurrency), my_barrier(b), my_worker_barrier(wb) {}
     // NativeParallelFor's functor
     void operator()( int ) const {
         CHECK_MESSAGE( local_id.local() == 0, "TLS was not cleaned?" );
@@ -478,7 +477,7 @@ void TestArenaConcurrency( int p, int reserved = 0, int step = 1) {
             ResetTLS();
             utils::SpinBarrier b( p );
             utils::SpinBarrier wb( p-reserved );
-            TestArenaConcurrencyBody test( a, p, reserved, &b, &wb );
+            TestArenaConcurrencyBody test( a, p, &b, &wb );
             for ( int i = reserved; i < p; ++i ) // requests p-reserved worker threads
                 a.enqueue( test );
             if ( reserved==1 )
@@ -489,7 +488,7 @@ void TestArenaConcurrency( int p, int reserved = 0, int step = 1) {
         } { // Check if multiple external threads alone can achieve maximum concurrency.
             ResetTLS();
             utils::SpinBarrier b( p );
-            utils::NativeParallelFor( p, TestArenaConcurrencyBody( a, p, reserved, &b ) );
+            utils::NativeParallelFor( p, TestArenaConcurrencyBody( a, p, &b ) );
             a.debug_wait_until_empty();
         } { // Check oversubscription by external threads.
 #if !_WIN32 || !_WIN64
@@ -502,7 +501,7 @@ void TestArenaConcurrency( int p, int reserved = 0, int step = 1) {
 #endif
             {
                 ResetTLS();
-                utils::NativeParallelFor(2 * p, TestArenaConcurrencyBody(a, p, reserved));
+                utils::NativeParallelFor(2 * p, TestArenaConcurrencyBody(a, p));
                 a.debug_wait_until_empty();
             }
         }
