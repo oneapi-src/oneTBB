@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020-2021 Intel Corporation
+    Copyright (c) 2020-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ void* __TBB_EXPORTED_FUNC allocate(d1::small_object_pool*& allocator, std::size_
     // TODO: optimize if the allocator contains a valid pool.
     auto tls = governor::get_thread_data();
     auto pool = tls->my_small_object_pool;
+    __TBB_ASSERT(allocator == nullptr || pool == allocator, "An attempt was made to allocate using another thread's small memory pool");
     return pool->allocate_impl(allocator, number_of_bytes);
 }
 

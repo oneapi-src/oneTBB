@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2023 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -219,6 +219,10 @@ void notify_waiters(std::uintptr_t wait_ctx_addr) {
     };
 
     governor::get_thread_data()->my_arena->get_waiting_threads_monitor().notify(is_related_wait_ctx);
+}
+
+d1::task* current_task() {
+    return governor::get_thread_data()->get_current_task();
 }
 
 } // namespace r1
