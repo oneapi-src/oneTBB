@@ -251,7 +251,7 @@ template <typename... Body>
 void test_try_put_and_wait_key_matching(Body... body) {
     // Body of one argument for testing standard key_matching
     // Body of zero arguments for testing message based key_matching
-    static_assert(sizeof...(Body) == 0 || sizeof...(Body) == 1);
+    static_assert(sizeof...(Body) == 0 || sizeof...(Body) == 1, "incorrect test setup");
     tbb::task_arena arena(1);
 
     arena.execute([=] {
