@@ -371,7 +371,7 @@ public:
     bool find_with_key(const typename base_type::Knoref& k,
                        typename base_type::value_type& v)
     {
-        return this->find_with_key(k, v);
+        return base_type::find_with_key(k, v);
     }
 
     bool find_with_key(const typename base_type::Knoref& k,
