@@ -10,7 +10,7 @@ parallel_sort ranges interface extension
 Description
 ***********
 
-|full_name| implementation extends the `oneapi::tbb::parallel_sort specification <https://oneapi-spec.uxlfoundation.org/specifications/oneapi/latest/elements/onetbb/source/algorithms/functions/parallel_for_func>`_
+|full_name| implementation extends the `oneapi::tbb::parallel_sort specification <https://oneapi-spec.uxlfoundation.org/specifications/oneapi/latest/elements/onetbb/source/algorithms/functions/parallel_sort_func>`_
 with overloads that takes the container by forwarding reference.
 
 
