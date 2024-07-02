@@ -933,12 +933,15 @@ class multifunction_node :
 
 protected:
     static const int N = std::tuple_size<Output>::value;
+    typedef typename wrap_tuple_elements<std::tuple_size<Output>::value,
+                                         multifunction_output,
+                                         Output>::type output_ports_base_type;
 public:
     typedef Input input_type;
     typedef null_type output_type;
-    typedef typename wrap_tuple_elements<N,multifunction_output, Output>::type output_ports_type;
     typedef multifunction_input<
-        input_type, output_ports_type, Policy, internals_allocator> input_impl_type;
+        input_type, output_ports_base_type, Policy, internals_allocator> input_impl_type;
+    typedef typename input_impl_type::output_ports_type output_ports_type;
     typedef function_input_queue<input_type, internals_allocator> input_queue_type;
 private:
     using input_impl_type::my_predecessors;
@@ -3054,8 +3057,17 @@ public:
     async_body(const Body &body, gateway_type *gateway)
         : base_type(gateway), my_body(body) { }
 
-    void operator()( const Input &v, Ports & ) noexcept(noexcept(tbb::detail::invoke(my_body, v, std::declval<gateway_type&>()))) {
+    void operator()( const Input &v, Ports &ports)
+        noexcept(noexcept(tbb::detail::invoke(my_body, v, std::declval<gateway_type&>())))
+    {
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        // Recreate gateway with metainfo
+        gateway_type gateway(*this->my_gateway, std::get<0>(ports).get_metainfo());
+        tbb::detail::invoke(my_body, v, gateway);
+#else
+        tbb::detail::suppress_unused_warning(ports);
         tbb::detail::invoke(my_body, v, *this->my_gateway);
+#endif
     }
 
     Body get_body() { return my_body; }
@@ -3072,20 +3084,35 @@ class async_node
     typedef multifunction_input<
         Input, typename base_type::output_ports_type, Policy, cache_aligned_allocator<Input>> mfn_input_type;
 
+    class receiver_gateway_impl;
+
 public:
     typedef Input input_type;
     typedef Output output_type;
     typedef receiver<input_type> receiver_type;
     typedef receiver<output_type> successor_type;
     typedef sender<input_type> predecessor_type;
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    typedef receiver_gateway_impl gateway_type;
+#else
     typedef receiver_gateway<output_type> gateway_type;
+#endif
     typedef async_body_base<gateway_type> async_body_base_type;
     typedef typename base_type::output_ports_type output_ports_type;
 
 private:
     class receiver_gateway_impl: public receiver_gateway<Output> {
     public:
+        using output_type = Output;
+
         receiver_gateway_impl(async_node* node): my_node(node) {}
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        receiver_gateway_impl(const receiver_gateway_impl& other, const message_metainfo& metainfo)
+            : my_node(other.my_node), my_metainfo(metainfo)
+        {
+            __TBB_ASSERT(other.my_metainfo.empty(), nullptr);
+        }
+#endif
         void reserve_wait() override {
             fgt_async_reserve(static_cast<typename async_node::receiver_type *>(my_node), &my_node->my_graph);
             my_node->my_graph.reserve_wait();
@@ -3100,24 +3127,31 @@ private:
 
         //! Implements gateway_type::try_put for an external activity to submit a message to FG
         bool try_put(const Output &i) override {
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+            return my_node->try_put_impl(i, my_metainfo);
+#else
             return my_node->try_put_impl(i);
+#endif
         }
 
     private:
         async_node* my_node;
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        message_metainfo my_metainfo;
+#endif
     } my_gateway;
 
     //The substitute of 'this' for member construction, to prevent compiler warnings
     async_node* self() { return this; }
 
     //! Implements gateway_type::try_put for an external activity to submit a message to FG
-    bool try_put_impl(const Output &i) {
-        multifunction_output<Output> &port_0 = output_port<0>(*this);
+    bool try_put_impl(const Output &i __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo)) {
+        auto &port_0 = output_port<0>(*this);
         broadcast_cache<output_type>& port_successors = port_0.successors();
         fgt_async_try_put_begin(this, &port_0);
         // TODO revamp: change to std::list<graph_task*>
         graph_task_list tasks;
-        bool is_at_least_one_put_successful = port_successors.gather_successful_try_puts(i, tasks);
+        bool is_at_least_one_put_successful = port_successors.gather_successful_try_puts(i, tasks, metainfo);
         __TBB_ASSERT( is_at_least_one_put_successful || tasks.empty(),
                       "Return status is inconsistent with the method operation." );
 
