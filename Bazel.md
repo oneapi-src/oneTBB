@@ -82,7 +82,7 @@ Switch to the folder with the files created earlier and run the binary with `baz
 
 ### Bzlmod
 
-If you are using Bzlmod you can fetch oneTBB using [the Bazel Central Registry](https://registry.bazel.build/).
+If you use Bzlmod, you can fetch oneTBB with the [Bazel Central Registry](https://registry.bazel.build/).
 
 Add to your `MODULE.bazel` file:
 
