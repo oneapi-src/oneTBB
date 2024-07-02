@@ -21,7 +21,7 @@
 #error Do not #include this internal file directly; use public TBB headers instead.
 #endif
 
-// Included in namespace tbb::detail::d1 (in flow_graph.h)
+// Included in namespace tbb::detail::d2 (in flow_graph.h)
 
 #if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
 // Visual Studio 2019 reports an error while calling predecessor_selector::get and successor_selector::get
