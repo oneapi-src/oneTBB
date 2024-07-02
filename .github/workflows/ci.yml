@@ -19,7 +19,7 @@ on:
     branches: [master]
 
   pull_request:
-    branches: [master]
+    branches: [master, dev/pavelkumbrasev/task_group_refactoring]
     types:
       - opened
       - synchronize
