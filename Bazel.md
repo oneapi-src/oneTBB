@@ -84,7 +84,7 @@ Switch to the folder with the files created earlier and run the binary with `baz
 
 If you use Bzlmod, you can fetch oneTBB with the [Bazel Central Registry](https://registry.bazel.build/).
 
-Add to your `MODULE.bazel` file:
+Add the following line to your `MODULE.bazel` file:
 
 ```bazel
 bazel_dep(name = "onetbb", version = "2021.13.0")
