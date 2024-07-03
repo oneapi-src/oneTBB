@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2022 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -346,7 +346,7 @@ private:
 
     graph_task_priority_queue_t my_priority_queue;
 
-    d1::wait_context_vertex& get_wait_context_node() { return my_wait_context_vertex; }
+    d1::wait_context_vertex& get_wait_context_vertex() { return my_wait_context_vertex; }
 
     friend void activate_graph(graph& g);
     friend void deactivate_graph(graph& g);
@@ -382,7 +382,7 @@ inline graph_task::graph_task(graph& g, d1::small_object_allocator& allocator,
     : my_graph(g)
     , priority(node_priority)
     , my_allocator(allocator)
-    , my_reference_vertex(r1::get_thread_reference_vertex(&my_graph.get_wait_context_node()))
+    , my_reference_vertex(r1::get_thread_reference_vertex(&my_graph.get_wait_context_vertex()))
 {
     my_reference_vertex->reserve();
 }
@@ -485,7 +485,6 @@ template <typename Body>
 void execute_in_graph_arena(graph &g, const Body& body ) {
     if (is_graph_active(g)) {
         __TBB_ASSERT( g.my_task_arena && g.my_task_arena->is_active(), "Is graph's arena initialized and active?" );
-
         g.my_task_arena->execute(body);
     }
 }

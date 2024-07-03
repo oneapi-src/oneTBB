@@ -43,7 +43,6 @@
 #include <cstdint>
 #include <exception>
 #include <memory> // unique_ptr
-#include <unordered_map>
 
 //! Mutex type for global locks in the scheduler
 using scheduler_mutex_type = __TBB_SCHEDULER_MUTEX_TYPE;
@@ -511,14 +510,6 @@ public:
             m_suspend_point->~suspend_point_type();
             cache_aligned_deallocate(m_suspend_point);
         }
-
-        for (auto& elem : m_reference_vertex_map) {
-            d1::reference_vertex*& node = elem.second;
-            node->~reference_vertex();
-            cache_aligned_deallocate(node);
-            poison_pointer(node);
-        }
-
         poison_pointer(m_thread_data);
         poison_pointer(m_suspend_point);
     }

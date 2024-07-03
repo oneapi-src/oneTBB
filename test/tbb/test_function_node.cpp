@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -437,8 +437,8 @@ void test_function_node_with_continue_msg_as_input() {
 //! Tests limited concurrency cases for nodes that accept data messages
 void test_concurrency(int num_threads) {
     tbb::global_control thread_limit(tbb::global_control::max_allowed_parallelism, num_threads);
-    // run_concurrency_levels<int,int>(num_threads);
-    // run_concurrency_levels<int,tbb::flow::continue_msg>(num_threads);
+    run_concurrency_levels<int,int>(num_threads);
+    run_concurrency_levels<int,tbb::flow::continue_msg>(num_threads);
     run_buffered_levels<int, int>(num_threads);
     run_unlimited_concurrency<int,int>();
     run_unlimited_concurrency<int,empty_no_assign>();
