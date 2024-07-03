@@ -13,4 +13,8 @@
 /oneTBB/python/ @sarathnandu
 /oneTBB/python/ @isaevil
 
-
+# Bazel build related files.
+/oneTBB/.bazelversion @Vertexwahn
+/oneTBB/Bazel.md @Vertexwahn
+/oneTBB/BUILD.bazel @Vertexwahn
+/oneTBB/MODULE.bazel @Vertexwahn
