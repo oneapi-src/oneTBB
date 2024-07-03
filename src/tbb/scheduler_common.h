@@ -474,6 +474,9 @@ public:
     //! Suspend point (null if this task dispatcher has been never suspended)
     suspend_point_type* m_suspend_point{ nullptr };
 
+    //! Innermost task whose task::execute() is running. A nullptr on the outermost level.
+    d1::task* m_innermost_running_task{ nullptr };
+
     //! Attempt to get a task from the mailbox.
     /** Gets a task only if it has not been executed by its sender or a thief
         that has stolen it from the sender's task pool. Otherwise returns nullptr.

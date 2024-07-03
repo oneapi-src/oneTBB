@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2023 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -431,23 +431,53 @@ class structured_task_group;
 class isolated_task_group;
 #endif
 
-template<typename F>
-class function_task : public task {
-    const F m_func;
+class base_task_group_task : public task {
+public:
+    base_task_group_task(wait_context& wo, small_object_allocator& alloc, distributed_reference_counter* p = nullptr)
+        : m_wait_ctx(wo), m_allocator(alloc), m_parent(p)
+    {}
+
+    distributed_reference_counter* get_ref_counter() {
+        if (m_ref_counter == nullptr) {
+            small_object_allocator alloc{};
+            // Original task holds implicit reference to ensure the reference_counter would not be destroyed
+            // after completing one or several nested stolen tasks.
+            m_ref_counter = alloc.new_object<distributed_reference_counter>(1, m_parent, m_wait_ctx, alloc);
+            m_parent = m_ref_counter;
+        }
+        return m_ref_counter;
+    }
+
+    bool is_same_task_group(wait_context* wo) {
+        return &m_wait_ctx == wo;
+    }
+protected:
     wait_context& m_wait_ctx;
     small_object_allocator m_allocator;
+    distributed_reference_counter* m_parent{nullptr};
+    distributed_reference_counter* m_ref_counter{nullptr};
+};
+
+template<typename F>
+class function_task : public base_task_group_task {
+    const F m_func;
 
     void finalize(const execution_data& ed) {
-        // Make a local reference not to access this after destruction.
-        wait_context& wo = m_wait_ctx;
-        // Copy allocator to the stack
         auto allocator = m_allocator;
-        // Destroy user functor before release wait.
+        wait_context& wo = m_wait_ctx;
+        auto parent = m_parent;
+
         this->~function_task();
-        wo.release();
+
+        if (parent) {
+            parent->release();
+        } else {
+            wo.release();
+        }
 
         allocator.deallocate(this, ed);
     }
+
     task* execute(execution_data& ed) override {
         task* res = d2::task_ptr_or_nullptr(m_func);
         finalize(ed);
@@ -458,15 +488,13 @@ class function_task : public task {
         return nullptr;
     }
 public:
-    function_task(const F& f, wait_context& wo, small_object_allocator& alloc)
-        : m_func(f)
-        , m_wait_ctx(wo)
-        , m_allocator(alloc) {}
+    function_task(const F& f, wait_context& wo, small_object_allocator& alloc, distributed_reference_counter* p = nullptr)
+        : base_task_group_task(wo, alloc, p), m_func(f)
+    {}
 
-    function_task(F&& f, wait_context& wo, small_object_allocator& alloc)
-        : m_func(std::move(f))
-        , m_wait_ctx(wo)
-        , m_allocator(alloc) {}
+    function_task(F&& f, wait_context& wo, small_object_allocator& alloc, distributed_reference_counter* p = nullptr)
+        : base_task_group_task(wo, alloc, p), m_func(std::move(f))
+    {}
 };
 
 template <typename F>
@@ -529,9 +557,18 @@ protected:
 
     template<typename F>
     task* prepare_task(F&& f) {
-        m_wait_ctx.reserve();
+        base_task_group_task* parent_task = dynamic_cast<base_task_group_task*>(current_task());
+        distributed_reference_counter* ref_counter = nullptr;
+
+        if (parent_task && parent_task->is_same_task_group(&m_wait_ctx)) {
+            ref_counter = parent_task->get_ref_counter();
+            ref_counter->reserve();
+        } else {
+            m_wait_ctx.reserve();
+        }
+
         small_object_allocator alloc{};
-        return alloc.new_object<function_task<typename std::decay<F>::type>>(std::forward<F>(f), m_wait_ctx, alloc);
+        return alloc.new_object<function_task<typename std::decay<F>::type>>(std::forward<F>(f), m_wait_ctx, alloc, ref_counter);
     }
 
     task_group_context& context() noexcept {
