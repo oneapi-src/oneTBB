@@ -2899,7 +2899,9 @@ private:
 
         //! Implements gateway_type::try_put for an external activity to submit a message to FG
         bool try_put(const Output &i) override {
-            return my_node->try_put_impl(i);
+            bool result = false;
+            execute_in_graph_arena(my_node->my_graph, [&] { result = my_node->try_put_impl(i); });
+            return result;
         }
 
     private:
