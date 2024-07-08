@@ -299,7 +299,7 @@ public:
     template <typename Metainfo>
     apply_body_task_bypass( graph& g, d1::small_object_allocator& allocator, NodeType &n, const Input &i,
                             node_priority_t node_priority, Metainfo&& metainfo )
-        : BaseTaskType(g, allocator, std::forward<Metainfo>(metainfo).waiters(), node_priority)
+        : BaseTaskType(g, allocator, node_priority, std::forward<Metainfo>(metainfo).waiters())
         , my_node(n), my_input(i) {}
 #endif
 

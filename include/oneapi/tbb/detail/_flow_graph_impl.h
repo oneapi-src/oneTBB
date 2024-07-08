@@ -150,8 +150,8 @@ private:
 class graph_task_with_message_waiters : public graph_task {
 public:
     graph_task_with_message_waiters(graph& g, d1::small_object_allocator& allocator,
-                                    const std::forward_list<d1::wait_context_vertex*>& msg_waiters,
-                                    node_priority_t node_priority = no_priority)
+                                    node_priority_t node_priority,
+                                    const std::forward_list<d1::wait_context_vertex*>& msg_waiters)
         : graph_task(g, allocator, node_priority)
         , my_msg_wait_context_vertices(msg_waiters)
     {
@@ -164,6 +164,10 @@ public:
             ref_vertex->reserve(1);
         }
     }
+
+    graph_task_with_message_waiters(graph& g, d1::small_object_allocator& allocator,
+                                    const std::forward_list<d1::wait_context_vertex*>& msg_waiters)
+        : graph_task_with_message_waiters(g, allocator, no_priority, msg_waiters) {}
 
     const std::forward_list<d1::wait_context_vertex*> get_msg_wait_context_vertices() const {
         return my_msg_wait_context_vertices;
