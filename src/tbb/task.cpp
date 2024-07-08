@@ -252,7 +252,19 @@ d1::wait_tree_vertex_interface* get_thread_reference_vertex(d1::wait_tree_vertex
     return ref_counter;
 }
 
+struct task_arena_base_accessor {
+    static r1::arena* get_arena(d1::task_arena_base& arena) {
+        return arena.my_arena.load(std::memory_order_relaxed);
+    }
+};
+
+d1::wait_tree_vertex_interface* get_arena_thread_reference_vertex(d1::task_arena_base& arena, d1::wait_tree_vertex_interface* top_wait_context) {
+    if (task_arena_base_accessor::get_arena(arena) != governor::get_thread_data()->my_arena) {
+        return nullptr;
+    }
+    return get_thread_reference_vertex(top_wait_context);
+}
+
 } // namespace r1
 } // namespace detail
 } // namespace tbb
-

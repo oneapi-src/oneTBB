@@ -34,6 +34,7 @@ class base_filter;
 
 namespace d2 {
 template <typename Output>
+__TBB_requires(std::copyable<Output>)
 class input_node;
 }
 

@@ -382,8 +382,9 @@ inline graph_task::graph_task(graph& g, d1::small_object_allocator& allocator,
     : my_graph(g)
     , priority(node_priority)
     , my_allocator(allocator)
-    , my_reference_vertex(r1::get_thread_reference_vertex(&my_graph.get_wait_context_vertex()))
 {
+    d1::wait_tree_vertex_interface* ref_node = r1::get_arena_thread_reference_vertex(*(my_graph.my_task_arena), &my_graph.get_wait_context_vertex());
+    my_reference_vertex = ref_node != nullptr ? ref_node : &my_graph.get_wait_context_vertex();
     my_reference_vertex->reserve();
 }
 

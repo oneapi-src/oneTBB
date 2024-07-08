@@ -82,6 +82,7 @@ class task_scheduler_observer;
 namespace r1 {
 class arena;
 struct task_arena_impl;
+struct task_arena_base_accessor;
 
 TBB_EXPORT void __TBB_EXPORTED_FUNC observe(d1::task_scheduler_observer&, bool);
 TBB_EXPORT void __TBB_EXPORTED_FUNC initialize(d1::task_arena_base&);
@@ -116,6 +117,7 @@ static constexpr int priority_stride = INT_MAX / (num_priority_levels + 1);
 class task_arena_base {
     friend struct r1::task_arena_impl;
     friend void r1::observe(d1::task_scheduler_observer&, bool);
+    friend struct r1::task_arena_base_accessor;
 public:
     enum class priority : int {
         low    = 1 * priority_stride,

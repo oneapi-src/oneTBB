@@ -559,7 +559,7 @@ void task_arena_impl::initialize(d1::task_arena_base& ta) {
         ta.my_numa_id, ta.core_type(), ta.max_threads_per_core());
     if (observer) {
         // TODO: Consider lazy initialization for internal arena so
-        // the direct calls to observer might be omitted until actual initialization. 
+        // the direct calls to observer might be omitted until actual initialization.
         observer->on_scheduler_entry(true);
     }
 #endif /*__TBB_CPUBIND_PRESENT*/
