@@ -157,7 +157,6 @@ class wait_tree_vertex_interface {
 public:
     virtual void reserve(std::uint32_t delta = 1) = 0;
     virtual void release(std::uint32_t delta = 1) = 0;
-    virtual void release(std::uint32_t delta, const d1::execution_data&) = 0;
 
 protected:
     virtual ~wait_tree_vertex_interface() = default;
@@ -186,11 +185,6 @@ private:
         return m_wait.continue_execution();
     }
 
-    void release(std::uint32_t, const d1::execution_data&) override {
-        __TBB_ASSERT(false,
-            "This method is overloaded only to fulfill the base class interface requirements, and thus, it should not be called.");
-    }
-
     wait_context m_wait;
 };
 
@@ -212,16 +206,6 @@ public:
             execute_continuation();
             destroy();
             parent->release();
-        }
-    }
-
-    void release(std::uint32_t delta, const d1::execution_data& ed) override {
-        std::uint64_t ref = m_ref_count.fetch_sub(static_cast<std::uint64_t>(delta)) - static_cast<std::uint64_t>(delta);
-        if (ref == 0) {
-            auto parent = my_parent;
-            execute_continuation();
-            destroy(ed);
-            parent->release(1, ed);
         }
     }
 
