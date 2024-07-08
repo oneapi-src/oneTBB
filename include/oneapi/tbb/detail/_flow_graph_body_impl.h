@@ -270,17 +270,6 @@ public:
     }
 };
 
-#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-template <typename... Metainfo>
-struct graph_task_base : std::conditional<sizeof...(Metainfo) != 0,
-                                          graph_task_with_message_waiters,
-                                          graph_task>
-{};
-
-template <typename... Metainfo>
-using graph_task_base_t = typename graph_task_base<Metainfo...>::type;
-#endif
-
 //! A task that calls a node's apply_body_bypass function, passing in an input of type Input
 //  return the task* unless it is SUCCESSFULLY_ENQUEUED, in which case return nullptr
 template< typename NodeType, typename Input, typename BaseTaskType = graph_task>
@@ -307,9 +296,7 @@ class apply_body_task_bypass
 
 public:
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    template <typename Metainfo,
-              typename BaseT = BaseTaskType,
-              typename = typename std::enable_if<std::is_same<BaseT, graph_task_with_message_waiters>::value>::type>
+    template <typename Metainfo>
     apply_body_task_bypass( graph& g, d1::small_object_allocator& allocator, NodeType &n, const Input &i,
                             node_priority_t node_priority, Metainfo&& metainfo )
         : BaseTaskType(g, allocator, std::forward<Metainfo>(metainfo).waiters(), node_priority)

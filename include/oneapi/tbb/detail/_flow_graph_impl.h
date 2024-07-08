@@ -180,6 +180,11 @@ protected:
         }
     }
 private:
+    // Each task that holds information about single message wait_contexts should hold two lists
+    // The first one is wait_contexts associated with the message itself. They are needed
+    // to be able to broadcast the list of wait_contexts to the node successors while executing the task.
+    // The second list is a list of reference vertices for each wait_context_vertex in the first list
+    // to support the distributed reference counting schema
     std::forward_list<d1::wait_context_vertex*> my_msg_wait_context_vertices;
     std::forward_list<d1::wait_tree_vertex_interface*> my_msg_reference_vertices;
 }; // class graph_task_with_message_waiters
