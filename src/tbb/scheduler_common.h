@@ -23,6 +23,7 @@
 #include "oneapi/tbb/detail/_machine.h"
 #include "oneapi/tbb/task_group.h"
 #include "oneapi/tbb/cache_aligned_allocator.h"
+#include "oneapi/tbb/tbb_allocator.h"
 #include "itt_notify.h"
 #include "co_context.h"
 #include "misc.h"
@@ -476,7 +477,11 @@ public:
     suspend_point_type* m_suspend_point{ nullptr };
 
     //! Used to improve scalability of d1::wait_context by using per thread reference_counter
-    std::unordered_map<d1::wait_tree_vertex_interface*, d1::reference_vertex*> m_reference_vertex_map;
+    std::unordered_map<d1::wait_tree_vertex_interface*, d1::reference_vertex*,
+                       std::hash<d1::wait_tree_vertex_interface*>, std::equal_to<d1::wait_tree_vertex_interface*>,
+                       tbb_allocator<std::pair<d1::wait_tree_vertex_interface* const, d1::reference_vertex*>>
+                      >
+        m_reference_vertex_map;
 
     //! Attempt to get a task from the mailbox.
     /** Gets a task only if it has not been executed by its sender or a thief
