@@ -31,7 +31,7 @@ public:
     }
 
     const T& front() const {
-        return this->item_buffer<T, A>::front();
+        return this->template item_buffer<T, A>::front();
     }
 
     void pop() {
