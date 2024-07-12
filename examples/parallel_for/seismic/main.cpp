@@ -35,14 +35,17 @@ struct RunOptions {
     //!                  threads.second - initialization value for scheduler
     utility::thread_number_range threads;
     int numberOfFrames;
+    int numberofIterations;
     bool silent;
     bool parallel;
     RunOptions(utility::thread_number_range threads_,
                int number_of_frames_,
+               int number_of_iterations_,
                bool silent_,
                bool parallel_)
             : threads(threads_),
               numberOfFrames(number_of_frames_),
+              numberofIterations(number_of_iterations_),
               silent(silent_),
               parallel(parallel_) {}
 };
@@ -53,6 +56,7 @@ RunOptions ParseCommandLine(int argc, char *argv[]) {
         utility::get_default_num_threads, 0, utility::get_default_num_threads());
 
     int numberOfFrames = 0;
+    int numberofIterations = 0;
     bool silent = false;
     bool serial = false;
 
@@ -65,15 +69,19 @@ RunOptions ParseCommandLine(int argc, char *argv[]) {
             .positional_arg(numberOfFrames,
                             "n-of-frames",
                             "number of frames the example processes internally (0 means unlimited)")
+            .positional_arg(numberofIterations,
+                            "n-of-iterations",
+                            "number of iterations the example runs internally")
             .arg(silent, "silent", "no output except elapsed time")
             .arg(serial, "serial", "in GUI mode start with serial version of algorithm"));
-    return RunOptions(threads, numberOfFrames, silent, !serial);
+    return RunOptions(threads, numberOfFrames, numberofIterations, silent, !serial);
 }
 
 int main(int argc, char *argv[]) {
     oneapi::tbb::tick_count mainStartTime = oneapi::tbb::tick_count::now();
     RunOptions options = ParseCommandLine(argc, argv);
     SeismicVideo video(u, options.numberOfFrames, options.threads.last, options.parallel);
+    utility::measurements mu;
 
     // video layer init
     if (video.init_window(u.UniverseWidth, u.UniverseHeight)) {
@@ -91,11 +99,17 @@ int main(int argc, char *argv[]) {
             std::cout << "Substituting 1000 for unlimited frames because not running interactively"
                       << "\n";
         }
+        if (options.numberofIterations == 0) {
+            options.numberofIterations = 10;
+            std::cout << "Setting the number of iterations = 10 default"
+                      << "\n";
+        }
         for (int p = options.threads.first; p <= options.threads.last;
              p = options.threads.step(p)) {
             oneapi::tbb::tick_count xwayParallelismStartTime = oneapi::tbb::tick_count::now();
             u.InitializeUniverse(video);
             int numberOfFrames = options.numberOfFrames;
+            int numberOfIterations = options.numberofIterations;
 
             if (p == 0) {
                 //run a serial version
@@ -106,8 +120,13 @@ int main(int argc, char *argv[]) {
             else {
                 oneapi::tbb::global_control c(oneapi::tbb::global_control::max_allowed_parallelism,
                                               p);
-                for (int i = 0; i < numberOfFrames; ++i) {
-                    u.ParallelUpdateUniverse();
+                mu.clear();
+                for (int iter = 0; iter < numberOfIterations; ++iter) {
+                    mu.start();
+                    for (int i = 0; i < numberOfFrames; ++i) {
+                        u.ParallelUpdateUniverse();
+                    }
+                    mu.stop();
                 }
             }
 
@@ -128,6 +147,8 @@ int main(int argc, char *argv[]) {
         }
     }
     video.terminate();
+    double rel_error = mu.computeRelError();
     utility::report_elapsed_time((oneapi::tbb::tick_count::now() - mainStartTime).seconds());
+    utility::report_relative_error(rel_error);
     return 0;
 }

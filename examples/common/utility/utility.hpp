@@ -20,6 +20,7 @@
 #include <cassert>
 #include <cstring>
 #include <cstdlib>
+#include <cmath>
 
 #include <utility>
 #include <string>
@@ -356,6 +357,37 @@ public:
     }
 }; // class cli_argument_pack
 
+class measurements {
+public:
+    measurements() {
+        clear();
+    }
+    void clear() {
+        _secPerFrame.clear();
+    }
+    void start() {
+        _startTime = oneapi::tbb::tick_count::now();
+    }
+    void stop() {
+        _endTime = oneapi::tbb::tick_count::now();
+        auto count = _endTime - _startTime;
+        _secPerFrame.push_back(count.seconds());
+    }
+    double computeRelError() {
+        auto averageTimePerFrame = std::accumulate(_secPerFrame.begin(), _secPerFrame.end(), 0.0) / _secPerFrame.size();
+        std::vector<double> diff(_secPerFrame.size());
+        std::transform(_secPerFrame.begin(), _secPerFrame.end(), diff.begin(), [averageTimePerFrame](double x) { return (x - averageTimePerFrame);});
+        double sumOfSquareDiff = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
+        double stdDev = std::sqrt(sumOfSquareDiff / _secPerFrame.size());
+        double relError = 100 * (stdDev / averageTimePerFrame);
+        return relError;
+    }
+private:
+    std::vector<double> _secPerFrame;
+    oneapi::tbb::tick_count _startTime;
+    oneapi::tbb::tick_count _endTime;
+};
+
 namespace internal {
 template <typename T>
 bool is_power_of_2(T val) {
@@ -544,6 +576,11 @@ inline void report_elapsed_time(double seconds) {
 
 inline void report_skipped() {
     std::cout << "skip"
+              << "\n";
+}
+
+inline void report_relative_error(double err) {
+    std::cout << "Relative Error : " << err << " %"
               << "\n";
 }
 
