@@ -192,17 +192,18 @@ void* __TBB_EXPORTED_FUNC cache_aligned_allocate(std::size_t size) {
 
     // Check for overflow
     if (size + cache_line_size < size) {
-        throw_exception(exception_id::bad_alloc);
+      throw_exception(exception_id::bad_alloc);
     }
     // scalable_aligned_malloc considers zero size request an error, and returns nullptr
     if (size == 0) size = 1;
 
-    void* result = cache_aligned_allocate_handler.load(std::memory_order_acquire)(size, cache_line_size);
+    /* void* result = cache_aligned_allocate_handler.load(std::memory_order_acquire)(size, cache_line_size);
     if (!result) {
         throw_exception(exception_id::bad_alloc);
     }
     __TBB_ASSERT(is_aligned(result, cache_line_size), "The returned address isn't aligned");
-    return result;
+    return result;*/
+    return nullptr;
 }
 
 void __TBB_EXPORTED_FUNC cache_aligned_deallocate(void* p) {

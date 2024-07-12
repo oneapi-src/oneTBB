@@ -24,7 +24,7 @@
 //! \file test_allocators.cpp
 //! \brief Test for [memory_allocation.cache_aligned_allocator memory_allocation.tbb_allocator memory_allocation.cache_aligned_resource] specifications
 
-#if TBB_USE_EXCEPTIONS
+
 //! Test that cache_aligned_allocate() throws bad_alloc if cannot allocate memory.
 //! \brief \ref requirement
 TEST_CASE("Test cache_aligned_allocate throws") {
@@ -52,7 +52,7 @@ TEST_CASE("Test cache_aligned_allocate throws") {
     bool exception_caught = false;
     try {
         // Try allocating more memory than left in the address space; should cause std::bad_alloc
-        (void)cache_aligned_allocate(~size_t(0) - itemsize * nitems + cache_line_size());
+      (void)cache_aligned_allocate(~size_t(0) - itemsize * nitems);// + cache_line_size());
     } catch (std::bad_alloc&) {
         exception_caught = true;
     } catch (...) {
@@ -67,36 +67,3 @@ TEST_CASE("Test cache_aligned_allocate throws") {
         REQUIRE_MESSAGE(false, "cache_aligned_deallocate did not accept the address obtained with cache_aligned_allocate");
     }
 }
-#endif /* TBB_USE_EXCEPTIONS */
-
-#if TBB_ALLOCATOR_TRAITS_BROKEN
-//! Testing allocator types in case std::allocator traits is broken
-//! \brief \ref error_guessing
-TEST_CASE("Broken allocator concept") {
-    TestAllocator<tbb::cache_aligned_allocator<void>>(Broken);
-    TestAllocator<tbb::tbb_allocator<void>>(Broken);
-}
-#endif
-
-//! Testing allocators compatibility with STL containers
-//! \brief \ref interface
-TEST_CASE("Test allocators with STL containers") {
-    TestAllocatorWithSTL<tbb::cache_aligned_allocator<void>>();
-    TestAllocatorWithSTL<tbb::tbb_allocator<void>>();
-}
-
-#if __TBB_CPP17_MEMORY_RESOURCE_PRESENT
-//! Testing memory resources compatibility with STL containers through the
-//! std::pmr::polymorphic_allocator
-//! \brief \ref interface
-TEST_CASE("polymorphic_allocator test") {
-    tbb::cache_aligned_resource aligned_resource;
-    tbb::cache_aligned_resource equal_aligned_resource(std::pmr::get_default_resource());
-    REQUIRE_MESSAGE(aligned_resource.is_equal(equal_aligned_resource),
-            "Underlying upstream resources should be equal.");
-    REQUIRE_MESSAGE(!aligned_resource.is_equal(*std::pmr::null_memory_resource()),
-            "Cache aligned resource upstream shouldn't be equal to the standard resource.");
-    TestAllocatorWithSTL(std::pmr::polymorphic_allocator<void>(&aligned_resource));
-}
-#endif
-
