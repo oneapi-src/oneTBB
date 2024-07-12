@@ -188,18 +188,6 @@ private:
         return m_wait.continue_execution();
     }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-    void release(std::uint32_t delta, const d1::execution_data&) override { release(delta); }
-=======
-    void release(std::uint32_t, const d1::execution_data&) override {
-        __TBB_ASSERT(false,
-            "This method is overloaded only to fulfill the base class interface requirements, and thus, it should not be called.");
-    }
->>>>>>> c7ff9e14 (Add comment for release in wait_vertex)
-
->>>>>>> 4e88ad44 (Add wait_vertex implementation)
     wait_context m_wait;
 };
 
