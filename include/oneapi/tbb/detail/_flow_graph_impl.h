@@ -351,12 +351,10 @@ private:
     friend void activate_graph(graph& g);
     friend void deactivate_graph(graph& g);
     friend bool is_graph_active(graph& g);
+    friend bool is_thread_in_graph_arena(graph& g);
     friend graph_task* prioritize_task(graph& g, graph_task& arena_task);
     friend void spawn_in_graph_arena(graph& g, graph_task& arena_task);
     friend void enqueue_in_graph_arena(graph &g, graph_task& arena_task);
-
-    template <typename Body>
-    friend void execute_in_graph_arena(graph& g, const Body& body);
 
     friend class task_arena_base;
     friend class graph_task;
@@ -383,8 +381,14 @@ inline graph_task::graph_task(graph& g, d1::small_object_allocator& allocator,
     , priority(node_priority)
     , my_allocator(allocator)
 {
-    d1::wait_tree_vertex_interface* ref_node = r1::get_arena_thread_reference_vertex(*(my_graph.my_task_arena), &my_graph.get_wait_context_vertex());
-    my_reference_vertex = ref_node != nullptr ? ref_node : &my_graph.get_wait_context_vertex();
+    // If the task is created by the thread outside the graph arena, the lifetime of the thread reference vertex
+    // may be shorter that the lifetime of the task, so thread reference vertex approach cannot be used
+    // and the task should be associated with the graph wait context itself
+    // TODO: consider how reference counting can be improved for such a use case. Most common example is the async_node
+    d1::wait_context_vertex* graph_wait_context_vertex = &my_graph.get_wait_context_vertex();
+    my_reference_vertex = is_thread_in_graph_arena(g) ? r1::get_thread_reference_vertex(graph_wait_context_vertex)
+                                                      : graph_wait_context_vertex;
+    __TBB_ASSERT(my_reference_vertex, nullptr);
     my_reference_vertex->reserve();
 }
 
@@ -435,6 +439,11 @@ inline void deactivate_graph(graph& g) {
 
 inline bool is_graph_active(graph& g) {
     return g.my_is_active;
+}
+
+inline bool is_thread_in_graph_arena(graph& g) {
+    __TBB_ASSERT(g.my_task_arena && g.my_task_arena->is_active(), nullptr);
+    return r1::execution_slot(*g.my_task_arena) != d1::slot_id(-1);
 }
 
 inline graph_task* prioritize_task(graph& g, graph_task& gt) {
