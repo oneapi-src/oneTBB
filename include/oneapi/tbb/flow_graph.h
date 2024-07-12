@@ -244,9 +244,6 @@ public:
 
     //! Put an item to the receiver
     bool try_put( const T& t ) {
-        // graph_task* res = nullptr;
-
-        // execute_in_graph_arena(graph_reference(), [&]{ res = try_put_task(t); });
         graph_task* res = try_put_task(t);
 
         if (!res) return false;
@@ -2900,9 +2897,6 @@ private:
 
         //! Implements gateway_type::try_put for an external activity to submit a message to FG
         bool try_put(const Output &i) override {
-            // bool result = false;
-            // execute_in_graph_arena(my_node->my_graph, [&] { result = my_node->try_put_impl(i); });
-            // return result;
             return my_node->try_put_impl(i);
         }
 

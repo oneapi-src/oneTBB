@@ -491,14 +491,6 @@ inline void enqueue_in_graph_arena(graph &g, graph_task& arena_task) {
     }
 }
 
-template <typename Body>
-void execute_in_graph_arena(graph &g, const Body& body ) {
-    if (is_graph_active(g)) {
-        __TBB_ASSERT( g.my_task_arena && g.my_task_arena->is_active(), "Is graph's arena initialized and active?" );
-        g.my_task_arena->execute(body);
-    }
-}
-
 } // namespace d2
 } // namespace detail
 } // namespace tbb
