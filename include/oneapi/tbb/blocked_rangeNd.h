@@ -17,20 +17,16 @@
 #ifndef __TBB_blocked_rangeNd_H
 #define __TBB_blocked_rangeNd_H
 
-#if !TBB_PREVIEW_BLOCKED_RANGE_ND
-    #error Set TBB_PREVIEW_BLOCKED_RANGE_ND to include blocked_rangeNd.h
-#endif
-
 #include <algorithm>    // std::any_of
-#include <array>
+#include <vector>
 #include <cstddef>
 #include <type_traits>  // std::is_same, std::enable_if
 
-#include "detail/_config.h"
-#include "detail/_template_helpers.h" // index_sequence, make_index_sequence
-#include "detail/_range_common.h"
+#include <oneapi/tbb/detail/_config.h>
+#include <oneapi/tbb/detail/_namespace_injection.h>
+#include <oneapi/tbb/detail/_range_common.h>
 
-#include "blocked_range.h"
+#include <oneapi/tbb/blocked_range.h>
 
 namespace tbb {
 namespace detail {
@@ -63,13 +59,27 @@ public:
 private:
     //! Helper type to construct range with N tbb::blocked_range<value_type> objects.
     template<std::size_t>
-    using dim_type_helper = tbb::blocked_range<value_type>;
+    using dim_range_type = tbb::blocked_range<value_type>;
 
 public:
     blocked_rangeNd_impl() = delete;
 
     //! Constructs N-dimensional range over N half-open intervals each represented as tbb::blocked_range<Value>.
-    blocked_rangeNd_impl(const dim_type_helper<Is>&... args) : my_dims{ {args...} } {}
+    blocked_rangeNd_impl(const dim_range_type<Is>&... args) : my_dims{ {args...} } {
+      __TBB_ASSERT(my_dims.size()==N, "range is not properly initialised" );
+    }
+
+    blocked_rangeNd_impl(
+      Value begin[N],
+      Value end[N],
+      typename tbb::blocked_range<value_type>::size_type grainsize
+    ):
+      my_dims() {
+      for (int d=0; d<N; d++) {
+        my_dims.push_back( dim_range_type( begin[d], end[d], grainsize ) );
+      }
+      __TBB_ASSERT(my_dims.size()==N, "range is not properly initialised" );
+    }
 
     //! Dimensionality of a range.
     static constexpr unsigned int ndims() { return N; }
@@ -77,6 +87,7 @@ public:
     //! Range in certain dimension.
     const tbb::blocked_range<value_type>& dim(unsigned int dimension) const {
         __TBB_ASSERT(dimension < N, "out of bound");
+        __TBB_ASSERT(my_dims.size()==N, "range is not properly initialised" );
         return my_dims[dimension];
     }
 
@@ -100,17 +111,23 @@ public:
 
     blocked_rangeNd_impl(blocked_rangeNd_impl& r, proportional_split proportion) : my_dims(r.my_dims) {
         do_split(r, proportion);
+        __TBB_ASSERT(my_dims.size()==N, "range is not properly initialised" );
     }
 
     blocked_rangeNd_impl(blocked_rangeNd_impl& r, split proportion) : my_dims(r.my_dims) {
         do_split(r, proportion);
+        __TBB_ASSERT(my_dims.size()==N, "range is not properly initialised" );
     }
 
 private:
     static_assert(N != 0, "zero dimensional blocked_rangeNd can't be constructed");
 
-    //! Ranges in each dimension.
-    std::array<tbb::blocked_range<value_type>, N> my_dims;
+    /*! Ranges in each dimension.
+     *
+     * This has to be a vector, as there are situations where we can't
+     * initialise the entries all in one go.
+     */
+    std::vector<tbb::blocked_range<value_type>> my_dims;
 
     template<typename split_type>
     void do_split(blocked_rangeNd_impl& r, split_type proportion) {
@@ -144,4 +161,3 @@ using detail::d1::blocked_rangeNd;
 } // namespace tbb
 
 #endif /* __TBB_blocked_rangeNd_H */
-
