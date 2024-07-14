@@ -31,7 +31,11 @@ public:
     }
 
     const T& front() const {
+#if defined( __clang__ ) && __clang_major__ >= 19
         return this->template item_buffer<T, A>::front();
+#else
+        return this->item_buffer<T, A>::front();
+#endif
     }
 
     void pop() {
