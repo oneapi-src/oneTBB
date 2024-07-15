@@ -629,9 +629,9 @@ void task_arena_impl::enqueue(d1::task& t, d1::task_group_context* c, d1::task_a
      a->enqueue_task(t, *ctx, *td);
 }
 
-d1::slot_id task_arena_impl::execution_slot(const d1::task_arena_base& arena) {
+d1::slot_id task_arena_impl::execution_slot(const d1::task_arena_base& ta) {
     thread_data* td = governor::get_thread_data_if_initialized();
-    if (td && (td->my_arena == arena.my_arena.load(std::memory_order_relaxed))) {
+    if (td && (td->my_arena == ta.my_arena.load(std::memory_order_relaxed))) {
         return td->my_arena_index;
     }
     return d1::slot_id(-1);
