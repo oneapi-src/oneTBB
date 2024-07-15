@@ -118,11 +118,11 @@ struct feeder_item_task: public task {
     using feeder_type = feeder_impl<Body, Item>;
 
     template <typename ItemType>
-    feeder_item_task(ItemType&& input_item, feeder_type& feeder, small_object_allocator& alloc, wait_tree_vertex_interface* node) :
+    feeder_item_task(ItemType&& input_item, feeder_type& feeder, small_object_allocator& alloc, wait_tree_vertex_interface& wait_vertex) :
         item(std::forward<ItemType>(input_item)),
         my_feeder(feeder),
         my_allocator(alloc),
-        m_wait_tree_vertex(node)
+        m_wait_tree_vertex(r1::get_thread_reference_vertex(&wait_vertex))
     {
         m_wait_tree_vertex->reserve();
     }
@@ -174,7 +174,7 @@ class feeder_impl : public feeder<Item> {
     void internal_add_copy_impl(std::true_type, const Item& item) {
         using feeder_task = feeder_item_task<Body, Item>;
         small_object_allocator alloc;
-        auto task = alloc.new_object<feeder_task>(item, *this, alloc, r1::get_thread_reference_vertex(&my_wait_context));
+        auto task = alloc.new_object<feeder_task>(item, *this, alloc, my_wait_context);
 
         spawn(*task, my_execution_context);
     }
@@ -190,7 +190,7 @@ class feeder_impl : public feeder<Item> {
     void internal_add_move(Item&& item) override {
         using feeder_task = feeder_item_task<Body, Item>;
         small_object_allocator alloc{};
-        auto task = alloc.new_object<feeder_task>(std::move(item), *this, alloc, r1::get_thread_reference_vertex(&my_wait_context));
+        auto task = alloc.new_object<feeder_task>(std::move(item), *this, alloc, my_wait_context);
 
         spawn(*task, my_execution_context);
     }
