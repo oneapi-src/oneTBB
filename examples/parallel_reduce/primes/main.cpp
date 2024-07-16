@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
@@ -40,17 +41,19 @@ struct RunOptions {
     NumberType grainSize;
     // number of time to repeat calculation
     NumberType repeatNumber;
-
+    int numberofIterations;
     RunOptions(utility::thread_number_range threads_,
                NumberType grainSize_,
                NumberType n_,
                bool silentFlag_,
-               NumberType repeatNumber_)
+               NumberType repeatNumber_,
+	       int number_of_iterations_)
             : threads(threads_),
               silentFlag(silentFlag_),
               n(n_),
               grainSize(grainSize_),
-              repeatNumber(repeatNumber_) {}
+              repeatNumber(repeatNumber_),
+	      numberofIterations(number_of_iterations_) {}
 };
 
 //! Parse the command line.
@@ -61,6 +64,7 @@ static RunOptions ParseCommandLine(int argc, char* argv[]) {
     bool silent = false;
     NumberType number = 100000000;
     NumberType repeatNumber = 1;
+    int numberofIterations = 0;
 
     utility::parse_cli_arguments(
         argc,
@@ -76,28 +80,43 @@ static RunOptions ParseCommandLine(int argc, char* argv[]) {
                 repeatNumber,
                 "n-of-repeats",
                 "repeat the calculation this number of times, must be a positive integer")
+	    .positional_arg(numberofIterations,
+                            "n-of-iterations",
+                            "number of iterations the example runs internally")
             .arg(silent, "silent", "no output except elapsed time"));
 
-    RunOptions options(threads, grainSize, number, silent, repeatNumber);
+    RunOptions options(threads, grainSize, number, silent, repeatNumber, numberofIterations);
     return options;
 }
 
 int main(int argc, char* argv[]) {
     oneapi::tbb::tick_count mainBeginMark = oneapi::tbb::tick_count::now();
     RunOptions options = ParseCommandLine(argc, argv);
-
+    utility::measurements mu;
     // Try different numbers of threads
     for (int p = options.threads.first; p <= options.threads.last; p = options.threads.step(p)) {
         for (NumberType i = 0; i < options.repeatNumber; ++i) {
             oneapi::tbb::tick_count iterationBeginMark = oneapi::tbb::tick_count::now();
             NumberType count = 0;
             NumberType n = options.n;
+	    
+	    if (options.numberofIterations == 0) {
+	      options.numberofIterations = 10;
+	      std::cout << "Setting the number of iterations = 10 default"
+			<< "\n";
+	    }
+	    int numberOfIterations = options.numberofIterations;
             if (p == 0) {
                 count = SerialCountPrimes(n);
             }
             else {
                 NumberType grainSize = options.grainSize;
-                count = ParallelCountPrimes(n, p, grainSize);
+		mu.clear();
+                for (int iter = 0; iter < numberOfIterations; ++iter) {
+		  mu.start();
+		  count = ParallelCountPrimes(n, p, grainSize);
+		  mu.stop();
+		}
             }
             oneapi::tbb::tick_count iterationEndMark = oneapi::tbb::tick_count::now();
             if (!options.silentFlag) {
@@ -111,6 +130,8 @@ int main(int argc, char* argv[]) {
             }
         }
     }
+    double rel_error = mu.computeRelError();
     utility::report_elapsed_time((oneapi::tbb::tick_count::now() - mainBeginMark).seconds());
+    utility::report_relative_error(rel_error);
     return 0;
 }
