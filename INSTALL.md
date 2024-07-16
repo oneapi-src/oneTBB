@@ -9,9 +9,10 @@
 
 ## Configure oneTBB
 
-At the command prompt, type:
-```
-cmake <options> <repo_root>
+In your build directory, type:
+
+```bash
+cmake [options] <repo_root>
 ```
 
 You may want to use some additional options for configuration:
@@ -25,8 +26,9 @@ You may want to use some additional options for configuration:
 ## Build oneTBB
  
 To build the system, run:
-```
-cmake --build . <options>
+
+```bash
+cmake --build . [options]
 ```
 
 Some useful build options:
@@ -73,7 +75,7 @@ Simple packaging using CPack is supported.
 The following commands allow you to create a simple portable package that includes header files, libraries, and integration files for CMake:
 
 ```bash
-cmake <options> ..
+cmake [options] ..
 cpack
 ```
 

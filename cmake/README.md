@@ -26,7 +26,7 @@ TBB_BUILD_APPLE_FRAMEWORKS - Enable the Apple* frameworks instead of dylibs, onl
 
 ### Preparation
 
-To perform an out-of-source build, create a build directory and go there:
+To perform an out-of-source build, create a build directory in an arbitrary location outside of the oneTBB source directory and go there.
 
 ```bash
 mkdir /tmp/my-build
@@ -35,8 +35,10 @@ cd /tmp/my-build
 
 ### Configure
 
+In the build directory, specify the oneTBB source directory to generate a build system for it.
+
 ```bash
-cmake <options> <repo_root>
+cmake [options] <repo_root>
 ```
 
 Some useful options:
@@ -47,7 +49,7 @@ Some useful options:
 
 > **_TIP:_** It is recommended to install the HWLOC* library. See [oneTBB documentation](https://oneapi-src.github.io/oneTBB/GSG/next_steps.html#hybrid-cpu-and-numa-support) for details.
 
-The TBBbind library has three versions: `tbbbind`, `tbbbind_2_0`, and `tbbbind_2_5`. Each of these versions is linked with the corresponding HWLOC* library version: 
+The TBBbind library has three versions: `tbbbind`, `tbbbind_2_0`, and `tbbbind_2_5`. Each of these versions is linked with the corresponding HWLOC* library version:
 - `tbbbind` links with `HWLOC 1.11.x`
 - `tbbbind_2_0` links with `HWLOC 2.1–2.4`
 - `tbbbind_2_5` links with `HWLOC 2.5` and later
