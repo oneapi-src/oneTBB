@@ -22,7 +22,6 @@
 //! \file conformance_blocked_rangeNd.cpp
 //! \brief Test for [preview] functionality
 
-#define TBB_PREVIEW_BLOCKED_RANGE_ND 1
 #include "oneapi/tbb/blocked_rangeNd.h"
 #include "oneapi/tbb/parallel_for.h"
 #include "oneapi/tbb/global_control.h"
