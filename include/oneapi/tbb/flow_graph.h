@@ -1260,15 +1260,12 @@ protected:
         graph_task* ltask;
         successor_type *r;
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-        message_metainfo* metainfo;
+        message_metainfo* metainfo = nullptr;
 #endif
 
         buffer_operation(const T& e, op_type t) : type(char(t))
                                                   , elem(const_cast<T*>(&e)) , ltask(nullptr)
                                                   , r(nullptr)
-#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-                                                  , metainfo(nullptr)
-#endif
         {}
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
@@ -1277,11 +1274,7 @@ protected:
             , metainfo(const_cast<message_metainfo*>(&info))
         {}
 #endif
-        buffer_operation(op_type t) : type(char(t)), elem(nullptr), ltask(nullptr), r(nullptr)
-#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-            , metainfo(nullptr)
-#endif
-        {}
+        buffer_operation(op_type t) : type(char(t)), elem(nullptr), ltask(nullptr), r(nullptr) {}
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
         buffer_operation(op_type t, message_metainfo& info)
@@ -1440,7 +1433,9 @@ protected:
             this->push_back(*(op->elem), (*op->metainfo));
         } else
 #endif
+        {
             this->push_back(*(op->elem));
+        }
         op->status.store(SUCCEEDED, std::memory_order_release);
         return true;
     }
@@ -1877,12 +1872,11 @@ protected:
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
         if (op->metainfo) {
             prio_push(*(op->elem), *(op->metainfo));
-        } else {
+        } else
+#endif
+        {
             prio_push(*(op->elem));
         }
-#else
-        prio_push(*(op->elem));
-#endif
         op->status.store(SUCCEEDED, std::memory_order_release);
         return true;
     }
@@ -2028,10 +2022,8 @@ private:
             input_type to_place;
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
             message_metainfo metainfo;
-            this->fetch_item(mark, to_place, metainfo);
-#else
-            this->fetch_item(mark, to_place);
 #endif
+            this->fetch_item(mark, to_place __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo));
             do { // push to_place up the heap
                 size_type parent = (cur_pos-1)>>1;
                 if (!compare(this->get_my_item(parent), to_place))

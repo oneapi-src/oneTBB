@@ -215,16 +215,11 @@ private:
             input_type i;
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
             message_metainfo metainfo;
-            if(my_predecessors.get_item(i, metainfo)) {
-                ++my_concurrency;
-                new_task = create_body_task(i, std::move(metainfo));
-            }
-#else
-            if (my_predecessors.get_item(i)) {
-                ++my_concurrency;
-                new_task = create_body_task(i __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo{}));
-            }
 #endif
+            if(my_predecessors.get_item(i __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo))) {
+                ++my_concurrency;
+                new_task = create_body_task(i __TBB_FLOW_GRAPH_METAINFO_ARG(std::move(metainfo)));
+            }
         }
         return new_task;
     }

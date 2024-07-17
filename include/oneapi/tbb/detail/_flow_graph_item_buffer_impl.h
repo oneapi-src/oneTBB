@@ -142,11 +142,8 @@ protected:
     void move_item(size_t to, size_t from) {
         __TBB_ASSERT(!my_item_valid(to), "Trying to move to a non-empty slot");
         __TBB_ASSERT(my_item_valid(from), "Trying to move from an empty slot");
-#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-        set_my_item(to, get_my_item(from), get_my_metainfo(from));
-#else
-        set_my_item(to, get_my_item(from));   // could have std::move semantics
-#endif
+        // could have std::move semantics
+        set_my_item(to, get_my_item(from) __TBB_FLOW_GRAPH_METAINFO_ARG(get_my_metainfo(from)));
         destroy_item(from);
     }
 
@@ -162,7 +159,6 @@ protected:
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
     template <typename Metainfo>
     bool place_item(size_t here, const item_type &me, Metainfo&& metainfo) {
-
 #if !TBB_DEPRECATED_SEQUENCER_DUPLICATES
         if(my_item_valid(here)) return false;
 #endif
