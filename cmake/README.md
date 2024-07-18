@@ -26,7 +26,7 @@ TBB_BUILD_APPLE_FRAMEWORKS - Enable the Apple* frameworks instead of dylibs, onl
 
 ### Preparation
 
-To perform an out-of-source build, create a build directory in an arbitrary location outside of the oneTBB source directory and go there.
+To perform an out-of-source build, create a build directory in an arbitrary location outside the oneTBB source directory and go there:
 
 ```bash
 mkdir /tmp/my-build
