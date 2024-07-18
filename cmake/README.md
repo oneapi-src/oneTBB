@@ -35,10 +35,10 @@ cd /tmp/my-build
 
 ### Configure
 
-In the build directory, specify the oneTBB source directory to generate a build system for it.
+From the build directory, to generate a build system for it, run:
 
 ```bash
-cmake [options] <repo_root>
+cmake [options] <onetbb_repo_directory>
 ```
 
 Some useful options:

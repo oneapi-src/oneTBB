@@ -12,7 +12,7 @@
 From the build directory, run:
 
 ```bash
-cmake [options] <repo_root>
+cmake [options] <onetbb_repo_directory>
 ```
 
 You may want to use some additional options for configuration:
