@@ -67,7 +67,8 @@ class static_partitioner;
 class affinity_partitioner;
 class affinity_partition_type;
 class affinity_partitioner_base;
-
+template <typename T> class numa_partitioner;
+  
 inline std::size_t get_initial_auto_partitioner_divisor() {
     const std::size_t factor = 4;
     return factor * static_cast<std::size_t>(max_concurrency());
@@ -654,6 +655,35 @@ private:
     typedef affinity_partition_type::split_type split_type;
 };
 
+template <typename T>
+class numa_partitioner{
+public:
+  numa_partitioner() {
+    printf("Creating Numa partitioner\n");
+    numa_nodes = oneapi::tbb::info::numa_nodes();
+    num_numa_nodes = numa_nodes.size();
+
+    // Create a task arena for each valid NUMA node
+    for (int node : numa_nodes) {
+      arenas.emplace_back(tbb::task_arena::constraints().set_numa_id(node));
+    }
+
+  }
+
+  mutable std::vector<oneapi::tbb::numa_node_id> numa_nodes;
+  mutable std::vector<oneapi::tbb::task_arena>  arenas;
+  mutable std::vector<std::vector<float>> data_partitions;
+  T inner_partitioner;
+  //std::vector<std::vector<float>>& get_data_partitions() {
+  //return data_partitions;
+  //}
+  size_t num_numa_nodes;
+private:
+  template<typename Range, typename Body, typename Partitioner> friend struct start_for;
+  //typedef hierarchical_partition_type task_partition_type;
+  typedef detail::proportional_split split_type;
+};
+  
 } // namespace d1
 } // namespace detail
 
@@ -663,6 +693,8 @@ using detail::d1::auto_partitioner;
 using detail::d1::simple_partitioner;
 using detail::d1::static_partitioner;
 using detail::d1::affinity_partitioner;
+using detail::d1::numa_partitioner;
+
 // Split types
 using detail::split;
 using detail::proportional_split;

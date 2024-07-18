@@ -30,6 +30,7 @@
 
 #include <cstddef>
 #include <new>
+#include <numa.h>
 
 namespace tbb {
 namespace detail {
@@ -261,7 +262,61 @@ void parallel_for( const Range& range, const Body& body, affinity_partitioner& p
     start_for<Range,Body,affinity_partitioner>::run(range,body,partitioner);
 }
 
-//! Parallel iteration over range with default partitioner and user-supplied context.
+template<typename Range, typename Body, typename T>
+__TBB_requires(tbb_range<Range> && parallel_for_body<Body, Range>)
+void parallel_for(const Range& range, const Body& body, const T& n_partitioner) {
+  
+    size_t data_size = range.size();
+    size_t partition_size = data_size / n_partitioner.num_numa_nodes;
+    std::vector<oneapi::tbb::task_group> task_groups(n_partitioner.num_numa_nodes);
+
+    // Allocate memory for data partitions with NUMA affinity
+    n_partitioner.data_partitions.resize(n_partitioner.num_numa_nodes);
+
+    /*    for (size_t i = 0; i < n_partitioner.num_numa_nodes; ++i) {
+        n_partitioner.data_partitions[i].resize(partition_size);
+        // Set NUMA affinity (Linux specific)
+        numa_set_preferred(n_partitioner.numa_nodes[i]);
+	}*/
+
+    // Initialize the data in partitions
+    auto initialize_data = [&](std::vector<float>& partition, const tbb::blocked_range<size_t>& range) {
+        for (size_t j = range.begin(); j != range.end(); ++j) {
+            partition[j] = static_cast<float>(j);
+        }
+    };
+    
+    for (size_t i = 0; i < n_partitioner.num_numa_nodes; ++i) {
+        n_partitioner.arenas[i].execute([&task_groups, &n_partitioner, &range, &initialize_data, i]() {
+            task_groups[i].run([&, i] {
+                parallel_for(tbb::blocked_range<size_t>(0, n_partitioner.data_partitions[i].size()),
+                                  [&](const tbb::blocked_range<size_t>& r) {
+                                      initialize_data(n_partitioner.data_partitions[i], r);
+                                  }, n_partitioner.inner_partitioner);
+            });
+        });
+    }
+
+    for (size_t i = 0; i < n_partitioner.num_numa_nodes; ++i) {
+        n_partitioner.arenas[i].execute([&task_groups, &n_partitioner, &range, &body, i]() {
+            task_groups[i].run([&, i] {
+                parallel_for(range,
+                                  [&](const tbb::blocked_range<size_t>& r) {
+                                      body(r);
+                                  }, n_partitioner.inner_partitioner);
+            });
+        });
+    }
+
+    for (size_t i = 0; i < n_partitioner.num_numa_nodes; ++i) {
+        n_partitioner.arenas[i].execute([&task_groups, i]() {
+            task_groups[i].wait();
+        });
+    }
+}
+
+
+  //! Parallel iteration over range with default partitioner and user-supplied context.
 /** @ingroup algorithms **/
 template<typename Range, typename Body>
     __TBB_requires(tbb_range<Range> && parallel_for_body<Body, Range>)
