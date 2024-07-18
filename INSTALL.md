@@ -9,7 +9,7 @@
 
 ## Configure oneTBB
 
-In your build directory, type:
+From the build directory, run:
 
 ```bash
 cmake [options] <repo_root>
