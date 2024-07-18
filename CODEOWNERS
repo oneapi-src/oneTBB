@@ -8,6 +8,8 @@
 /oneTBB/include/oneapi/tbb/concurrent_* @kboyarinov
 /oneTBB/include/oneapi/tbb/flow_graph* @kboyarinov
 /oneTBB/include/oneapi/tbb/flow_graph* @aleksei-fedotov
+/oneTBB/include/oneapi/tbb/detail/_flow_graph* @kboyarinov
+/oneTBB/include/oneapi/tbb/detail/_flow_graph* @aleksei-fedotov
 /oneTBB/src/doc @aepanchi
 /oneTBB/src/tbbbind/ @isaevil
 /oneTBB/src/tbbmalloc/ @lplewa
