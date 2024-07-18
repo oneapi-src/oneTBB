@@ -30,7 +30,7 @@
 
 #include <cstddef>
 #include <new>
-#include <numa.h>
+
 
 namespace tbb {
 namespace detail {
@@ -292,23 +292,16 @@ void parallel_for(const Range& range, const Body& body, const T& n_partitioner) 
     };
     
     for (size_t i = 0; i < n_partitioner.num_numa_nodes; ++i) {
-        n_partitioner.arenas[i].execute([&task_groups, &n_partitioner, &range, &initialize_data, i]() {
+        n_partitioner.arenas[i].execute([&task_groups, &n_partitioner, &range, &initialize_data, &body, i]() {
             task_groups[i].run([&, i] {
                 parallel_for(tbb::blocked_range<size_t>(0, n_partitioner.data_partitions[i].size()),
                                   [&](const tbb::blocked_range<size_t>& r) {
                                       initialize_data(n_partitioner.data_partitions[i], r);
-                                  }, n_partitioner.inner_partitioner);
-            });
-        });
-    }
-
-    for (size_t i = 0; i < n_partitioner.num_numa_nodes; ++i) {
-        n_partitioner.arenas[i].execute([&task_groups, &n_partitioner, &range, &body, i]() {
-            task_groups[i].run([&, i] {
-                parallel_for(range,
-                                  [&](const tbb::blocked_range<size_t>& r) {
-                                      body(r);
-                                  }, n_partitioner.inner_partitioner);
+				  }, n_partitioner.inner_partitioner);
+		parallel_for(range,
+			     [&](const tbb::blocked_range<size_t>& r) {
+			       body(r);
+			     }, n_partitioner.inner_partitioner);
             });
         });
     }
