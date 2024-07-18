@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2022 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -255,6 +255,23 @@ void observer_list::do_notify_exit_observers(observer_proxy* last, bool worker) 
         intptr_t bc = --tso->my_busy_count;
         __TBB_ASSERT_EX(bc >= 0, "my_busy_count underflowed");
         prev = p;
+    }
+}
+
+void observe(d1::task_scheduler_observer &tso, arena& a) {
+    if( !tso.my_proxy.load(std::memory_order_relaxed) ) {
+        observer_proxy* p = new observer_proxy(tso);
+        tso.my_proxy.store(p, std::memory_order_relaxed);
+        tso.my_busy_count.store(0, std::memory_order_relaxed);
+
+        p->my_list = &a.my_observers;
+        p->my_list->insert(p);
+
+        thread_data* td = governor::get_thread_data_if_initialized();
+        // Notify newly activated observer and other pending ones if it belongs to current arena
+        if (td && td->my_arena && &td->my_arena->my_observers == p->my_list) {
+            p->my_list->notify_entry_observers(td->my_last_observer, td->my_is_worker);
+        }
     }
 }
 

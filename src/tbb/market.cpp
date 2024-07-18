@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2023 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -27,10 +27,6 @@ namespace r1 {
 class tbb_permit_manager_client : public pm_client {
 public:
     tbb_permit_manager_client(arena& a) : pm_client(a) {}
-
-    void register_thread() override {}
-
-    void unregister_thread() override {}
 
     void set_allotment(unsigned allotment) {
         my_arena.set_allotment(allotment);
