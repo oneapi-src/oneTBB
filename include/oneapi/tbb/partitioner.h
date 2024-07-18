@@ -679,7 +679,7 @@ public:
   //}
   size_t num_numa_nodes;
 private:
-  template<typename Range, typename Body, typename Partitioner> friend struct start_for;
+  //template<typename Range, typename Body, typename Partitioner> friend struct start_for;
   //typedef hierarchical_partition_type task_partition_type;
   typedef detail::proportional_split split_type;
 };

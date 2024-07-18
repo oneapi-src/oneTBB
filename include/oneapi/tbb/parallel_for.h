@@ -262,22 +262,27 @@ void parallel_for( const Range& range, const Body& body, affinity_partitioner& p
     start_for<Range,Body,affinity_partitioner>::run(range,body,partitioner);
 }
 
+template<typename T, typename = void>
+struct is_2d_range : std::false_type {};
+
+template<typename T>
+struct is_2d_range<T, std::void_t<decltype(std::declval<T>().rows()), decltype(std::declval<T>().cols())>> : std::true_type {};
+
 template<typename Range, typename Body, typename T>
 __TBB_requires(tbb_range<Range> && parallel_for_body<Body, Range>)
 void parallel_for(const Range& range, const Body& body, const T& n_partitioner) {
   
-    size_t data_size = range.size();
+  //size_t data_size = range.size();
+    size_t data_size;
+    if constexpr (is_2d_range<Range>::value) {
+        data_size = (range.rows().end() - range.rows().begin()) * (range.cols().end() - range.cols().begin());
+    } else {
+        data_size = range.end() - range.begin();
+    }
     size_t partition_size = data_size / n_partitioner.num_numa_nodes;
     std::vector<oneapi::tbb::task_group> task_groups(n_partitioner.num_numa_nodes);
 
-    // Allocate memory for data partitions with NUMA affinity
     n_partitioner.data_partitions.resize(n_partitioner.num_numa_nodes);
-
-    /*    for (size_t i = 0; i < n_partitioner.num_numa_nodes; ++i) {
-        n_partitioner.data_partitions[i].resize(partition_size);
-        // Set NUMA affinity (Linux specific)
-        numa_set_preferred(n_partitioner.numa_nodes[i]);
-	}*/
 
     // Initialize the data in partitions
     auto initialize_data = [&](std::vector<float>& partition, const tbb::blocked_range<size_t>& range) {
