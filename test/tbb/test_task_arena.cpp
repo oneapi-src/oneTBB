@@ -1941,7 +1941,7 @@ TEST_CASE("Stress test with mixing functionality") {
     StressTestMixFunctionality();
 }
 
-// global_control::max_alowed_parallelism functionality is not covered by TCM
+// global_control::max_allowed_parallelism functionality is not covered by TCM
 #if !__TBB_TCM_TESTING_ENABLED
 //! \brief \ref stress
 TEST_CASE("Workers oversubscription") {

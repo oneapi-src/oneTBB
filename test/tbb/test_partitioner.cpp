@@ -168,7 +168,7 @@ void strict_test() {
 
 } // namespace task_affinity_retention
 
-// global_control::max_alowed_parallelism functionality is not covered by TCM
+// global_control::max_allowed_parallelism functionality is not covered by TCM
 #if !__TBB_TCM_TESTING_ENABLED
 //! Testing affinitized tasks are not stolen
 //! \brief \ref error_guessing

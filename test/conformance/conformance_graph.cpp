@@ -158,7 +158,7 @@ void test_join_node_rf_reset_protocol(){
     CHECK_MESSAGE((!testing_node.try_get(tmp)), "All buffers must be emptied");
 }
 
-// global_control::max_alowed_parallelism functionality is not covered by TCM
+// global_control::max_allowed_parallelism functionality is not covered by TCM
 #if !__TBB_TCM_TESTING_ENABLED
 //! Graph reset
 //! \brief \ref requirement
