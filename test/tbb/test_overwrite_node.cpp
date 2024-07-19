@@ -334,7 +334,7 @@ void test_overwrite_node_try_put_and_wait() {
 
         tbb::flow::make_edge(buffer, f);
 
-        buffer.try_put_and_wait(0);
+        buffer.try_put_and_wait(wait_message);
 
         CHECK_MESSAGE(processed_item == wait_message, "unexpected processing");
 
