@@ -22,9 +22,10 @@
 #include <cstddef>
 #include <type_traits>  // std::is_same, std::enable_if
 
-#include <oneapi/tbb/detail/_config.h>
-#include <oneapi/tbb/detail/_namespace_injection.h>
-#include <oneapi/tbb/detail/_range_common.h>
+#include "detail/_config.h"
+#include "detail/_template_helpers.h" // index_sequence, make_index_sequence
+#include "detail/_namespace_injection.h"
+#include "detail/_range_common.h"
 
 #include <oneapi/tbb/blocked_range.h>
 
