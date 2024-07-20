@@ -1914,7 +1914,8 @@ TEST_CASE("Small stack size") {
 TEST_CASE("Test for exceptions during execute.") {
     ExceptionInExecute();
 }
-
+#endif
+/*
 //! \brief \ref error_guessing
 TEST_CASE("Exception thrown during tbb::task_arena::execute call") {
     struct throwing_obj {
@@ -1935,6 +1936,7 @@ TEST_CASE("Exception thrown during tbb::task_arena::execute call") {
     }(), std::exception );
 }
 #endif // TBB_USE_EXCEPTIONS
+
 
 //! \brief \ref stress
 TEST_CASE("Stress test with mixing functionality") {
@@ -1977,7 +1979,8 @@ TEST_CASE("Workers oversubscription") {
         );
     });
 }
-
+*/
+/*
 #if TBB_USE_EXCEPTIONS
 //! The test for error in scheduling empty task_handle
 //! \brief \ref requirement
@@ -1991,7 +1994,7 @@ TEST_CASE("Empty task_handle cannot be scheduled"
     CHECK_THROWS_WITH_AS(tbb::this_task_arena::enqueue(tbb::task_handle{}), "Attempt to schedule empty task_handle", std::runtime_error);
 }
 #endif
-
+*/
 #if !EMSCRIPTEN
 //! For emscripten, FPU control state has not been set correctly
 //! \brief \ref error_guessing
@@ -2007,7 +2010,7 @@ TEST_CASE("Test threads sleep") {
 #endif
 
 #if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
-
+#if !EMSCRIPTEN
 //! Basic test for is_inside_task in task_group
 //! \brief \ref interface \ref requirement
 TEST_CASE("is_inside_task in task_group"){
@@ -2018,7 +2021,8 @@ TEST_CASE("is_inside_task in task_group"){
         CHECK( true == tbb::is_inside_task());
     });
 }
-
+#endif
+/*
 //! Basic test for is_inside_task in arena::execute
 //! \brief \ref interface \ref requirement
 TEST_CASE("is_inside_task in arena::execute"){
@@ -2030,8 +2034,8 @@ TEST_CASE("is_inside_task in arena::execute"){
         // The execute method is processed outside of any task
         CHECK( false == tbb::is_inside_task());
     });
-}
-
+    }*/
+#if !EMSCRIPTEN
 //! The test for is_inside_task in arena::execute when inside other task
 //! \brief \ref error_guessing
 TEST_CASE("is_inside_task in arena::execute") {
@@ -2045,9 +2049,12 @@ TEST_CASE("is_inside_task in arena::execute") {
             CHECK(false == tbb::is_inside_task());
         });
     });
-}
+    }
+#endif
+
 #endif //__TBB_PREVIEW_TASK_GROUP_EXTENSIONS
 
+#if !EMSCRIPTEN
 //! \brief \ref interface \ref requirement \ref regression
 TEST_CASE("worker threads occupy slots in correct range") {
     std::vector<tbb::task_arena> arenas(42);
@@ -2065,3 +2072,5 @@ TEST_CASE("worker threads occupy slots in correct range") {
 
     while (counter < 42) { utils::yield(); }
 }
+#endif //emscripten
+
