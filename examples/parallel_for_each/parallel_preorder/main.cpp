@@ -41,7 +41,7 @@ static unsigned traversals = 500;
 static bool SilentFlag = false;
 
 //! Parse the command line.
-static void ParseCommandLine(int argc, char* argv[], utility::thread_number_range& threads, int& numberOfIterations) {
+static void ParseCommandLine(int argc, char* argv[], utility::thread_number_range& threads) {
     utility::parse_cli_arguments(
         argc,
         argv,
@@ -53,17 +53,13 @@ static void ParseCommandLine(int argc, char* argv[], utility::thread_number_rang
                 traversals,
                 "n-of-traversals",
                 "number of times to evaluate the graph. Reduce it (e.g. to 100) to shorten example run time\n")
-            .arg(SilentFlag, "silent", "no output except elapsed time ")
-            .positional_arg(numberOfIterations, "n-of-iterations", "number of iterations the example runs internally"));
+            .arg(SilentFlag, "silent", "no output except elapsed time "));
 }
 
 int main(int argc, char* argv[]) {
     utility::thread_number_range threads(utility::get_default_num_threads);
-    int numberOfIterations = 10; // Default number of iterations
     oneapi::tbb::tick_count main_start = oneapi::tbb::tick_count::now();
-    ParseCommandLine(argc, argv, threads, numberOfIterations);
-
-    utility::measurements mu;
+    ParseCommandLine(argc, argv, threads);
 
     // Start scheduler with given number of threads.
     for (int p = threads.first; p <= threads.last; p = threads.step(p)) {
@@ -76,14 +72,9 @@ int main(int argc, char* argv[]) {
             g.create_random_dag(nodes);
             std::vector<Cell*> root_set;
             g.get_root_set(root_set);
-	    mu.clear();
             root_set_size = root_set.size();
-            for (int iter = 0; iter < numberOfIterations; ++iter) {
-                mu.start();
-                for (unsigned int trial = 0; trial < traversals; ++trial) {
-                    ParallelPreorderTraversal(root_set);
-                }
-                mu.stop();
+            for (unsigned int trial = 0; trial < traversals; ++trial) {
+                ParallelPreorderTraversal(root_set);
             }
         }
         oneapi::tbb::tick_count::interval_t interval = oneapi::tbb::tick_count::now() - t0;
@@ -92,10 +83,7 @@ int main(int argc, char* argv[]) {
                       << root_set_size << " nodes in root_set)\n";
         }
     }
-
-    double rel_error = mu.computeRelError();
     utility::report_elapsed_time((oneapi::tbb::tick_count::now() - main_start).seconds());
-    utility::report_relative_error(rel_error);
 
     return 0;
 }
