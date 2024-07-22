@@ -40,7 +40,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Download Linux 64 Coverity Tool
         run: |
-          curl https://scan.coverity.com/download/cxx/linux64 \
+          curl -L https://scan.coverity.com/download/cxx/linux64 \
             --output cov-linux64-tool.tar.gz \
             --data "token=${{secrets.COVERITY_TOKEN}}&project=${env: COVERITY_PROJECT}"
           ls -l
