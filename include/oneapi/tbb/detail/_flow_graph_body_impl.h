@@ -280,16 +280,16 @@ class apply_body_task_bypass
     Input my_input;
 
     using check_metainfo = std::is_same<BaseTaskType, graph_task>;
-    using not_contains_metainfo = std::true_type;
-    using contains_metainfo = std::false_type;
+    using without_metainfo = std::true_type;
+    using with_metainfo = std::false_type;
 
-    graph_task* call_apply_body_bypass_impl(not_contains_metainfo) {
+    graph_task* call_apply_body_bypass_impl(without_metainfo) {
         return my_node.apply_body_bypass(my_input
                                          __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo{}));
     }
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    graph_task* call_apply_body_bypass_impl(contains_metainfo) {
+    graph_task* call_apply_body_bypass_impl(with_metainfo) {
         return my_node.apply_body_bypass(my_input, message_metainfo{this->get_msg_wait_context_vertices()});
     }
 #endif
