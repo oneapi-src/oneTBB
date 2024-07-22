@@ -35,7 +35,6 @@ jobs:
   coverity_linux:
     name: Coverity Linux
     runs-on: [ubuntu-latest]
-    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v3
       - name: Download Linux 64 Coverity Tool
