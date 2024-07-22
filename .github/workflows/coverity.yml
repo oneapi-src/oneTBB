@@ -40,7 +40,8 @@ jobs:
       - uses: actions/checkout@v3
       - name: Download Linux 64 Coverity Tool
         run: |
-          wget https://scan.coverity.com/download/cxx/linux64 -O cov-linux64-tool.tar.gz --post-data "token=${{secrets.COVERITY_TOKEN}}&project=${env: COVERITY_PROJECT}" --show-progress
+          curl -L https://scan.coverity.com/download/cxx/linux64 > cov-linux64-tool.tar.gz \
+            --data "token=${{secrets.COVERITY_TOKEN}}&project=${env: COVERITY_PROJECT}"
           ls -l
           mkdir cov-linux64-tool
           tar -xzf cov-linux64-tool.tar.gz --strip 1 -C cov-linux64-tool
