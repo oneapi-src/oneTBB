@@ -474,7 +474,7 @@ void test_follows_and_precedes_api() {
 // with one of the policies (lightweight, queueing and rejecting) with different concurrency limits
 // processes all of the previous jobs required to process message, the message itself, but does
 // not process the elements submitted later or not required to process the message
-// These tests submits start_work_items using the regular try_put and then submits wait_message
+// These tests submit start_work_items using the regular try_put and then submit wait_message
 // with try_put_and_wait. During the completion of the graph, new_work_items would be submitted
 // once the wait_message arrives.
 void test_try_put_and_wait_lightweight(std::size_t concurrency_limit) {
