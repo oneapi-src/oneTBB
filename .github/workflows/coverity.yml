@@ -29,7 +29,7 @@ permissions: read-all
 
 env:
   BUILD_CONCURRENCY: 2
-  COVERITY_PROJECT: oneapi-src/oneTBB
+  COVERITY_PROJECT: oneapi-src%2FoneTBB
 
 jobs:
   coverity_linux:
