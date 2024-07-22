@@ -25,8 +25,6 @@ on:
       - synchronize
       - reopened
 
-  workflow_dispatch:
-
 permissions: read-all
 
 env:
@@ -34,7 +32,6 @@ env:
   COVEIRTY_PROJECT: oneapi-src/oneTBB
 
 jobs:
-
   coverity_linux:
     name: Coverity Linux
     runs-on: [ubuntu-latest]
@@ -42,7 +39,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Download Linux 64 Coverity Tool
-        shell: bash
         run: |
           curl https://scan.coverity.com/download/cxx/linux64 \
             --no-progress-meter \
@@ -50,14 +46,15 @@ jobs:
             --data "token=${{secrets.COVERITY_TOKEN}}&project=${env: COVERITY_PROJECT}"
           mkdir cov-linux64-tool
           tar -xzf cov-linux64-tool.tar.gz --strip 1 -C cov-linux64-tool
-      - name: Build with cov-build
         shell: bash
+      - name: Build with cov-build
         run: |
           export PATH="${PWD}/cov-linux64-tool/bin:${PATH}"
           mkdir build && cd build
           cmake -DCMAKE_CXX_STANDARD=20 -DCMAKE_BUILD_TYPE=relwithdebinfo \
             -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DTBB_CPF=ON ..
           cov-build --dir cov-int make VERBOSE=1 -j${BUILD_CONCURRENCY}
+        shell: bash
       - name: Archive Coverity build results
         run: tar -czvf cov-int.tgz cov-int
         shell: bash
@@ -72,4 +69,3 @@ jobs:
             --form description="oneTBB-master-${{ env.GITHUB_SHA_SHORT }}" \
               "https://scan.coverity.com/builds?project=${env: COVERITY_PROJECT}"
         shell: bash
- 
