@@ -35,7 +35,7 @@ cd /tmp/my-build
 
 ### Configure
 
-From the build directory, to generate a build system for it, run:
+From the build directory, to generate a build system, run:
 
 ```bash
 cmake [options] <onetbb_repo_directory>
