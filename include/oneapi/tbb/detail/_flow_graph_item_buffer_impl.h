@@ -183,8 +183,15 @@ protected:
 #endif
 
     // following methods are for reservation of the front of a buffer.
-    void reserve_item(size_type i) { __TBB_ASSERT(my_item_valid(i) && !my_item_reserved(i), "item cannot be reserved"); element(i).state = reserved_item; }
-    void release_item(size_type i) { __TBB_ASSERT(my_item_reserved(i), "item is not reserved"); element(i).state = has_item; }
+    void reserve_item(size_type i) {
+        __TBB_ASSERT(my_item_valid(i) && !my_item_reserved(i), "item cannot be reserved");
+        element(i).state = reserved_item;
+    }
+
+    void release_item(size_type i) {
+        __TBB_ASSERT(my_item_reserved(i), "item is not reserved");
+        element(i).state = has_item;
+    }
 
     void destroy_front() { destroy_item(my_head); ++my_head; }
     void destroy_back() { destroy_item(my_tail-1); --my_tail; }

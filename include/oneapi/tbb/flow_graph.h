@@ -284,12 +284,12 @@ public:
     //! Put an item to the receiver and wait for completion
     bool try_put_and_wait( const T& t ) {
         // Since try_put_and_wait is a blocking call, it is safe to create wait_context on stack
-        d1::wait_context_vertex msg_wait_context{};
+        d1::wait_context_vertex msg_wait_vertex{};
 
-        bool res = internal_try_put(t, message_metainfo{message_metainfo::waiters_type{&msg_wait_context}});
+        bool res = internal_try_put(t, message_metainfo{message_metainfo::waiters_type{&msg_wait_vertex}});
         if (res) {
             __TBB_ASSERT(graph_reference().my_context != nullptr, "No wait_context associated with the Flow Graph");
-            wait(msg_wait_context.get_context(), *graph_reference().my_context);
+            wait(msg_wait_vertex.get_context(), *graph_reference().my_context);
         }
         return res;
     }

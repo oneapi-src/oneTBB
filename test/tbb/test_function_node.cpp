@@ -484,9 +484,7 @@ void test_try_put_and_wait_lightweight(std::size_t concurrency_limit) {
 
         for (int i = 0; i < wait_message; ++i) {
             start_work_items.emplace_back(i);
-            if (i != 0) {
-                new_work_items.emplace_back(i + 10);
-            }
+            new_work_items.emplace_back(i + 1 + wait_message);
         }
 
         using function_node_type = tbb::flow::function_node<int, int, tbb::flow::lightweight>;
@@ -529,10 +527,13 @@ void test_try_put_and_wait_lightweight(std::size_t concurrency_limit) {
         if (concurrency_limit == tbb::flow::serial) {
             // If the lightweight function_node is serial, it should process the wait_message but add items from new_work_items
             // into the queue since the concurrency limit is occupied.
+            CHECK_MESSAGE(processed_items.size() == start_work_items.size() + 1, "Unexpected number of elements processed");
             CHECK_MESSAGE(processed_items[check_index++] == wait_message, "Unexpected items processing");
         } else {
             // If the node is unlimited, it should process new_work_items immediately while processing the wait_message
             // Hence they should be processed before exiting the try_put_and_wait
+            CHECK_MESSAGE(processed_items.size() == start_work_items.size() + new_work_items.size() + 1,
+                          "Unexpected number of elements processed");
             for (auto item : new_work_items) {
                 CHECK_MESSAGE(processed_items[check_index++] == item, "Unexpected items processing");
             }
@@ -549,6 +550,7 @@ void test_try_put_and_wait_lightweight(std::size_t concurrency_limit) {
                 CHECK_MESSAGE(processed_items[check_index++] == item, "Unexpected items processing");
             }
         }
+        CHECK(check_index == processed_items.size());
     });
 }
 
@@ -565,9 +567,7 @@ void test_try_put_and_wait_queueing(std::size_t concurrency_limit) {
 
         for (int i = 0; i < wait_message; ++i) {
             start_work_items.emplace_back(i);
-            if (i != 0) {
-                new_work_items.emplace_back(i + 10);
-            }
+            new_work_items.emplace_back(i + 1 + wait_message);
         }
 
         using function_node_type = tbb::flow::function_node<int, int, tbb::flow::queueing>;
@@ -605,9 +605,12 @@ void test_try_put_and_wait_queueing(std::size_t concurrency_limit) {
             // Serial queueing function_node should add all start_work_items except the first one into the queue
             // and then process them in FIFO order.
             // wait_message would also be added to the queue, but would be processed later
+            CHECK_MESSAGE(processed_items.size() == start_work_items.size() + 1, "Unexpected number of elements processed");
             for (auto item : start_work_items) {
                 CHECK_MESSAGE(processed_items[check_index++] == item, "Unexpected items processing");
             }
+        } else {
+            CHECK_MESSAGE(processed_items.size() == 1, "Unexpected number of elements processed");
         }
 
         // For the unlimited function_node, all of the tasks for start_work_items and wait_message would be spawned
@@ -634,6 +637,7 @@ void test_try_put_and_wait_queueing(std::size_t concurrency_limit) {
                 CHECK_MESSAGE(processed_items[check_index++] == start_work_items[i - 1], "Unexpected items processing");
             }
         }
+        CHECK(check_index == processed_items.size());
     });
 }
 
@@ -678,7 +682,7 @@ void test_try_put_and_wait_rejecting(size_t concurrency_limit) {
         // If the first action is try_put_and_wait, it will occupy concurrency of the function_node
         // All submits of new_work_items inside of the body should be rejected
         bool result = function.try_put_and_wait(wait_message);
-        CHECK_MESSAGE(result, "task should not rejected since the node concurrency is not acquired");
+        CHECK_MESSAGE(result, "task should not rejected since the node concurrency is not saturated");
 
         CHECK_MESSAGE(processed_items.size() == 1, nullptr);
         CHECK_MESSAGE(processed_items[0] == wait_message, "Unexpected items processing");
@@ -690,10 +694,10 @@ void test_try_put_and_wait_rejecting(size_t concurrency_limit) {
         processed_items.clear();
 
         // If the first action is try_put, try_put_and_wait is expected to return false since the concurrency of the
-        // node would be acquired
+        // node would be saturated
         function.try_put(0);
         result = function.try_put_and_wait(wait_message);
-        CHECK_MESSAGE(!result, "task should be rejected since the node concurrency is acquired");
+        CHECK_MESSAGE(!result, "task should be rejected since the node concurrency is saturated");
         CHECK(processed_items.empty());
 
         g.wait_for_all();
