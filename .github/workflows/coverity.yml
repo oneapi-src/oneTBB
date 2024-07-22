@@ -44,7 +44,6 @@ jobs:
           ls -l
           mkdir cov-linux64-tool
           tar -xzf cov-linux64-tool.tar.gz --strip 1 -C cov-linux64-tool
-        shell: bash
       - name: Build with cov-build
         run: |
           export PATH="${PWD}/cov-linux64-tool/bin:${PATH}"
@@ -52,10 +51,8 @@ jobs:
           cmake -DCMAKE_CXX_STANDARD=20 -DCMAKE_BUILD_TYPE=relwithdebinfo \
             -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DTBB_CPF=ON ..
           cov-build --dir cov-int make VERBOSE=1 -j${BUILD_CONCURRENCY}
-        shell: bash
       - name: Archive Coverity build results
         run: tar -czvf cov-int.tgz cov-int
-        shell: bash
       - name: Submit Coverity results for analysis
         run: |
           echo GITHUB_SHA_SHORT=${GITHUB_SHA::8} >> $GITHUB_ENV
@@ -66,4 +63,3 @@ jobs:
             --form version="${{ inputs.version }}" \
             --form description="oneTBB-master-${{ env.GITHUB_SHA_SHORT }}" \
               "https://scan.coverity.com/builds?project=${env: COVERITY_PROJECT}"
-        shell: bash
