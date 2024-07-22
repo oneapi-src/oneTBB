@@ -179,7 +179,7 @@ public:
     }
 
 private:
-    alignas(value_type) char my_value[sizeof(value_type)];
+    alignas(value_type) alignas(max_nfs_size) char my_value[sizeof(value_type)];
 }; // class value_node
 
 template <typename Traits>
