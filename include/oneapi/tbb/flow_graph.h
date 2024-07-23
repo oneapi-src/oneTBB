@@ -1570,7 +1570,7 @@ public:
     }
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    bool try_reserve(output_type& v, message_metainfo& metainfo) override {
+    bool try_reserve( output_type& v, message_metainfo& metainfo ) override {
         buffer_operation op_data(res_item, metainfo);
         op_data.elem = &v;
         my_aggregator.execute(&op_data);
@@ -1943,7 +1943,7 @@ protected:
         reserved_item = input_type();
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
         for (auto waiter : reserved_metainfo.waiters()) {
-            waiter->release();
+            waiter->release(1);
         }
 
         reserved_metainfo = message_metainfo{};
@@ -1957,7 +1957,7 @@ protected:
         reserved_item = input_type();
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
         for (auto waiter : reserved_metainfo.waiters()) {
-            waiter->release();
+            waiter->release(1);
         }
 
         reserved_metainfo = message_metainfo{};
@@ -2319,7 +2319,7 @@ private:
                 ++my_tries;
         }
 
-        graph_task* rtask = my_successors.try_put_task(t __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo) );
+        graph_task* rtask = my_successors.try_put_task(t __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo));
         if ( !rtask ) {  // try_put_task failed.
             spin_mutex::scoped_lock lock(my_mutex);
             --my_tries;

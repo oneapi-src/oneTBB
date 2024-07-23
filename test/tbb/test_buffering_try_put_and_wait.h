@@ -149,9 +149,6 @@ std::size_t test_buffer_reserve(std::size_t limiter_threshold,
 
         BufferingNode buffer(g, args...);
 
-        // auto function_threshold = limiter_threshold == 1 ? tbb::flow::unlimited
-        //                                                  : tbb::flow::serial;
-
         tbb::flow::limiter_node<int, int> limiter(g, limiter_threshold);
         tbb::flow::function_node<int, int, tbb::flow::rejecting> function(g, tbb::flow::serial,
             [&](int input) {

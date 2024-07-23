@@ -222,7 +222,7 @@ public:
     }
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    bool try_reserve( output_type& v, message_metainfo& metainfo) {
+    bool try_reserve( output_type& v, message_metainfo& metainfo ) {
         return try_reserve_impl(v, &metainfo);
     }
 #endif
