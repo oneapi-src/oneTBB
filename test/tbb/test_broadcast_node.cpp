@@ -248,6 +248,12 @@ void test_deduction_guides() {
 #endif
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+// Basic idea of the following tests is to check that try_put_and_wait(message) call for broadcast_node
+// processes all of the previous jobs required to process message, the message itself, but does
+// not process the elements submitted later or not required to process the message
+// These tests submit start_work_items using the regular try_put and then submit wait_message
+// with try_put_and_wait. During the completion of the graph, new_work_items would be submitted
+// once the wait_message arrives.
 void test_try_put_and_wait_spawning_and_serial_receiver() {
     tbb::task_arena arena(1);
 
@@ -262,9 +268,7 @@ void test_try_put_and_wait_spawning_and_serial_receiver() {
 
         for (int i = 0; i < wait_message; ++i) {
             start_work_items.emplace_back(i);
-            if (i != 0) {
-                new_work_items.emplace_back(i + wait_message);
-            }
+            new_work_items.emplace_back(i + 1 + wait_message);
         }
 
         tbb::flow::broadcast_node<int> broadcast(g);
@@ -300,6 +304,8 @@ void test_try_put_and_wait_spawning_and_serial_receiver() {
         // For the unlimited function_node, all of the tasks for start_work_items and wait_message would be spawned
         // and hence processed by the thread in LIFO order.
         // The first processed item is expected to be wait_message since it was spawned last
+        CHECK_MESSAGE(processed_items_unlimited.size() == new_work_items.size() + start_work_items.size(),
+                      "Unexpected number of processed items");
         CHECK_MESSAGE(processed_items_unlimited[unlimited_check_index++] == wait_message, "Unexpected items processing");
         for (int i = int(new_work_items.size()) - 1; i >= 0; --i) {
             CHECK_MESSAGE(processed_items_unlimited[unlimited_check_index++] == new_work_items[i], "Unexpected items processing");
@@ -311,6 +317,8 @@ void test_try_put_and_wait_spawning_and_serial_receiver() {
         // Serial queueing function_node should add all start_work_items except the first one into the queue
         // and then process them in FIFO order.
         // wait_message would also be added to the queue, but would be processed later
+        CHECK_MESSAGE(processed_items_serial.size() == start_work_items.size() + 1,
+                      "Unexpected number of processed items");
         for (auto item : start_work_items) {
             CHECK_MESSAGE(processed_items_serial[serial_check_index++] == item, "Unexpected items processing");
         }
@@ -325,6 +333,8 @@ void test_try_put_and_wait_spawning_and_serial_receiver() {
         for (auto item : new_work_items) {
             CHECK_MESSAGE(processed_items_serial[serial_check_index++] == item, "Unexpected items processing");
         }
+        CHECK(serial_check_index == processed_items_serial.size());
+        CHECK(unlimited_check_index == processed_items_unlimited.size());
     });
 }
 
@@ -343,9 +353,7 @@ void test_try_put_and_wait_spawning_receivers() {
 
         for (int i = 0; i < wait_message; ++i) {
             start_work_items.emplace_back(i);
-            if (i != 0) {
-                new_work_items.emplace_back(i + wait_message);
-            }
+            new_work_items.emplace_back(i + 1 + wait_message);
         }
 
         tbb::flow::broadcast_node<int> broadcast(g);
