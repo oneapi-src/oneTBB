@@ -290,7 +290,7 @@ public:
 
     virtual graph_task* try_put_task( const T& t ) = 0;
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    virtual graph_task* try_put_task( const T& t, const message_metainfo& metainfo) = 0;
+    virtual graph_task* try_put_task( const T& t, const message_metainfo& metainfo ) = 0;
 #endif
 };  // successor_cache<T>
 
@@ -391,7 +391,6 @@ public:
         // Do not work with the passed pointer here as it may not be fully initialized yet
     }
 
-    // as above, but call try_put_task instead, and return the last task we received (if any)
     graph_task* try_put_task( const T &t ) override {
         return try_put_task_impl(t __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo{}));
     }
@@ -476,8 +475,9 @@ public:
     }
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    graph_task* try_put_task(const T& t, const message_metainfo& metainfo) override {
-        return try_put_task_impl(t, metainfo);
+    // TODO: add support for round robin cache
+    graph_task* try_put_task( const T& t, const message_metainfo& metainfo ) override {
+        return try_put_task(t, metainfo);
     }
 #endif
 };

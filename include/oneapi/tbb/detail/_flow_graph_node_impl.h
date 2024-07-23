@@ -164,7 +164,7 @@ private:
 
     friend class apply_body_task_bypass< class_type, input_type>;
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    friend class apply_body_task_bypass< class_type, input_type, graph_task_with_message_waiters>;
+    friend class apply_body_task_bypass< class_type, input_type, graph_task_with_message_waiters >;
 #endif
     friend class forward_task_bypass< class_type >;
 
