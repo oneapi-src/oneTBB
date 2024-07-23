@@ -676,9 +676,7 @@ void test_try_put_and_wait() {
 
         for (int i = 0; i < wait_message; ++i) {
             start_work_items.emplace_back(i);
-            if (i != 0) {
-                new_work_items.emplace_back(i + 10);
-            }
+            new_work_items.emplace_back(i + 1 + wait_message);
         }
 
         tbb::flow::indexer_node<int, float> indexer(g);
@@ -726,18 +724,6 @@ void test_try_put_and_wait() {
 
         // wait_message was submitted only to the first port of indexer_node
         CHECK_MESSAGE(processed_items1[check_index1++] == wait_message, "Unexpected wait_message processing");
-
-        // std::cout << "v1" << std::endl;
-        // for (auto item : processed_items1) {
-        //     std::cout << item << " ";
-        // }
-        // std::cout << std::endl;
-
-        // std::cout << "v2" << std::endl;
-        // for (auto item : processed_items2) {
-        //     std::cout << item << " ";
-        // }
-        // std::cout << std::endl;
 
         g.wait_for_all();
 
