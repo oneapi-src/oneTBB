@@ -260,9 +260,7 @@ void test_try_put_and_wait_key_matching(Body... body) {
 
         for (int i = 0; i < wait_message.i; ++i) {
             start_work_items.emplace_back(i);
-            if (i != 0) {
-                new_work_items.emplace_back(i + 10);
-            }
+            new_work_items.emplace_back(i + 1 + wait_message);
         }
 
         using tuple_type = std::tuple<int_wrapper, int_wrapper, int_wrapper>;
