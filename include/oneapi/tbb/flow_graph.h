@@ -699,7 +699,7 @@ public:
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
 private:
-    bool try_reserve(output_type& v, message_metainfo&) override {
+    bool try_reserve( output_type& v, message_metainfo& ) override {
         return try_reserve(v);
     }
 
@@ -1680,14 +1680,14 @@ protected:
         }
         else {
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-            if (op->metainfo) {
+            if (op->metainfo)
+            {
                 this->pop_front(*(op->elem), *(op->metainfo));
-            } else {
+            } else
+#endif
+            {
                 this->pop_front(*(op->elem));
             }
-#else
-            this->pop_front(*(op->elem));
-#endif
             op->status.store(SUCCEEDED, std::memory_order_release);
         }
     }

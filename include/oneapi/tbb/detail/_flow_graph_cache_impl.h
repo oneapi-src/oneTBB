@@ -100,7 +100,7 @@ public:
 
 private:
     bool get_item_impl( output_type& v
-                        __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo* metainfo = nullptr))
+                        __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo* metainfo_ptr = nullptr) )
     {
 
         bool msg = false;
@@ -117,14 +117,14 @@ private:
 
             // Try to get from this sender
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-            if (metainfo) {
-                msg = src->try_get( v, *metainfo );
-            } else {
+            if (metainfo_ptr)
+            {
+                msg = src->try_get( v, *metainfo_ptr );
+            } else
+#endif
+            {
                 msg = src->try_get( v );
             }
-#else
-            msg = src->try_get( v );
-#endif
 
             if (msg == false) {
                 // Relinquish ownership of the edge
@@ -363,7 +363,7 @@ class broadcast_cache : public successor_cache<T, M> {
     typedef M mutex_type;
     typedef typename successor_cache<T,M>::successors_type successors_type;
 
-    graph_task* try_put_task_impl( const T& t __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo)) {
+    graph_task* try_put_task_impl( const T& t __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo) ) {
         graph_task * last_task = nullptr;
         typename mutex_type::scoped_lock l(this->my_mutex, /*write=*/true);
         typename successors_type::iterator i = this->my_successors.begin();
@@ -449,7 +449,7 @@ public:
 private:
 
     graph_task* try_put_task_impl( const T &t
-                                   __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo))
+                                   __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo) )
     {
         typename mutex_type::scoped_lock l(this->my_mutex, /*write=*/true);
         typename successors_type::iterator i = this->my_successors.begin();

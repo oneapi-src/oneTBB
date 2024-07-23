@@ -448,9 +448,7 @@ void test_seq_node_try_put_and_wait() {
 
     for (int i = 0; i < wait_message; ++i) {
         start_work_items.emplace_back(i);
-        if (i != 0) {
-            new_work_items.emplace_back(i + 10);
-        }
+        new_work_items.emplace_back(i + 1 + wait_message);
     }
 
     auto simple_sequencer = [](int item) { return item; };
