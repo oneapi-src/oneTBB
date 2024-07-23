@@ -271,32 +271,36 @@ bool remove_successor(sender<C>& s, receiver<C>& r) {
 //! Pure virtual template class that defines a receiver of messages of type T
 template< typename T >
 class receiver {
+private:
+    template <typename... TryPutTaskArgs>
+    bool internal_try_put(const T& t, TryPutTaskArgs&&... args) {
+        graph_task* res = try_put_task(t, std::forward<TryPutTaskArgs>(args)...);
+        if (!res) return false;
+        if (res != SUCCESSFULLY_ENQUEUED) spawn_in_graph_arena(graph_reference(), *res);
+        return true;
+    }
+
 public:
     //! Destructor
     virtual ~receiver() {}
 
     //! Put an item to the receiver
     bool try_put( const T& t ) {
-        graph_task *res = try_put_task(t);
-        if (!res) return false;
-        if (res != SUCCESSFULLY_ENQUEUED) spawn_in_graph_arena(graph_reference(), *res);
-        return true;
+        return internal_try_put(t);
     }
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
     //! Put an item to the receiver and wait for completion
     bool try_put_and_wait( const T& t ) {
-        d1::small_object_allocator alloc{};
-        d1::wait_context_vertex* msg_wait_context = alloc.new_object<d1::wait_context_vertex>();
+        // Since try_put_and_wait is a blocking call, it is safe to create wait_context on stack
+        d1::wait_context_vertex msg_wait_vertex{};
 
-        graph_task* res = try_put_task(t, message_metainfo{message_metainfo::waiters_type{msg_wait_context}});
-        if (!res) return false;
-        if (res != SUCCESSFULLY_ENQUEUED) spawn_in_graph_arena(graph_reference(), *res);
-
-        __TBB_ASSERT(graph_reference().my_context != nullptr, "No wait_context associated with the Flow Graph");
-
-        wait(msg_wait_context->get_context(), *graph_reference().my_context);
-        return true;
+        bool res = internal_try_put(t, message_metainfo{message_metainfo::waiters_type{&msg_wait_vertex}});
+        if (res) {
+            __TBB_ASSERT(graph_reference().my_context != nullptr, "No wait_context associated with the Flow Graph");
+            wait(msg_wait_vertex.get_context(), *graph_reference().my_context);
+        }
+        return res;
     }
 #endif
 
@@ -695,7 +699,7 @@ public:
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
 private:
-    bool try_reserve(output_type& v, message_metainfo&) override {
+    bool try_reserve( output_type& v, message_metainfo& ) override {
         return try_reserve(v);
     }
 
@@ -1260,15 +1264,12 @@ protected:
         graph_task* ltask;
         successor_type *r;
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-        message_metainfo* metainfo;
+        message_metainfo* metainfo = nullptr;
 #endif
 
         buffer_operation(const T& e, op_type t) : type(char(t))
                                                   , elem(const_cast<T*>(&e)) , ltask(nullptr)
                                                   , r(nullptr)
-#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-                                                  , metainfo(nullptr)
-#endif
         {}
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
@@ -1277,11 +1278,7 @@ protected:
             , metainfo(const_cast<message_metainfo*>(&info))
         {}
 #endif
-        buffer_operation(op_type t) : type(char(t)), elem(nullptr), ltask(nullptr), r(nullptr)
-#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-            , metainfo(nullptr)
-#endif
-        {}
+        buffer_operation(op_type t) : type(char(t)), elem(nullptr), ltask(nullptr), r(nullptr) {}
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
         buffer_operation(op_type t, message_metainfo& info)
@@ -1440,7 +1437,9 @@ protected:
             this->push_back(*(op->elem), (*op->metainfo));
         } else
 #endif
+        {
             this->push_back(*(op->elem));
+        }
         op->status.store(SUCCEEDED, std::memory_order_release);
         return true;
     }
@@ -1688,14 +1687,14 @@ protected:
         }
         else {
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-            if (op->metainfo) {
+            if (op->metainfo)
+            {
                 this->pop_front(*(op->elem), *(op->metainfo));
-            } else {
+            } else
+#endif
+            {
                 this->pop_front(*(op->elem));
             }
-#else
-            this->pop_front(*(op->elem));
-#endif
             op->status.store(SUCCEEDED, std::memory_order_release);
         }
     }
@@ -1892,12 +1891,11 @@ protected:
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
         if (op->metainfo) {
             prio_push(*(op->elem), *(op->metainfo));
-        } else {
+        } else
+#endif
+        {
             prio_push(*(op->elem));
         }
-#else
-        prio_push(*(op->elem));
-#endif
         op->status.store(SUCCEEDED, std::memory_order_release);
         return true;
     }
@@ -2066,10 +2064,8 @@ private:
             input_type to_place;
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
             message_metainfo metainfo;
-            this->fetch_item(mark, to_place, metainfo);
-#else
-            this->fetch_item(mark, to_place);
 #endif
+            this->fetch_item(mark, to_place __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo));
             do { // push to_place up the heap
                 size_type parent = (cur_pos-1)>>1;
                 if (!compare(this->get_my_item(parent), to_place))

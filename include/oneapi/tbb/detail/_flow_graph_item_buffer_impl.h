@@ -99,14 +99,14 @@ protected:
             destroy_item(i);
         }
         new(&(element(i).item)) item_type(o);
+        element(i).state = has_item;
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
         new(&element(i).metainfo) message_metainfo(metainfo);
 
-        for (auto& msg_waiter : metainfo.waiters()) {
-            msg_waiter->reserve();
+        for (auto& waiter : metainfo.waiters()) {
+            waiter->reserve(1);
         }
 #endif
-        element(i).state = has_item;
     }
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
@@ -142,11 +142,8 @@ protected:
     void move_item(size_t to, size_t from) {
         __TBB_ASSERT(!my_item_valid(to), "Trying to move to a non-empty slot");
         __TBB_ASSERT(my_item_valid(from), "Trying to move from an empty slot");
-#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-        set_my_item(to, get_my_item(from), get_my_metainfo(from));
-#else
-        set_my_item(to, get_my_item(from));   // could have std::move semantics
-#endif
+        // could have std::move semantics
+        set_my_item(to, get_my_item(from) __TBB_FLOW_GRAPH_METAINFO_ARG(get_my_metainfo(from)));
         destroy_item(from);
     }
 
@@ -162,7 +159,6 @@ protected:
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
     template <typename Metainfo>
     bool place_item(size_t here, const item_type &me, Metainfo&& metainfo) {
-
 #if !TBB_DEPRECATED_SEQUENCER_DUPLICATES
         if(my_item_valid(here)) return false;
 #endif
@@ -231,8 +227,15 @@ protected:
 #endif
 
     // following methods are for reservation of the front of a buffer.
-    void reserve_item(size_type i) { __TBB_ASSERT(my_item_valid(i) && !my_item_reserved(i), "item cannot be reserved"); element(i).state = reserved_item; }
-    void release_item(size_type i) { __TBB_ASSERT(my_item_reserved(i), "item is not reserved"); element(i).state = has_item; }
+    void reserve_item(size_type i) {
+        __TBB_ASSERT(my_item_valid(i) && !my_item_reserved(i), "item cannot be reserved");
+        element(i).state = reserved_item;
+    }
+
+    void release_item(size_type i) {
+        __TBB_ASSERT(my_item_reserved(i), "item is not reserved");
+        element(i).state = has_item;
+    }
 
     void destroy_front() { destroy_item(my_head); ++my_head; }
     void destroy_back() { destroy_item(my_tail-1); --my_tail; }
@@ -263,11 +266,11 @@ protected:
                 // placement-new copy-construct; could be std::move
                 char *new_space = (char *)&(new_array[i&(new_size-1)].begin()->item);
                 (void)new(new_space) item_type(get_my_item(i));
+                new_array[i&(new_size-1)].begin()->state = element(i).state;
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
                 char* meta_space = (char *)&(new_array[i&(new_size-1)].begin()->metainfo);
                 ::new(meta_space) message_metainfo(std::move(element(i).metainfo));
 #endif
-                new_array[i&(new_size-1)].begin()->state = element(i).state;
             }
         }
 
