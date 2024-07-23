@@ -92,14 +92,14 @@ protected:
             destroy_item(i);
         }
         new(&(element(i).item)) item_type(o);
+        element(i).state = has_item;
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
         new(&element(i).metainfo) message_metainfo(metainfo);
 
         for (auto& waiter : metainfo.waiters()) {
-            waiter->reserve();
+            waiter->reserve(1);
         }
 #endif
-        element(i).state = has_item;
     }
 
     // destructively-fetch an object from the buffer
@@ -183,8 +183,15 @@ protected:
 #endif
 
     // following methods are for reservation of the front of a buffer.
-    void reserve_item(size_type i) { __TBB_ASSERT(my_item_valid(i) && !my_item_reserved(i), "item cannot be reserved"); element(i).state = reserved_item; }
-    void release_item(size_type i) { __TBB_ASSERT(my_item_reserved(i), "item is not reserved"); element(i).state = has_item; }
+    void reserve_item(size_type i) {
+        __TBB_ASSERT(my_item_valid(i) && !my_item_reserved(i), "item cannot be reserved");
+        element(i).state = reserved_item;
+    }
+
+    void release_item(size_type i) {
+        __TBB_ASSERT(my_item_reserved(i), "item is not reserved");
+        element(i).state = has_item;
+    }
 
     void destroy_front() { destroy_item(my_head); ++my_head; }
     void destroy_back() { destroy_item(my_tail-1); --my_tail; }
@@ -215,11 +222,11 @@ protected:
                 // placement-new copy-construct; could be std::move
                 char *new_space = (char *)&(new_array[i&(new_size-1)].begin()->item);
                 (void)new(new_space) item_type(get_my_item(i));
+                new_array[i&(new_size-1)].begin()->state = element(i).state;
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
                 char* meta_space = (char *)&(new_array[i&(new_size-1)].begin()->metainfo);
                 ::new(meta_space) message_metainfo(std::move(element(i).metainfo));
 #endif
-                new_array[i&(new_size-1)].begin()->state = element(i).state;
             }
         }
 

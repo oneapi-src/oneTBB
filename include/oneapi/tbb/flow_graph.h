@@ -262,32 +262,36 @@ bool remove_successor(sender<C>& s, receiver<C>& r) {
 //! Pure virtual template class that defines a receiver of messages of type T
 template< typename T >
 class receiver {
+private:
+    template <typename... TryPutTaskArgs>
+    bool internal_try_put(const T& t, TryPutTaskArgs&&... args) {
+        graph_task* res = try_put_task(t, std::forward<TryPutTaskArgs>(args)...);
+        if (!res) return false;
+        if (res != SUCCESSFULLY_ENQUEUED) spawn_in_graph_arena(graph_reference(), *res);
+        return true;
+    }
+
 public:
     //! Destructor
     virtual ~receiver() {}
 
     //! Put an item to the receiver
     bool try_put( const T& t ) {
-        graph_task *res = try_put_task(t);
-        if (!res) return false;
-        if (res != SUCCESSFULLY_ENQUEUED) spawn_in_graph_arena(graph_reference(), *res);
-        return true;
+        return internal_try_put(t);
     }
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
     //! Put an item to the receiver and wait for completion
     bool try_put_and_wait( const T& t ) {
-        d1::small_object_allocator alloc{};
-        d1::wait_context_vertex* msg_wait_context = alloc.new_object<d1::wait_context_vertex>();
+        // Since try_put_and_wait is a blocking call, it is safe to create wait_context on stack
+        d1::wait_context_vertex msg_wait_vertex{};
 
-        graph_task* res = try_put_task(t, message_metainfo{message_metainfo::waiters_type{msg_wait_context}});
-        if (!res) return false;
-        if (res != SUCCESSFULLY_ENQUEUED) spawn_in_graph_arena(graph_reference(), *res);
-
-        __TBB_ASSERT(graph_reference().my_context != nullptr, "No wait_context associated with the Flow Graph");
-
-        wait(msg_wait_context->get_context(), *graph_reference().my_context);
-        return true;
+        bool res = internal_try_put(t, message_metainfo{message_metainfo::waiters_type{&msg_wait_vertex}});
+        if (res) {
+            __TBB_ASSERT(graph_reference().my_context != nullptr, "No wait_context associated with the Flow Graph");
+            wait(msg_wait_vertex.get_context(), *graph_reference().my_context);
+        }
+        return res;
     }
 #endif
 
