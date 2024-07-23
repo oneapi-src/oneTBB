@@ -475,9 +475,8 @@ public:
     }
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    // TODO: add support for round robin cache
     graph_task* try_put_task( const T& t, const message_metainfo& metainfo ) override {
-        return try_put_task(t, metainfo);
+        return try_put_task_impl(t, metainfo);
     }
 #endif
 };
