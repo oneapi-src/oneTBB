@@ -279,19 +279,23 @@ class apply_body_task_bypass
     NodeType &my_node;
     Input my_input;
 
-    graph_task* call_apply_body_bypass_impl(std::true_type) {
+    using check_metainfo = std::is_same<BaseTaskType, graph_task>;
+    using without_metainfo = std::true_type;
+    using with_metainfo = std::false_type;
+
+    graph_task* call_apply_body_bypass_impl(without_metainfo) {
         return my_node.apply_body_bypass(my_input
                                          __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo{}));
     }
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    graph_task* call_apply_body_bypass_impl(std::false_type) {
+    graph_task* call_apply_body_bypass_impl(with_metainfo) {
         return my_node.apply_body_bypass(my_input, message_metainfo{this->get_msg_wait_context_vertices()});
     }
 #endif
 
     graph_task* call_apply_body_bypass() {
-        return call_apply_body_bypass_impl(std::is_same<BaseTaskType, graph_task>{});
+        return call_apply_body_bypass_impl(check_metainfo{});
     }
 
 public:
