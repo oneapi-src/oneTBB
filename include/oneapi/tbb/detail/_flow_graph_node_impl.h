@@ -752,7 +752,10 @@ protected:
 
     virtual broadcast_cache<output_type > &successors() = 0;
 
-    friend class apply_body_task_bypass< class_type, continue_msg __TBB_FLOW_GRAPH_METAINFO_ARG(graph_task_with_message_waiters) >;
+    friend class apply_body_task_bypass< class_type, continue_msg >;
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    friend class apply_body_task_bypass< class_type, continue_msg, graph_task_with_message_waiters >;
+#endif
 
     //! Applies the body to the provided input
     graph_task* apply_body_bypass( input_type __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo) ) {
@@ -764,14 +767,10 @@ protected:
         return successors().try_put_task( v __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo) );
     }
 
-    graph_task* execute() override {
-#if !__TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-        message_metainfo metainfo{};
-#else
-        return execute(message_metainfo{});
-    }
-
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
     graph_task* execute(const message_metainfo& metainfo) override {
+#else
+    graph_task* execute() override {
 #endif
         if(!is_graph_active(my_graph_ref)) {
             return nullptr;
@@ -788,9 +787,17 @@ protected:
         }
         else {
             d1::small_object_allocator allocator{};
-            typedef apply_body_task_bypass<class_type, continue_msg __TBB_FLOW_GRAPH_METAINFO_ARG(graph_task_with_message_waiters)> task_type;
-            graph_task* t = allocator.new_object<task_type>( graph_reference(), allocator, *this, continue_msg(),
-                                                             my_priority __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo));
+            graph_task* t = nullptr;
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+            if (!metainfo.empty()) {
+                using task_type = apply_body_task_bypass<class_type, continue_msg, graph_task_with_message_waiters>;
+                t = allocator.new_object<task_type>( graph_reference(), allocator, *this, continue_msg(), my_priority, metainfo );
+            } else
+#endif
+            {
+                using task_type = apply_body_task_bypass<class_type, continue_msg>;
+                t = allocator.new_object<task_type>( graph_reference(), allocator, *this, continue_msg(), my_priority );
+            }
             return t;
         }
     }

@@ -411,9 +411,7 @@ void test_try_put_and_wait_lightweight() {
 
         for (int i = 0; i < wait_message; ++i) {
             start_work_items.emplace_back(i);
-            if (i != 0) {
-                new_work_items.emplace_back(i + 10);
-            }
+            new_work_items.emplace_back(i + 1 + wait_message);
         }
 
         tbb::flow::continue_node<int, tbb::flow::lightweight>* start_node = nullptr;
@@ -447,6 +445,9 @@ void test_try_put_and_wait_lightweight() {
 
         cont.try_put_and_wait(tbb::flow::continue_msg{});
 
+        CHECK_MESSAGE(processed_items.size() == start_work_items.size() + new_work_items.size() + 1,
+                      "Unexpected number of elements processed");
+
         std::size_t check_index = 0;
 
         // For lightweight continue_node, start_work_items are expected to be processed first
@@ -463,6 +464,8 @@ void test_try_put_and_wait_lightweight() {
         CHECK_MESSAGE(processed_items[check_index++] == wait_message, "Unexpected items processing");
 
         g.wait_for_all();
+
+        CHECK(check_index == processed_items.size());
     });
 }
 

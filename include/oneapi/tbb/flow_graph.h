@@ -443,9 +443,10 @@ protected:
     //! Does whatever should happen when the threshold is reached
     /** This should be very fast or else spawn a task.  This is
         called while the sender is blocked in the try_put(). */
-    virtual graph_task* execute() = 0;
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
     virtual graph_task* execute(const message_metainfo& metainfo) = 0;
+#else
+    virtual graph_task* execute() = 0;
 #endif
     template<typename TT, typename M> friend class successor_cache;
     bool is_continue_receiver() override { return true; }
