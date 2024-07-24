@@ -88,12 +88,15 @@ private:
         if ( hwloc_topology_init( &topology ) == 0 ) {
             initialization_state = topology_allocated;
 #if __TBBBIND_HWLOC_TOPOLOGY_FLAG_RESTRICT_TO_CPUBINDING_PRESENT
-            if ( groups_num == 1 &&
-                 hwloc_topology_set_flags(topology,
-                     HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM |
-                     HWLOC_TOPOLOGY_FLAG_RESTRICT_TO_CPUBINDING
-                 ) != 0
-            ) {
+            unsigned long flags = 0;
+            if (groups_num > 1) {
+                // HWLOC x86 backend might interfere with process affinity mask on
+                // Windows systems with multiple processor groups.
+                flags = HWLOC_TOPOLOGY_FLAG_DONT_CHANGE_BINDING;
+            } else {
+                flags = HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM | HWLOC_TOPOLOGY_FLAG_RESTRICT_TO_CPUBINDING;
+            }
+            if (hwloc_topology_set_flags(topology, flags) != 0) {
                 return;
             }
 #endif
