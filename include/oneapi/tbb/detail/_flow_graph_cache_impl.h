@@ -117,8 +117,7 @@ private:
 
             // Try to get from this sender
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-            if (metainfo_ptr)
-            {
+            if (metainfo_ptr) {
                 msg = src->try_get( v, *metainfo_ptr );
             } else
 #endif

@@ -1264,7 +1264,7 @@ protected:
         graph_task* ltask;
         successor_type *r;
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-        message_metainfo* metainfo = nullptr;
+        message_metainfo* metainfo{ nullptr };
 #endif
 
         buffer_operation(const T& e, op_type t) : type(char(t))
@@ -1277,13 +1277,11 @@ protected:
             : type(char(t)), elem(const_cast<T*>(&e)), ltask(nullptr), r(nullptr)
             , metainfo(const_cast<message_metainfo*>(&info))
         {}
-#endif
-        buffer_operation(op_type t) : type(char(t)), elem(nullptr), ltask(nullptr), r(nullptr) {}
 
-#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
         buffer_operation(op_type t, message_metainfo& info)
             : type(char(t)), elem(nullptr), ltask(nullptr), r(nullptr), metainfo(&info) {}
 #endif
+        buffer_operation(op_type t) : type(char(t)), elem(nullptr), ltask(nullptr), r(nullptr) {}
     };
 
     bool forwarder_busy;
@@ -1680,8 +1678,7 @@ protected:
         }
         else {
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-            if (op->metainfo)
-            {
+            if (op->metainfo) {
                 this->pop_front(*(op->elem), *(op->metainfo));
             } else
 #endif
@@ -1805,7 +1802,7 @@ private:
         this->my_tail = new_tail;
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-        auto place_item_result = op->metainfo ? this->place_item(tag, *(op->elem), *(op->metainfo))
+        bool place_item_result = op->metainfo ? this->place_item(tag, *(op->elem), *(op->metainfo))
                                               : this->place_item(tag, *(op->elem));
         const op_stat res = place_item_result ? SUCCEEDED : FAILED;
 #else
