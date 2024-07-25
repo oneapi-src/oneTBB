@@ -456,12 +456,13 @@ void test_try_put_and_wait() {
         // and only when {f2 - 10} would be taken and executed, try_put_and_wait would be exitted
         // All of the other tasks for start_work_items would be processed during wait_for_all()
         CHECK_MESSAGE(processed_items1[check_index1++] == wait_message, "Unexpected items processing");
-        CHECK_MESSAGE(processed_items2[check_index2++] == wait_message, "Unexpected items processing");
 
         for (std::size_t i = new_work_items.size(); i != 0; --i) {
             CHECK_MESSAGE(processed_items1[check_index1++] == new_work_items[i - 1], "Unexpected items processing");
             CHECK_MESSAGE(processed_items2[check_index2++] == new_work_items[i - 1], "Unexpected items processing");
         }
+
+        CHECK_MESSAGE(processed_items2[check_index2++] == wait_message, "Unexpected items processing");
 
         g.wait_for_all();
 
