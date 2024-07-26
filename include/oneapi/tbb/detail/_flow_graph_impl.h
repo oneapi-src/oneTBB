@@ -147,11 +147,11 @@ private:
 };
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-class graph_task_with_message_waiters : public graph_task {
+class trackable_messages_graph_task : public graph_task {
 public:
-    graph_task_with_message_waiters(graph& g, d1::small_object_allocator& allocator,
-                                    node_priority_t node_priority,
-                                    const std::forward_list<d1::wait_context_vertex*>& msg_waiters)
+    trackable_messages_graph_task(graph& g, d1::small_object_allocator& allocator,
+                                  node_priority_t node_priority,
+                                  const std::forward_list<d1::wait_context_vertex*>& msg_waiters)
         : graph_task(g, allocator, node_priority)
         , my_msg_wait_context_vertices(msg_waiters)
     {
@@ -165,9 +165,9 @@ public:
         }
     }
 
-    graph_task_with_message_waiters(graph& g, d1::small_object_allocator& allocator,
-                                    const std::forward_list<d1::wait_context_vertex*>& msg_waiters)
-        : graph_task_with_message_waiters(g, allocator, no_priority, msg_waiters) {}
+    trackable_messages_graph_task(graph& g, d1::small_object_allocator& allocator,
+                                  const std::forward_list<d1::wait_context_vertex*>& msg_waiters)
+        : trackable_messages_graph_task(g, allocator, no_priority, msg_waiters) {}
 
     const std::forward_list<d1::wait_context_vertex*> get_msg_wait_context_vertices() const {
         return my_msg_wait_context_vertices;
@@ -191,7 +191,7 @@ private:
     // to support the distributed reference counting schema
     std::forward_list<d1::wait_context_vertex*> my_msg_wait_context_vertices;
     std::forward_list<d1::wait_tree_vertex_interface*> my_msg_reference_vertices;
-}; // class graph_task_with_message_waiters
+}; // class trackable_messages_graph_task
 #endif // __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
 
 struct graph_task_comparator {
