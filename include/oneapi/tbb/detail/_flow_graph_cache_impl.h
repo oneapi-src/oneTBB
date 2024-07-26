@@ -103,7 +103,7 @@ private:
                         __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo* metainfo_ptr = nullptr) )
     {
 
-        bool msg = false;
+        bool successful_get = false;
 
         do {
             predecessor_type *src;
@@ -118,22 +118,22 @@ private:
             // Try to get from this sender
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
             if (metainfo_ptr) {
-                msg = src->try_get( v, *metainfo_ptr );
+                successful_get = src->try_get( v, *metainfo_ptr );
             } else
 #endif
             {
-                msg = src->try_get( v );
+                successful_get = src->try_get( v );
             }
 
-            if (msg == false) {
+            if (successful_get == false) {
                 // Relinquish ownership of the edge
                 register_successor(*src, *my_owner);
             } else {
                 // Retain ownership of the edge
                 this->add(*src);
             }
-        } while ( msg == false );
-        return msg;
+        } while ( successful_get == false );
+        return successful_get;
     }
 public:
     bool get_item( output_type& v ) {
@@ -178,7 +178,7 @@ public:
     }
 
     bool try_reserve( output_type &v ) {
-        bool msg = false;
+        bool successful_reserve = false;
 
         do {
             predecessor_type* pred = nullptr;
@@ -192,9 +192,9 @@ public:
             }
 
             // Try to get from this sender
-            msg = pred->try_reserve( v );
+            successful_reserve = pred->try_reserve( v );
 
-            if (msg == false) {
+            if (successful_reserve == false) {
                 typename mutex_type::scoped_lock lock(this->my_mutex);
                 // Relinquish ownership of the edge
                 register_successor( *pred, *this->my_owner );
@@ -203,9 +203,9 @@ public:
                 // Retain ownership of the edge
                 this->add( *pred);
             }
-        } while ( msg == false );
+        } while ( successful_reserve == false );
 
-        return msg;
+        return successful_reserve;
     }
 
     bool try_release() {
