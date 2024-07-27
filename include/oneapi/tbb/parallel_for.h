@@ -261,6 +261,17 @@ void parallel_for( const Range& range, const Body& body, affinity_partitioner& p
     start_for<Range,Body,affinity_partitioner>::run(range,body,partitioner);
 }
 
+//! Parallel iteration over range with affinity_partitioner.
+/** @ingroup algorithms **/
+  template<typename Range, typename Body, typename T>
+__TBB_requires(tbb_range<Range> && parallel_for_body<Body, Range>)
+    void parallel_for(const Range& range, const Body& body,  T& n_partitioner) {
+    //start_for<Range,Body,T>::run(range,body,n_partitioner);
+    n_partitioner.execute(range, body);
+    //printf("HERE\n");
+  }
+
+
 //! Parallel iteration over range with default partitioner and user-supplied context.
 /** @ingroup algorithms **/
 template<typename Range, typename Body>
