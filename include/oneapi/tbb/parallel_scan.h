@@ -28,6 +28,7 @@
 #include "partitioner.h"
 #include "blocked_range.h"
 #include "task_group.h"
+#include <iostream>
 
 namespace tbb {
 namespace detail {
@@ -541,7 +542,6 @@ public:
   template<typename BasePartitioner>
   template<typename Range, typename Body>
   void numa_partitioner<BasePartitioner>::execute_scan(const Range& range, Body& body) const{
-    start_scan<Range, Body, BasePartitioner>::run(range, body, base_partitioner);
     if (range.is_divisible() && num_numa_nodes > 1) {
       std::vector<Range> subranges;
       split_range(range, subranges, num_numa_nodes);
@@ -555,21 +555,21 @@ public:
 	    subranges[i].first_touch(data);
 	  });
 	});
+	//TODO coordinate between 2 nodes
 	arenas[i].execute([&]() {
 	  task_groups[i].run([&, i] {
 	    parallel_scan(subranges[i], body, base_partitioner);
 	  });
 	});
-	for (std::size_t i = 0; i < num_numa_nodes; ++i) {
-	   arenas[i].execute([&task_groups, i]() {
-	     task_groups[i].wait();
-	   });
-	}
       }
-    }else{
-      parallel_scan(range,body,base_partitioner);
+      for (std::size_t i = 0; i < num_numa_nodes; ++i) {
+	arenas[i].execute([&task_groups, i]() {
+	  task_groups[i].wait();
+	});
+      }
+      }else{
+      parallel_scan(range , body, base_partitioner);
     }
-
   }
 // Requirements on Range concept are documented in blocked_range.h
 
