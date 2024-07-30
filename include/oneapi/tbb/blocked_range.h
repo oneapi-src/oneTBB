@@ -108,6 +108,14 @@ public:
         // only comparison 'less than' is required from values of blocked_range objects
         __TBB_ASSERT( !(my_begin < r.my_end) && !(r.my_end < my_begin), "blocked_range has been split incorrectly" );
     }
+  
+    // fill elements with their index values
+    void first_touch(std::vector<Value>& container) const {
+      container.resize(this->end() - this->begin());
+      for (Value i = this->begin(); i != this->end(); ++i) {
+	container[i] = i; // Set each element to its index
+        }
+    }
 
 private:
     /** NOTE: my_end MUST be declared before my_begin, otherwise the splitting constructor will break. */

@@ -89,6 +89,19 @@ public:
     //! The columns of the iteration space
     const col_range_type& cols() const { return my_cols; }
 
+    // First touch method
+    template <typename Container>
+    void first_touch(Container& container) const {
+      container.resize(my_rows.end() * my_cols.end());
+      for (RowValue r = my_rows.begin(); r != my_rows.end(); ++r) {
+	for (ColValue c = my_cols.begin(); c != my_cols.end(); ++c) {
+	  container[r * my_cols.end() + c] = r * my_cols.size() + c; // Example initialization
+	}
+      }
+    }
+  
+
+
 private:
     template <typename Split>
     void do_split( blocked_range2d& r, Split& split_obj ) {

@@ -688,11 +688,13 @@ public:
       std::vector<oneapi::tbb::task_group> task_groups(num_numa_nodes);
       for (std::size_t i = 0; i < num_numa_nodes; ++i) {
 	initialize_arena();
-	//Add first touch
+	// For 1D
+	std::vector<long unsigned int> data;
+	// For 2D
+
 	arenas[i].execute([&]() {
 	  task_groups[i].run([&, i] {
-	    //subranges[i] = range[num_numa_nodes*subranges.size() + i];
-	    
+	    subranges[i].first_touch(data);
 	  });
 	});
 
