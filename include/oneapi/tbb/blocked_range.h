@@ -110,10 +110,17 @@ public:
     }
   
     // fill elements with their index values
-    void first_touch(std::vector<Value>& container) const {
-      container.resize(this->end() - this->begin());
-      for (Value i = this->begin(); i != this->end(); ++i) {
-	container[i] = i; // Set each element to its index
+  void first_touch(std::vector<Value>& container) const {
+        int size = this->end() - this->begin();
+        if (size < 0) {
+            // Handle error: end is before begin
+            throw std::runtime_error("Invalid range: end is before begin");
+        }
+
+        container.resize(size);
+
+        for (int i = this->begin(); i != this->end(); ++i) {
+            container[i - this->begin()] = static_cast<Value>(i); // Set each element to its index
         }
     }
 
