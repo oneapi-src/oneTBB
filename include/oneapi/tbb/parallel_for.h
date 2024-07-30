@@ -186,30 +186,30 @@ void numa_partitioner<BasePartitioner>::execute_for(const Range& range, const Bo
       std::vector<Range> subranges;
       split_range(range, subranges, num_numa_nodes);
       std::vector<oneapi::tbb::task_group> task_groups(num_numa_nodes);
+      initialize_arena();
+      std::vector<long unsigned int> data;
+      
       for (std::size_t i = 0; i < num_numa_nodes; ++i) {
-	initialize_arena();
-	// For 1D
-	std::vector<long unsigned int> data;
-	// For 2D
-
 	arenas[i].execute([&]() {
 	  task_groups[i].run([&, i] {
 	    subranges[i].first_touch(data);
 	  });
 	});
 
-
-        arenas[i].execute([&]() {
-            task_groups[i].run([&, i] {
-                parallel_for(range,body,base_partitioner);
+	arenas[i].execute([&]() {
+	  task_groups[i].run([&, i] {
+	    parallel_for(subranges[i], body, base_partitioner);
             });
-        });
-
-	arenas[i].execute([&task_groups, i]() {
-            task_groups[i].wait();
-        });
-      }
-    } else {
+	});
+	}
+      
+	for (std::size_t i = 0; i < num_numa_nodes; ++i) {
+	  arenas[i].execute([&task_groups, i]() {
+	    task_groups[i].wait();
+	  });
+	}
+    }
+    else {
       parallel_for(range,body,base_partitioner);
     }
 }
@@ -300,7 +300,7 @@ void parallel_for( const Range& range, const Body& body, affinity_partitioner& p
 /** @ingroup algorithms **/
   template<typename Range, typename Body, typename T>
 __TBB_requires(tbb_range<Range> && parallel_for_body<Body, Range>)
-    void parallel_for(const Range& range, const Body& body,  T& n_partitioner) {
+    void parallel_for(const Range& range, const Body& body,  numa_partitioner<T>& n_partitioner) {
     n_partitioner.execute_for(range, body);
   }
 
