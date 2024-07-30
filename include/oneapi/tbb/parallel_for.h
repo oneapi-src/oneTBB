@@ -179,6 +179,41 @@ task* start_for<Range, Body, Partitioner>::cancel(execution_data& ed) {
     return nullptr;
 }
 
+template<typename BasePartitioner>
+template<typename Range, typename Body>
+void numa_partitioner<BasePartitioner>::execute_for(const Range& range, const Body& body) const{
+    if (range.is_divisible() && num_numa_nodes > 1) {
+      std::vector<Range> subranges;
+      split_range(range, subranges, num_numa_nodes);
+      std::vector<oneapi::tbb::task_group> task_groups(num_numa_nodes);
+      for (std::size_t i = 0; i < num_numa_nodes; ++i) {
+	initialize_arena();
+	// For 1D
+	std::vector<long unsigned int> data;
+	// For 2D
+
+	arenas[i].execute([&]() {
+	  task_groups[i].run([&, i] {
+	    subranges[i].first_touch(data);
+	  });
+	});
+
+
+        arenas[i].execute([&]() {
+            task_groups[i].run([&, i] {
+                parallel_for(range,body,base_partitioner);
+            });
+        });
+
+	arenas[i].execute([&task_groups, i]() {
+            task_groups[i].wait();
+        });
+      }
+    } else {
+      parallel_for(range,body,base_partitioner);
+    }
+}
+    
 //! Calls the function with values from range [begin, end) with a step provided
 template<typename Function, typename Index>
 class parallel_for_body_wrapper : detail::no_assign {
@@ -266,9 +301,7 @@ void parallel_for( const Range& range, const Body& body, affinity_partitioner& p
   template<typename Range, typename Body, typename T>
 __TBB_requires(tbb_range<Range> && parallel_for_body<Body, Range>)
     void parallel_for(const Range& range, const Body& body,  T& n_partitioner) {
-    //start_for<Range,Body,T>::run(range,body,n_partitioner);
-    n_partitioner.execute(range, body);
-    //printf("HERE\n");
+    n_partitioner.execute_for(range, body);
   }
 
 

@@ -681,38 +681,7 @@ public:
   typedef typename BasePartitioner::task_partition_type task_partition_type;
 
   template<typename Range, typename Body>
-  void execute(const Range& range, const Body& body) const{
-    if (range.is_divisible() && num_numa_nodes > 1) {
-      std::vector<Range> subranges;
-      split_range(range, subranges, num_numa_nodes);
-      std::vector<oneapi::tbb::task_group> task_groups(num_numa_nodes);
-      for (std::size_t i = 0; i < num_numa_nodes; ++i) {
-	initialize_arena();
-	// For 1D
-	std::vector<long unsigned int> data;
-	// For 2D
-
-	arenas[i].execute([&]() {
-	  task_groups[i].run([&, i] {
-	    subranges[i].first_touch(data);
-	  });
-	});
-
-
-        arenas[i].execute([&]() {
-            task_groups[i].run([&, i] {
-                parallel_for(range,body,base_partitioner);
-            });
-        });
-
-	arenas[i].execute([&task_groups, i]() {
-            task_groups[i].wait();
-        });
-      }
-    } else {
-      parallel_for(range,body,base_partitioner);
-    }
-  }
+  void execute_for(const Range& range, const Body& body) const;
 
 private:
   mutable std::vector<oneapi::tbb::task_arena>  arenas;
