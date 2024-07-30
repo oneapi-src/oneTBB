@@ -542,18 +542,19 @@ public:
   template<typename Range, typename Body>
   void numa_partitioner<BasePartitioner>::execute_scan(const Range& range, Body& body) const{
     start_scan<Range, Body, BasePartitioner>::run(range, body, base_partitioner);
-    /*if (range.is_divisible() && num_numa_nodes > 1) {
+    if (range.is_divisible() && num_numa_nodes > 1) {
       std::vector<Range> subranges;
       split_range(range, subranges, num_numa_nodes);
       std::vector<oneapi::tbb::task_group> task_groups(num_numa_nodes);
       initialize_arena();
       std::vector<long unsigned int> data;
+
       for (std::size_t i = 0; i < num_numa_nodes; ++i) {
 	arenas[i].execute([&]() {
 	  task_groups[i].run([&, i] {
 	    subranges[i].first_touch(data);
-	     });
-	   });
+	  });
+	});
 	arenas[i].execute([&]() {
 	  task_groups[i].run([&, i] {
 	    parallel_scan(subranges[i], body, base_partitioner);
@@ -565,9 +566,9 @@ public:
 	   });
 	}
       }
-      }else{*/
-    //parallel_scan(range,body,base_partitioner);
-      //}
+    }else{
+      parallel_scan(range,body,base_partitioner);
+    }
 
   }
 // Requirements on Range concept are documented in blocked_range.h

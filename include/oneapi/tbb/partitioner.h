@@ -683,8 +683,11 @@ public:
   template<typename Range, typename Body>
   void execute_for(const Range& range, const Body& body) const;
 
-    template<typename Range, typename Body>
+  template<typename Range, typename Body>
   void execute_scan(const Range& range, Body& body) const;
+
+  template<typename Range, typename Body>
+  void execute_reduce(const Range& range, Body& body) const;
 
 private:
   mutable std::vector<oneapi::tbb::task_arena>  arenas;
