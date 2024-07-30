@@ -195,8 +195,6 @@ void arena::process(thread_data& tls) {
         return;
     }
 
-    my_tc_client.get_pm_client()->register_thread();
-
     __TBB_ASSERT( index >= my_num_reserved_slots, "Workers cannot occupy reserved slots" );
     tls.attach_arena(*this, index);
     // worker thread enters the dispatch loop to look for a work
@@ -235,8 +233,6 @@ void arena::process(thread_data& tls) {
     tls.my_inbox.detach();
     __TBB_ASSERT(tls.my_inbox.is_idle_state(true), nullptr);
     __TBB_ASSERT(is_alive(my_guard), nullptr);
-
-    my_tc_client.get_pm_client()->unregister_thread();
 
     // In contrast to earlier versions of TBB (before 3.0 U5) now it is possible
     // that arena may be temporarily left unpopulated by threads. See comments in
@@ -646,9 +642,11 @@ public:
             m_orig_arena = td.my_arena;
             m_orig_slot_index = td.my_arena_index;
             m_orig_last_observer = td.my_last_observer;
+            m_orig_is_thread_registered = td.my_is_registered;
 
             td.detach_task_dispatcher();
             td.attach_arena(nested_arena, slot_index);
+            td.my_is_registered = false;
             if (td.my_inbox.is_idle_state(true))
                 td.my_inbox.set_is_idle(false);
             task_dispatcher& task_disp = td.my_arena_slot->default_task_dispatcher();
@@ -699,7 +697,7 @@ public:
             td.leave_task_dispatcher();
             td.my_arena_slot->release();
             td.my_arena->my_exit_monitors.notify_one(); // do not relax!
-
+            td.my_is_registered = m_orig_is_thread_registered;
             td.attach_arena(*m_orig_arena, m_orig_slot_index);
             td.attach_task_dispatcher(*m_orig_execute_data_ext.task_disp);
             __TBB_ASSERT(td.my_inbox.is_idle_state(false), nullptr);
@@ -715,6 +713,7 @@ private:
     unsigned            m_orig_slot_index{};
     bool                m_orig_fifo_tasks_allowed{};
     bool                m_orig_critical_task_allowed{};
+    bool                m_orig_is_thread_registered{};
 };
 
 class delegated_task : public d1::task {
