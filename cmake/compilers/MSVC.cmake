@@ -70,4 +70,6 @@ if (TBB_WINDOWS_DRIVER)
 endif()
 
 set(TBB_OPENMP_FLAG /openmp)
+
+set(TBB_LIB_COMPILE_FLAGS ${TBB_LIB_COMPILE_FLAGS} /guard:cf)
 set(TBB_LIB_LINK_FLAGS ${TBB_LIB_LINK_FLAGS} /guard:cf)
