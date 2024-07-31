@@ -41,7 +41,8 @@ public:
     }
     double computeRelError() {
         auto averageTimePerFrame = 
-           std::accumulate(_secPerFrame.begin(), _secPerFrame.end(), 0.0) / _secPerFrame.size();
+           std::accumulate(_secPerFrame.begin(), _secPerFrame.end(), 0.0) /
+                           _secPerFrame.size();
         std::vector<double> diff(_secPerFrame.size());
         std::transform(_secPerFrame.begin(),
                        _secPerFrame.end(),
