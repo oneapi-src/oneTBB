@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -356,37 +356,6 @@ public:
         return str.str();
     }
 }; // class cli_argument_pack
-
-class measurements {
-public:
-    measurements() {
-        clear();
-    }
-    void clear() {
-        _secPerFrame.clear();
-    }
-    void start() {
-        _startTime = oneapi::tbb::tick_count::now();
-    }
-    void stop() {
-        _endTime = oneapi::tbb::tick_count::now();
-        auto count = _endTime - _startTime;
-        _secPerFrame.push_back(count.seconds());
-    }
-    double computeRelError() {
-        auto averageTimePerFrame = std::accumulate(_secPerFrame.begin(), _secPerFrame.end(), 0.0) / _secPerFrame.size();
-        std::vector<double> diff(_secPerFrame.size());
-        std::transform(_secPerFrame.begin(), _secPerFrame.end(), diff.begin(), [averageTimePerFrame](double x) { return (x - averageTimePerFrame);});
-        double sumOfSquareDiff = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
-        double stdDev = std::sqrt(sumOfSquareDiff / _secPerFrame.size());
-        double relError = 100 * (stdDev / averageTimePerFrame);
-        return relError;
-    }
-private:
-    std::vector<double> _secPerFrame;
-    oneapi::tbb::tick_count _startTime;
-    oneapi::tbb::tick_count _endTime;
-};
 
 namespace internal {
 template <typename T>
