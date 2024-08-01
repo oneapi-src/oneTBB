@@ -561,13 +561,14 @@ public:
 	    parallel_scan(subranges[i], body, base_partitioner);
 	  });
 	});
+	body.print_output();
       }
       for (std::size_t i = 0; i < num_numa_nodes; ++i) {
 	arenas[i].execute([&task_groups, i]() {
 	  task_groups[i].wait();
 	});
       }
-      }else{
+    }else{
       parallel_scan(range , body, base_partitioner);
     }
   }

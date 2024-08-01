@@ -402,7 +402,42 @@ public:
     }
 };
 
+template<typename BasePartitioner>
+template<typename Range, typename Body>
+void numa_partitioner<BasePartitioner>::execute_reduce(const Range& range, Body& body) const{
+  if (range.is_divisible() && num_numa_nodes > 1) {
+      std::vector<Range> subranges;
+      split_range(range, subranges, num_numa_nodes);
+      std::vector<oneapi::tbb::task_group> task_groups(num_numa_nodes);
+      initialize_arena();
+      std::vector<int> data;
 
+      for (std::size_t i = 0; i < num_numa_nodes; ++i) {
+	arenas[i].execute([&]() {
+	  task_groups[i].run([&, i] {
+	    //subranges[i].first_touch(data);
+	  });
+	});
+
+	arenas[i].execute([&]() {
+	  task_groups[i].run([&, i] {
+	    parallel_reduce(subranges[i], body, base_partitioner);
+            });
+	});
+	}
+
+	for (std::size_t i = 0; i < num_numa_nodes; ++i) {
+	  arenas[i].execute([&task_groups, i]() {
+	    task_groups[i].wait();
+	  });
+	}
+    }
+    else {
+      parallel_reduce(range,body,base_partitioner);
+    }
+
+}
+  
 // Requirements on Range concept are documented in blocked_range.h
 
 /** \page parallel_reduce_body_req Requirements on parallel_reduce body
@@ -464,6 +499,15 @@ void parallel_reduce( const Range& range, Body& body, affinity_partitioner& part
     start_reduce<Range,Body,affinity_partitioner>::run( range, body, partitioner );
 }
 
+//! Parallel iteration over range with affinity_partitioner.
+/** @ingroup algorithms **/
+template<typename Range, typename Body, typename T>
+__TBB_requires(tbb_range<Range> && parallel_reduce_body<Body, Range>)
+    void parallel_reduce(const Range& range, Body& body,  const numa_partitioner<T>& n_partitioner) {
+  n_partitioner.execute_reduce(range, body);
+  //parallel_reduce(range,body,n_partitioner.base_partitioner);
+  }
+  
 //! Parallel iteration with reduction, default partitioner and user-supplied context.
 /** @ingroup algorithms **/
 template<typename Range, typename Body>
