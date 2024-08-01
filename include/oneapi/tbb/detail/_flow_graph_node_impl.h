@@ -164,7 +164,7 @@ private:
 
     friend class apply_body_task_bypass< class_type, input_type >;
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    friend class apply_body_task_bypass< class_type, input_type, graph_task_with_message_waiters >;
+    friend class apply_body_task_bypass< class_type, input_type, trackable_messages_graph_task >;
 #endif
     friend class forward_task_bypass< class_type >;
 
@@ -369,7 +369,7 @@ private:
         graph_task* t = nullptr;
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
         if (!metainfo.empty()) {
-            using task_type = apply_body_task_bypass<class_type, input_type, graph_task_with_message_waiters>;
+            using task_type = apply_body_task_bypass<class_type, input_type, trackable_messages_graph_task>;
             t = allocator.new_object<task_type>(my_graph_ref, allocator, *this, input, my_priority, std::forward<Metainfo>(metainfo));
         } else
 #endif
