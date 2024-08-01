@@ -52,6 +52,7 @@
 
 #include <tuple>
 #include <list>
+#include <forward_list>
 #include <queue>
 #if __TBB_CPP20_CONCEPTS_PRESENT
 #include <concepts>
@@ -187,6 +188,29 @@ static inline graph_task* combine_tasks(graph& g, graph_task* left, graph_task* 
     return left;
 }
 
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+class message_metainfo {
+public:
+    using waiters_type = std::forward_list<d1::wait_context_vertex*>;
+
+    message_metainfo() = default;
+
+    message_metainfo(const waiters_type& waiters) : my_waiters(waiters) {}
+    message_metainfo(waiters_type&& waiters) : my_waiters(std::move(waiters)) {}
+
+    const waiters_type& waiters() const { return my_waiters; }
+
+    bool empty() const { return my_waiters.empty(); }
+private:
+    waiters_type my_waiters;
+}; // class message_metainfo
+
+#define __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo) , metainfo
+
+#else
+#define __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo)
+#endif // __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+
 //! Pure virtual template class that defines a sender of messages of type T
 template< typename T >
 class sender {
@@ -238,18 +262,38 @@ bool remove_successor(sender<C>& s, receiver<C>& r) {
 //! Pure virtual template class that defines a receiver of messages of type T
 template< typename T >
 class receiver {
+private:
+    template <typename... TryPutTaskArgs>
+    bool internal_try_put(const T& t, TryPutTaskArgs&&... args) {
+        graph_task* res = try_put_task(t, std::forward<TryPutTaskArgs>(args)...);
+        if (!res) return false;
+        if (res != SUCCESSFULLY_ENQUEUED) spawn_in_graph_arena(graph_reference(), *res);
+        return true;
+    }
+
 public:
     //! Destructor
     virtual ~receiver() {}
 
     //! Put an item to the receiver
     bool try_put( const T& t ) {
-        graph_task* res = try_put_task(t);
-
-        if (!res) return false;
-        if (res != SUCCESSFULLY_ENQUEUED) spawn_in_graph_arena(graph_reference(), *res);
-        return true;
+        return internal_try_put(t);
     }
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    //! Put an item to the receiver and wait for completion
+    bool try_put_and_wait( const T& t ) {
+        // Since try_put_and_wait is a blocking call, it is safe to create wait_context on stack
+        d1::wait_context_vertex msg_wait_vertex{};
+
+        bool res = internal_try_put(t, message_metainfo{message_metainfo::waiters_type{&msg_wait_vertex}});
+        if (res) {
+            __TBB_ASSERT(graph_reference().my_context != nullptr, "No wait_context associated with the Flow Graph");
+            wait(msg_wait_vertex.get_context(), *graph_reference().my_context);
+        }
+        return res;
+    }
+#endif
 
     //! put item to successor; return task to run the successor if possible.
 protected:
@@ -263,6 +307,9 @@ protected:
     template< typename X, typename Y > friend class broadcast_cache;
     template< typename X, typename Y > friend class round_robin_cache;
     virtual graph_task *try_put_task(const T& t) = 0;
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    virtual graph_task *try_put_task(const T& t, const message_metainfo&) = 0;
+#endif
     virtual graph& graph_reference() const = 0;
 
     template<typename TT, typename M> friend class successor_cache;
@@ -350,6 +397,13 @@ protected:
         graph_task* res = execute();
         return res? res : SUCCESSFULLY_ENQUEUED;
     }
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    // TODO: add metainfo support for continue_receiver
+    graph_task* try_put_task( const input_type& input, const message_metainfo& ) override {
+        return try_put_task(input);
+    }
+#endif
 
     spin_mutex my_mutex;
     int my_predecessor_count;
@@ -962,6 +1016,14 @@ protected:
         // Also, we do not have successors here. So we just tell the task returned here is successful.
         return emit_element<N>::emit_this(this->my_graph, t, output_ports());
     }
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    graph_task* try_put_task(const TupleType& t, const message_metainfo& metainfo) override {
+        // Sending split messages in parallel is not justified, as overheads would prevail.
+        // Also, we do not have successors here. So we just tell the task returned here is successful.
+        return emit_element<N>::emit_this(this->my_graph, t, output_ports(), metainfo);
+    }
+#endif
+
     void reset_node(reset_flags f) override {
         if (f & rf_clear_edges)
             clear_element<N>::clear_this(my_output_ports);
@@ -1119,16 +1181,27 @@ public:
         return true;
     }
 
+private:
+    graph_task* try_put_task_impl(const T& t __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo)) {
+        graph_task* new_task = my_successors.try_put_task(t __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo));
+        if (!new_task) new_task = SUCCESSFULLY_ENQUEUED;
+        return new_task;
+    }
+
 protected:
     template< typename R, typename B > friend class run_and_put_task;
     template<typename X, typename Y> friend class broadcast_cache;
     template<typename X, typename Y> friend class round_robin_cache;
     //! build a task to run the successor if possible.  Default is old behavior.
-    graph_task *try_put_task(const T& t) override {
-        graph_task *new_task = my_successors.try_put_task(t);
-        if (!new_task) new_task = SUCCESSFULLY_ENQUEUED;
-        return new_task;
+    graph_task* try_put_task(const T& t) override {
+        return try_put_task_impl(t __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo{}));
     }
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    graph_task* try_put_task(const T& t, const message_metainfo& metainfo) override {
+        return try_put_task_impl(t, metainfo);
+    }
+#endif
 
     graph& graph_reference() const override {
         return my_graph;
@@ -1477,6 +1550,13 @@ protected:
         }
         return ft;
     }
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    // TODO: add support for buffer_node
+    graph_task* try_put_task(const T& t, const message_metainfo&) override {
+        return try_put_task(t);
+    }
+#endif
 
     graph& graph_reference() const override {
         return my_graph;
@@ -2111,6 +2191,13 @@ protected:
         }
         return rtask;
     }
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    // TODO: add support for limiter_node
+    graph_task* try_put_task(const T& t, const message_metainfo&) override {
+        return try_put_task(t);
+    }
+#endif
 
     graph& graph_reference() const override { return my_graph; }
 
@@ -3106,6 +3193,13 @@ protected:
         return try_put_task_impl(v);
     }
 
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    // TODO: add support for overwrite_node
+    graph_task* try_put_task(const input_type& v, const message_metainfo&) override {
+        return try_put_task(v);
+    }
+#endif
+
     graph_task * try_put_task_impl(const input_type &v) {
         my_buffer = v;
         my_buffer_is_valid = true;
@@ -3195,6 +3289,13 @@ protected:
         spin_mutex::scoped_lock l( this->my_mutex );
         return this->my_buffer_is_valid ? nullptr : this->try_put_task_impl(v);
     }
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    // TODO: add support for write_once_node
+    graph_task* try_put_task(const T& v, const message_metainfo&) override {
+        return try_put_task(v);
+    }
+#endif
 }; // write_once_node
 
 inline void set_name(const graph& g, const char *name) {

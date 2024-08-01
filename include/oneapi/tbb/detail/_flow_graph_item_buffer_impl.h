@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2022 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -37,8 +37,14 @@ public:
     typedef T item_type;
     enum buffer_item_state { no_item=0, has_item=1, reserved_item=2 };
 protected:
+    struct aligned_space_item {
+        item_type item;
+        buffer_item_state state;
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        message_metainfo metainfo;
+#endif
+    };
     typedef size_t size_type;
-    typedef std::pair<item_type, buffer_item_state> aligned_space_item;
     typedef aligned_space<aligned_space_item> buffer_item_type;
     typedef typename allocator_traits<A>::template rebind_alloc<buffer_item_type> allocator_type;
     buffer_item_type *my_array;
@@ -49,37 +55,51 @@ protected:
 
     bool buffer_empty() const { return my_head == my_tail; }
 
-    aligned_space_item &item(size_type i) {
-        __TBB_ASSERT(!(size_type(&(my_array[i&(my_array_size-1)].begin()->second))%alignment_of<buffer_item_state>::value), nullptr);
-        __TBB_ASSERT(!(size_type(&(my_array[i&(my_array_size-1)].begin()->first))%alignment_of<item_type>::value), nullptr);
+    aligned_space_item &element(size_type i) {
+        __TBB_ASSERT(!(size_type(&(my_array[i&(my_array_size-1)].begin()->state))%alignment_of<buffer_item_state>::value), nullptr);
+        __TBB_ASSERT(!(size_type(&(my_array[i&(my_array_size-1)].begin()->item))%alignment_of<item_type>::value), nullptr);
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        __TBB_ASSERT(!(size_type(&(my_array[i&(my_array_size-1)].begin()->metainfo))%alignment_of<message_metainfo>::value), nullptr);
+#endif
         return *my_array[i & (my_array_size - 1) ].begin();
     }
 
-    const aligned_space_item &item(size_type i) const {
-        __TBB_ASSERT(!(size_type(&(my_array[i&(my_array_size-1)].begin()->second))%alignment_of<buffer_item_state>::value), nullptr);
-        __TBB_ASSERT(!(size_type(&(my_array[i&(my_array_size-1)].begin()->first))%alignment_of<item_type>::value), nullptr);
+    const aligned_space_item &element(size_type i) const {
+        __TBB_ASSERT(!(size_type(&(my_array[i&(my_array_size-1)].begin()->state))%alignment_of<buffer_item_state>::value), nullptr);
+        __TBB_ASSERT(!(size_type(&(my_array[i&(my_array_size-1)].begin()->item))%alignment_of<item_type>::value), nullptr);
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        __TBB_ASSERT(!(size_type(&(my_array[i&(my_array_size-1)].begin()->metainfo))%alignment_of<message_metainfo>::value), nullptr);
+#endif
         return *my_array[i & (my_array_size-1)].begin();
     }
 
-    bool my_item_valid(size_type i) const { return (i < my_tail) && (i >= my_head) && (item(i).second != no_item); }
+    bool my_item_valid(size_type i) const { return (i < my_tail) && (i >= my_head) && (element(i).state != no_item); }
 #if TBB_USE_ASSERT
-    bool my_item_reserved(size_type i) const { return item(i).second == reserved_item; }
+    bool my_item_reserved(size_type i) const { return element(i).state == reserved_item; }
 #endif
 
     // object management in buffer
     const item_type &get_my_item(size_t i) const {
         __TBB_ASSERT(my_item_valid(i),"attempt to get invalid item");
-        item_type* itm = const_cast<item_type*>(reinterpret_cast<const item_type*>(&item(i).first));
-        return *itm;
+        return element(i).item;
     }
 
     // may be called with an empty slot or a slot that has already been constructed into.
-    void set_my_item(size_t i, const item_type &o) {
-        if(item(i).second != no_item) {
+    void set_my_item(size_t i, const item_type &o
+                     __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo))
+    {
+        if(element(i).state != no_item) {
             destroy_item(i);
         }
-        new(&(item(i).first)) item_type(o);
-        item(i).second = has_item;
+        new(&(element(i).item)) item_type(o);
+        element(i).state = has_item;
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        new(&element(i).metainfo) message_metainfo(metainfo);
+
+        for (auto& waiter : metainfo.waiters()) {
+            waiter->reserve(1);
+        }
+#endif
     }
 
     // destructively-fetch an object from the buffer
@@ -119,8 +139,18 @@ protected:
 
     void destroy_item(size_type i) {
         __TBB_ASSERT(my_item_valid(i), "destruction of invalid item");
-        item(i).first.~item_type();
-        item(i).second = no_item;
+
+        auto& e = element(i);
+        e.item.~item_type();
+        e.state = no_item;
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        for (auto& msg_waiter : e.metainfo.waiters()) {
+            msg_waiter->release(1);
+        }
+
+        e.metainfo.~message_metainfo();
+#endif
     }
 
     // returns the front element
@@ -130,6 +160,14 @@ protected:
         return get_my_item(my_head);
     }
 
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    const message_metainfo& front_metainfo() const
+    {
+        __TBB_ASSERT(my_item_valid(my_head), "attempt to fetch head non-item");
+        return element(my_head).metainfo;
+    }
+#endif
+
     // returns  the back element
     const item_type& back() const
     {
@@ -137,9 +175,23 @@ protected:
         return get_my_item(my_tail - 1);
     }
 
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    const message_metainfo& back_metainfo() const {
+        __TBB_ASSERT(my_item_valid(my_tail - 1), "attempt to fetch head non-item");
+        return element(my_tail - 1).metainfo;
+    }
+#endif
+
     // following methods are for reservation of the front of a buffer.
-    void reserve_item(size_type i) { __TBB_ASSERT(my_item_valid(i) && !my_item_reserved(i), "item cannot be reserved"); item(i).second = reserved_item; }
-    void release_item(size_type i) { __TBB_ASSERT(my_item_reserved(i), "item is not reserved"); item(i).second = has_item; }
+    void reserve_item(size_type i) {
+        __TBB_ASSERT(my_item_valid(i) && !my_item_reserved(i), "item cannot be reserved");
+        element(i).state = reserved_item;
+    }
+
+    void release_item(size_type i) {
+        __TBB_ASSERT(my_item_reserved(i), "item is not reserved");
+        element(i).state = has_item;
+    }
 
     void destroy_front() { destroy_item(my_head); ++my_head; }
     void destroy_back() { destroy_item(my_tail-1); --my_tail; }
@@ -163,14 +215,18 @@ protected:
         buffer_item_type* new_array = allocator_type().allocate(new_size);
 
         // initialize validity to "no"
-        for( size_type i=0; i<new_size; ++i ) { new_array[i].begin()->second = no_item; }
+        for( size_type i=0; i<new_size; ++i ) { new_array[i].begin()->state = no_item; }
 
         for( size_type i=my_head; i<my_tail; ++i) {
             if(my_item_valid(i)) {  // sequencer_node may have empty slots
                 // placement-new copy-construct; could be std::move
-                char *new_space = (char *)&(new_array[i&(new_size-1)].begin()->first);
+                char *new_space = (char *)&(new_array[i&(new_size-1)].begin()->item);
                 (void)new(new_space) item_type(get_my_item(i));
-                new_array[i&(new_size-1)].begin()->second = item(i).second;
+                new_array[i&(new_size-1)].begin()->state = element(i).state;
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+                char* meta_space = (char *)&(new_array[i&(new_size-1)].begin()->metainfo);
+                ::new(meta_space) message_metainfo(std::move(element(i).metainfo));
+#endif
             }
         }
 
@@ -180,32 +236,68 @@ protected:
         my_array_size = new_size;
     }
 
-    bool push_back(item_type &v) {
-        if(buffer_full()) {
+    bool push_back(item_type& v
+                   __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo))
+    {
+        if (buffer_full()) {
             grow_my_array(size() + 1);
         }
-        set_my_item(my_tail, v);
+        set_my_item(my_tail, v __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo));
         ++my_tail;
         return true;
     }
 
-    bool pop_back(item_type &v) {
-        if (!my_item_valid(my_tail-1)) {
+    bool pop_back(item_type& v
+                  __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo& metainfo))
+    {
+        if (!my_item_valid(my_tail - 1)) {
             return false;
         }
-        v = this->back();
+        auto& e = element(my_tail - 1);
+        v = e.item;
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        metainfo = std::move(e.metainfo);
+#endif
+
         destroy_back();
         return true;
     }
 
-    bool pop_front(item_type &v) {
-        if(!my_item_valid(my_head)) {
+    bool pop_front(item_type& v
+                   __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo& metainfo))
+    {
+        if (!my_item_valid(my_head)) {
             return false;
         }
-        v = this->front();
+        auto& e = element(my_head);
+        v = e.item;
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        metainfo = std::move(e.metainfo);
+#endif
+
         destroy_front();
         return true;
     }
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    void set_my_item(size_t i, const item_type&o) {
+        set_my_item(i, o, message_metainfo{});
+    }
+
+    bool push_back(item_type& v) {
+        return push_back(v, message_metainfo{});
+    }
+
+    bool pop_back(item_type& v) {
+        message_metainfo metainfo;
+        return pop_back(v, metainfo);
+    }
+
+    bool pop_front(item_type& v) {
+        message_metainfo metainfo;
+        return pop_front(v, metainfo);
+    }
+#endif
 
     // This is used both for reset and for grow_my_array.  In the case of grow_my_array
     // we want to retain the values of the head and tail.
