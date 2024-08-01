@@ -146,6 +146,8 @@ private:
     friend graph_task* prioritize_task(graph& g, graph_task& gt);
 };
 
+inline bool is_this_thread_in_graph_arena(graph& g);
+
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
 class trackable_messages_graph_task : public graph_task {
 public:
@@ -158,7 +160,12 @@ public:
         auto last_iterator = my_msg_reference_vertices.cbefore_begin();
 
         for (auto& msg_waiter : my_msg_wait_context_vertices) {
-            d1::wait_tree_vertex_interface* ref_vertex = r1::get_thread_reference_vertex(msg_waiter);
+            // If the task is created by the thread outside the graph arena, the lifetime of the thread reference vertex
+            // may be shorter that the lifetime of the task, so thread reference vertex approach cannot be used
+            // and the task should be associated with the msg wait context itself
+            d1::wait_tree_vertex_interface* ref_vertex = is_this_thread_in_graph_arena(g) ?
+                                                         r1::get_thread_reference_vertex(msg_waiter) :
+                                                         msg_waiter;
             last_iterator = my_msg_reference_vertices.emplace_after(last_iterator,
                                                                     ref_vertex);
             ref_vertex->reserve(1);
