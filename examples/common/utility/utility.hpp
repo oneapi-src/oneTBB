@@ -372,8 +372,8 @@ public:
     }
     void stop() {
         _endTime = std::chrono::steady_clock::now();
-         std::chrono::duration<double> duration = _endTime - _startTime;
-         // store the duration in seconds
+        std::chrono::duration<double> duration = _endTime - _startTime;
+        // store the duration in seconds
         _secPerFrame.push_back(duration.count());
     }
     double computeRelError() {
