@@ -187,7 +187,7 @@ void numa_partitioner<BasePartitioner>::execute_for(const Range& range, const Bo
       split_range(range, subranges, num_numa_nodes);
       std::vector<oneapi::tbb::task_group> task_groups(num_numa_nodes);
       initialize_arena();
-      std::vector<long unsigned int> data;
+      std::vector<size_t> data;
       
       for (std::size_t i = 0; i < num_numa_nodes; ++i) {
 	arenas[i].execute([&]() {

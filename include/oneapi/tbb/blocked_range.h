@@ -120,8 +120,8 @@ public:
         container.resize(size);
 
         for (int i = this->begin(); i != this->end(); ++i) {
-	  //container[i - this->begin()] = static_cast<Value>(i); // Set each element to its index
-	  container[i] = static_cast<Value>(i);
+	  container[i - this->begin()] = static_cast<Value>(i); // Set each element to its index
+	  //container[i] = static_cast<Value>(i);
         }
     }
 
