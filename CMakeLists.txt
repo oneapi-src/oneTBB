@@ -107,6 +107,9 @@ option(TBB_DISABLE_HWLOC_AUTOMATIC_SEARCH "Disable HWLOC automatic search by pkg
 option(TBB_ENABLE_IPO "Enable Interprocedural Optimization (IPO) during the compilation" ON)
 option(TBB_FUZZ_TESTING "Enable fuzz testing" OFF)
 option(TBB_INSTALL "Enable installation" ON)
+if(APPLE)
+option(TBB_BUILD_APPLE_FRAMEWORKS "Build as Apple Frameworks" OFF)
+endif()
 
 if (NOT DEFINED BUILD_SHARED_LIBS)
     set(BUILD_SHARED_LIBS ON)
@@ -230,7 +233,7 @@ else()
     message(WARNING "TBB compiler settings not found ${TBB_COMPILER_SETTINGS_FILE}")
 endif()
 
-if (TBB_FIND_PACKAGE OR TBB_DIR)
+if (TBB_FIND_PACKAGE AND TBB_DIR)
     # Allow specifying external TBB to test with.
     # Do not add main targets and installation instructions in that case.
     message(STATUS "Using external TBB for testing")
