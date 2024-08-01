@@ -23,6 +23,7 @@
 #include "oneapi/tbb/detail/_machine.h"
 #include "oneapi/tbb/task_group.h"
 #include "oneapi/tbb/cache_aligned_allocator.h"
+#include "oneapi/tbb/tbb_allocator.h"
 #include "itt_notify.h"
 #include "co_context.h"
 #include "misc.h"
@@ -269,12 +270,7 @@ public:
     // no worse than 2x the optimal spin time. Or perhaps a time-slice quantum is the right amount.
     stealing_loop_backoff(int num_workers, int yields_multiplier)
         : my_pause_threshold{ 2 * (num_workers + 1) }
-#if __APPLE__
-        // threshold value tuned separately for macOS due to high cost of sched_yield there
-        , my_yield_threshold{10 * yields_multiplier}
-#else
         , my_yield_threshold{100 * yields_multiplier}
-#endif
         , my_pause_count{}
         , my_yield_count{}
     {}
@@ -481,7 +477,11 @@ public:
     suspend_point_type* m_suspend_point{ nullptr };
 
     //! Used to improve scalability of d1::wait_context by using per thread reference_counter
-    std::unordered_map<d1::wait_tree_vertex_interface*, d1::reference_vertex*> m_reference_vertex_map;
+    std::unordered_map<d1::wait_tree_vertex_interface*, d1::reference_vertex*,
+                       std::hash<d1::wait_tree_vertex_interface*>, std::equal_to<d1::wait_tree_vertex_interface*>,
+                       tbb_allocator<std::pair<d1::wait_tree_vertex_interface* const, d1::reference_vertex*>>
+                      >
+        m_reference_vertex_map;
 
     //! Attempt to get a task from the mailbox.
     /** Gets a task only if it has not been executed by its sender or a thief
@@ -512,12 +512,12 @@ public:
             cache_aligned_deallocate(m_suspend_point);
         }
 
-        // for (auto& elem : m_reference_vertex_map) {
-        //     d1::reference_vertex*& node = elem.second;
-        //     node->~reference_vertex();
-        //     cache_aligned_deallocate(node);
-        //     poison_pointer(node);
-        // }
+        for (auto& elem : m_reference_vertex_map) {
+            d1::reference_vertex*& node = elem.second;
+            node->~reference_vertex();
+            cache_aligned_deallocate(node);
+            poison_pointer(node);
+        }
 
         poison_pointer(m_thread_data);
         poison_pointer(m_suspend_point);

@@ -46,8 +46,8 @@ public:
         }
     }
 
-    task_handle_task(d1::wait_tree_vertex_interface* node, d1::task_group_context& ctx, d1::small_object_allocator& alloc)
-        : m_wait_tree_vertex(node)
+    task_handle_task(d1::wait_tree_vertex_interface* vertex, d1::task_group_context& ctx, d1::small_object_allocator& alloc)
+        : m_wait_tree_vertex(vertex)
         , m_ctx(ctx)
         , m_allocator(alloc) {
         suppress_unused_warning(m_version_and_traits);

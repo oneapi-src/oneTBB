@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2023 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@
 
 #include <atomic>
 #include <thread>
-#include <thread>
+#include <deque>
 
 //! \file test_task.cpp
 //! \brief Test for [internal] functionality
@@ -839,4 +839,25 @@ TEST_CASE("Check correct arena destruction with enqueue") {
         }
         tbb::finalize(handle, std::nothrow_t{});
     }
+}
+
+//! \brief \ref regression
+TEST_CASE("Try to force Leaked proxy observers warning") {
+    int num_threads = std::thread::hardware_concurrency() * 2;
+    tbb::global_control gc(tbb::global_control::max_allowed_parallelism, num_threads);
+    tbb::task_arena arena(num_threads, 0);
+    std::deque<tbb::task_scheduler_observer> observers;
+    for (int i = 0; i < 1000; ++i) {
+        observers.emplace_back(arena);
+    }
+
+    for (auto& observer : observers) {
+        observer.observe(true);
+    }
+
+    arena.enqueue([] {
+        tbb::parallel_for(0, 100000, [] (int) {
+            utils::doDummyWork(1000);
+        });
+    });
 }
