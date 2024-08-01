@@ -202,6 +202,13 @@ public:
     waiters_type&& waiters() && { return std::move(my_waiters); }
 
     bool empty() const { return my_waiters.empty(); }
+
+    void merge(const message_metainfo& other) {
+        // TODO: should we avoid duplications on merging
+        my_waiters.insert_after(my_waiters.before_begin(),
+                                other.waiters().begin(),
+                                other.waiters().end());
+    }
 private:
     waiters_type my_waiters;
 }; // class message_metainfo
