@@ -19,7 +19,7 @@ on:
     branches: [master]
 
   pull_request:
-    branches: [master]
+    branches: [master, dev/kboyarinov/try_put_and_wait_production]
     types:
       - opened
       - synchronize
