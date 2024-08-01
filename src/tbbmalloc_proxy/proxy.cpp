@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2022 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -602,8 +602,8 @@ _expand (by dummy implementation)
 ??_V@YAXPEAX@Z    void * operator new[](unsigned __int64) (intel64)
 ??3@YAXPEAX@Z     operator delete                         (intel64)
 ??_V@YAXPEAX@Z    operator delete[]                       (intel64)
-??2@YAPAXIABUnothrow_t@std@@@Z      void * operator new (size_t sz, const std::nothrow_t&) throw()  (optional)
-??_U@YAPAXIABUnothrow_t@std@@@Z     void * operator new[] (size_t sz, const std::nothrow_t&) throw() (optional)
+??2@YAPAXIABUnothrow_t@std@@@Z      void * operator new (size_t sz, const std::nothrow_t&) noexcept  (optional)
+??_U@YAPAXIABUnothrow_t@std@@@Z     void * operator new[] (size_t sz, const std::nothrow_t&) noexcept (optional)
 
 and these functions have runtime-specific replacement:
 realloc
