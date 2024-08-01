@@ -77,7 +77,7 @@ EXPORTS
 ?spawn@r1@detail@tbb@@YAXAAVtask@d1@23@AAVtask_group_context@523@G@Z
 ?spawn@r1@detail@tbb@@YAXAAVtask@d1@23@AAVtask_group_context@523@@Z
 ?execute_and_wait@r1@detail@tbb@@YAXAAVtask@d1@23@AAVtask_group_context@523@AAVwait_context@523@1@Z
-?execution_slot@r1@detail@tbb@@YAGPBUexecution_data@d1@23@@Z
+?execution_slot@r1@detail@tbb@@YAGAEBVtask_arena_base@d1@23@@Z
 ?wait@r1@detail@tbb@@YAXAAVwait_context@d1@23@AAVtask_group_context@523@@Z
 ?submit@r1@detail@tbb@@YAXAAVtask@d1@23@AAVtask_group_context@523@PAVarena@123@I@Z
 ?current_context@r1@detail@tbb@@YAPAVtask_group_context@d1@23@XZ
