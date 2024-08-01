@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2022 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -346,11 +346,12 @@ private:
 
     graph_task_priority_queue_t my_priority_queue;
 
-    d1::wait_context_vertex& get_wait_context_node() { return my_wait_context_vertex; }
+    d1::wait_context_vertex& get_wait_context_vertex() { return my_wait_context_vertex; }
 
     friend void activate_graph(graph& g);
     friend void deactivate_graph(graph& g);
     friend bool is_graph_active(graph& g);
+    friend bool is_this_thread_in_graph_arena(graph& g);
     friend graph_task* prioritize_task(graph& g, graph_task& arena_task);
     friend void spawn_in_graph_arena(graph& g, graph_task& arena_task);
     friend void enqueue_in_graph_arena(graph &g, graph_task& arena_task);
@@ -379,8 +380,15 @@ inline graph_task::graph_task(graph& g, d1::small_object_allocator& allocator,
     : my_graph(g)
     , priority(node_priority)
     , my_allocator(allocator)
-    , my_reference_vertex(r1::get_thread_reference_vertex(&my_graph.get_wait_context_node()))
 {
+    // If the task is created by the thread outside the graph arena, the lifetime of the thread reference vertex
+    // may be shorter that the lifetime of the task, so thread reference vertex approach cannot be used
+    // and the task should be associated with the graph wait context itself
+    // TODO: consider how reference counting can be improved for such a use case. Most common example is the async_node
+    d1::wait_context_vertex* graph_wait_context_vertex = &my_graph.get_wait_context_vertex();
+    my_reference_vertex = is_this_thread_in_graph_arena(g) ? r1::get_thread_reference_vertex(graph_wait_context_vertex)
+                                                           : graph_wait_context_vertex;
+    __TBB_ASSERT(my_reference_vertex, nullptr);
     my_reference_vertex->reserve();
 }
 
@@ -433,14 +441,19 @@ inline bool is_graph_active(graph& g) {
     return g.my_is_active;
 }
 
+inline bool is_this_thread_in_graph_arena(graph& g) {
+    __TBB_ASSERT(g.my_task_arena && g.my_task_arena->is_active(), nullptr);
+    return r1::execution_slot(*g.my_task_arena) != d1::slot_id(-1);
+}
+
 inline graph_task* prioritize_task(graph& g, graph_task& gt) {
     if( no_priority == gt.priority )
         return &gt;
 
     //! Non-preemptive priority pattern. The original task is submitted as a work item to the
     //! priority queue, and a new critical task is created to take and execute a work item with
-    //! the highest known priority. The reference counting responsibility is transferred (via
-    //! allocate_continuation) to the new task.
+    //! the highest known priority. The reference counting responsibility is transferred to
+    //! the new task.
     d1::task* critical_task = gt.my_allocator.new_object<priority_task_selector>(g.my_priority_queue, gt.my_allocator);
     __TBB_ASSERT( critical_task, "bad_alloc?" );
     g.my_priority_queue.push(&gt);

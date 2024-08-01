@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2023 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -244,7 +244,8 @@ public:
 
     //! Put an item to the receiver
     bool try_put( const T& t ) {
-        graph_task *res = try_put_task(t);
+        graph_task* res = try_put_task(t);
+
         if (!res) return false;
         if (res != SUCCESSFULLY_ENQUEUED) spawn_in_graph_arena(graph_reference(), *res);
         return true;

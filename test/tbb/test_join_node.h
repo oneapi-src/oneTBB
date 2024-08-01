@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2022 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -221,7 +221,7 @@ void print_my_value(MyKeySecond<K, V> const &i) {
 
 template<>
 void print_my_value(std::string const &i) {
-    INFO("\"" << i.c_str() << "\"" );
+    INFO("\"" << i << "\"" );
 }
 
 //

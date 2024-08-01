@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2023 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -37,11 +37,21 @@
 #include <atomic>
 #include <algorithm>
 
+#ifdef EMSCRIPTEN
+#include <emscripten/stack.h>
+#endif
+
 namespace tbb {
 namespace detail {
 namespace r1 {
 
+#if TBB_USE_ASSERT
+std::atomic<int> the_observer_proxy_count;
+#endif /* TBB_USE_ASSERT */
+
 void clear_address_waiter_table();
+void global_control_acquire();
+void global_control_release();
 
 //! global_control.cpp contains definition
 bool remove_and_check_if_empty(d1::global_control& gc);
@@ -60,6 +70,7 @@ namespace system_topology {
 //------------------------------------------------------------------------
 
 void governor::acquire_resources () {
+    global_control_acquire();
 #if __TBB_USE_POSIX
     int status = theTLS.create(auto_terminate);
 #else
@@ -83,8 +94,15 @@ void governor::release_resources () {
         runtime_warning("failed to destroy task scheduler TLS: %s", std::strerror(status));
     clear_address_waiter_table();
 
+#if TBB_USE_ASSERT
+    if (the_observer_proxy_count != 0) {
+            runtime_warning("Leaked %ld observer_proxy objects\n", long(the_observer_proxy_count));
+    }
+#endif /* TBB_USE_ASSERT */
+
     system_topology::destroy();
     dynamic_unlink_all();
+    global_control_release();
 }
 
 rml::tbb_server* governor::create_rml_server ( rml::tbb_client& client ) {
@@ -141,6 +159,9 @@ static std::uintptr_t get_stack_base(std::size_t stack_size) {
     NT_TIB* pteb = (NT_TIB*)NtCurrentTeb();
     __TBB_ASSERT(&pteb < pteb->StackBase && &pteb > pteb->StackLimit, "invalid stack info in TEB");
     return reinterpret_cast<std::uintptr_t>(pteb->StackBase);
+#elif defined(EMSCRIPTEN)
+    suppress_unused_warning(stack_size);
+    return reinterpret_cast<std::uintptr_t>(emscripten_stack_get_base());
 #else
     // There is no portable way to get stack base address in Posix, so we use
     // non-portable method (on all modern Linux) or the simplified approach
