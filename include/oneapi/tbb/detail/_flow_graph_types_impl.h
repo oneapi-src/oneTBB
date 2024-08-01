@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2022 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
 #error Do not #include this internal file directly; use public TBB headers instead.
 #endif
 
-// included in namespace tbb::detail::d1
+// included in namespace tbb::detail::d2
 
 // the change to key_matching (adding a K and KHash template parameter, making it a class)
 // means we have to pass this data to the key_matching_port.  All the ports have only one

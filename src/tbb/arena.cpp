@@ -503,6 +503,7 @@ struct task_arena_impl {
     static void wait(d1::task_arena_base&);
     static int max_concurrency(const d1::task_arena_base*);
     static void enqueue(d1::task&, d1::task_group_context*, d1::task_arena_base*);
+    static d1::slot_id execution_slot(const d1::task_arena_base&);
 };
 
 void __TBB_EXPORTED_FUNC initialize(d1::task_arena_base& ta) {
@@ -533,6 +534,10 @@ void __TBB_EXPORTED_FUNC enqueue(d1::task& t, d1::task_group_context& ctx, d1::t
     task_arena_impl::enqueue(t, &ctx, ta);
 }
 
+d1::slot_id __TBB_EXPORTED_FUNC execution_slot(const d1::task_arena_base& arena) {
+    return task_arena_impl::execution_slot(arena);
+}
+
 void task_arena_impl::initialize(d1::task_arena_base& ta) {
     // Enforce global market initialization to properly initialize soft limit
     (void)governor::get_thread_data();
@@ -559,7 +564,7 @@ void task_arena_impl::initialize(d1::task_arena_base& ta) {
         ta.my_numa_id, ta.core_type(), ta.max_threads_per_core());
     if (observer) {
         // TODO: Consider lazy initialization for internal arena so
-        // the direct calls to observer might be omitted until actual initialization. 
+        // the direct calls to observer might be omitted until actual initialization.
         observer->on_scheduler_entry(true);
     }
 #endif /*__TBB_CPUBIND_PRESENT*/
@@ -622,6 +627,14 @@ void task_arena_impl::enqueue(d1::task& t, d1::task_group_context* c, d1::task_a
      __TBB_ASSERT(!a->my_default_ctx->is_group_execution_cancelled(),
                   "The task will not be executed because its task_group_context is cancelled.");
      a->enqueue_task(t, *ctx, *td);
+}
+
+d1::slot_id task_arena_impl::execution_slot(const d1::task_arena_base& ta) {
+    thread_data* td = governor::get_thread_data_if_initialized();
+    if (td && (td->is_attached_to(ta.my_arena.load(std::memory_order_relaxed)))) {
+        return td->my_arena_index;
+    }
+    return d1::slot_id(-1);
 }
 
 class nested_arena_context : no_copy {
