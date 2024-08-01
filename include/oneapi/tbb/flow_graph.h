@@ -1582,7 +1582,7 @@ public:
         op_data.elem = &v;
         my_aggregator.execute(&op_data);
         (void)enqueue_forwarding_task(op_data);
-        return (op_data.status==SUCCEEDED);
+        return op_data.status==SUCCEEDED;
     }
 #endif
 
