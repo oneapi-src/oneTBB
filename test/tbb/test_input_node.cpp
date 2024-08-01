@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2022 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -30,8 +30,8 @@
 //! \brief Test for [flow_graph.input_node] specification
 
 
-using tbb::detail::d1::graph_task;
-using tbb::detail::d1::SUCCESSFULLY_ENQUEUED;
+using tbb::detail::d2::graph_task;
+using tbb::detail::d2::SUCCESSFULLY_ENQUEUED;
 
 const int N = 1000;
 

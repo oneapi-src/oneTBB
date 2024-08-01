@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2022 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@
 
 #include "common/spin_barrier.h"
 
-using tbb::detail::d1::SUCCESSFULLY_ENQUEUED;
+using tbb::detail::d2::SUCCESSFULLY_ENQUEUED;
 
 // Needed conversion to and from continue_msg, but didn't want to add
 // conversion operators to the class, since we don't want it in general,
@@ -277,9 +277,9 @@ struct harness_counting_receiver : public tbb::flow::receiver<T> {
         return my_graph;
     }
 
-    tbb::detail::d1::graph_task *try_put_task( const T & ) override {
+    tbb::detail::d2::graph_task *try_put_task( const T & ) override {
       ++my_count;
-      return const_cast<tbb::detail::d1::graph_task*>(SUCCESSFULLY_ENQUEUED);
+      return const_cast<tbb::detail::d2::graph_task*>(SUCCESSFULLY_ENQUEUED);
     }
 
     void validate() {
@@ -323,13 +323,13 @@ struct harness_mapped_receiver : public tbb::flow::receiver<T> {
        my_multiset = new multiset_type;
     }
 
-    tbb::detail::d1::graph_task* try_put_task( const T &t ) override {
+    tbb::detail::d2::graph_task* try_put_task( const T &t ) override {
       if ( my_multiset ) {
           (*my_multiset).emplace( t );
       } else {
           ++my_count;
       }
-      return const_cast<tbb::detail::d1::graph_task*>(SUCCESSFULLY_ENQUEUED);
+      return const_cast<tbb::detail::d2::graph_task*>(SUCCESSFULLY_ENQUEUED);
     }
 
     tbb::flow::graph& graph_reference() const override {
@@ -842,7 +842,7 @@ struct throwing_body{
         if(my_counter == Threshold)
             throw Threshold;
     }
-    
+
     template<typename input_type>
     output_tuple_type operator()(const input_type&) {
         ++my_counter;

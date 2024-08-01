@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2022 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
 #error Do not #include this internal file directly; use public TBB headers instead.
 #endif
 
-// included into namespace tbb::detail::d1
+// included into namespace tbb::detail::d2
 
     struct forwarding_base : no_assign {
         forwarding_base(graph &g) : graph_ref(g) {}
@@ -216,7 +216,7 @@
         };
         typedef reserving_port<T> class_type;
 
-        class reserving_port_operation : public aggregated_operation<reserving_port_operation> {
+        class reserving_port_operation : public d1::aggregated_operation<reserving_port_operation> {
         public:
             char type;
             union {
@@ -230,9 +230,9 @@
             reserving_port_operation(op_type t) : type(char(t)) {}
         };
 
-        typedef aggregating_functor<class_type, reserving_port_operation> handler_type;
-        friend class aggregating_functor<class_type, reserving_port_operation>;
-        aggregator<handler_type, reserving_port_operation> my_aggregator;
+        typedef d1::aggregating_functor<class_type, reserving_port_operation> handler_type;
+        friend class d1::aggregating_functor<class_type, reserving_port_operation>;
+        d1::aggregator<handler_type, reserving_port_operation> my_aggregator;
 
         void handle_operations(reserving_port_operation* op_list) {
             reserving_port_operation *current;
@@ -376,7 +376,7 @@
         enum op_type { get__item, res_port, try__put_task
         };
 
-        class queueing_port_operation : public aggregated_operation<queueing_port_operation> {
+        class queueing_port_operation : public d1::aggregated_operation<queueing_port_operation> {
         public:
             char type;
             T my_val;
@@ -398,9 +398,9 @@
             {}
         };
 
-        typedef aggregating_functor<class_type, queueing_port_operation> handler_type;
-        friend class aggregating_functor<class_type, queueing_port_operation>;
-        aggregator<handler_type, queueing_port_operation> my_aggregator;
+        typedef d1::aggregating_functor<class_type, queueing_port_operation> handler_type;
+        friend class d1::aggregating_functor<class_type, queueing_port_operation>;
+        d1::aggregator<handler_type, queueing_port_operation> my_aggregator;
 
         void handle_operations(queueing_port_operation* op_list) {
             queueing_port_operation *current;
@@ -541,7 +541,7 @@
         enum op_type { try__put, get__item, res_port
         };
 
-        class key_matching_port_operation : public aggregated_operation<key_matching_port_operation> {
+        class key_matching_port_operation : public d1::aggregated_operation<key_matching_port_operation> {
         public:
             char type;
             input_type my_val;
@@ -556,9 +556,9 @@
             key_matching_port_operation(op_type t) : type(char(t)), my_arg(nullptr) {}
         };
 
-        typedef aggregating_functor<class_type, key_matching_port_operation> handler_type;
-        friend class aggregating_functor<class_type, key_matching_port_operation>;
-        aggregator<handler_type, key_matching_port_operation> my_aggregator;
+        typedef d1::aggregating_functor<class_type, key_matching_port_operation> handler_type;
+        friend class d1::aggregating_functor<class_type, key_matching_port_operation>;
+        d1::aggregator<handler_type, key_matching_port_operation> my_aggregator;
 
         void handle_operations(key_matching_port_operation* op_list) {
             key_matching_port_operation *current;
@@ -695,10 +695,9 @@
         graph_task* decrement_port_count() override {
             if(ports_with_no_inputs.fetch_sub(1) == 1) {
                 if(is_graph_active(this->graph_ref)) {
-                    small_object_allocator allocator{};
+                    d1::small_object_allocator allocator{};
                     typedef forward_task_bypass<base_node_type> task_type;
                     graph_task* t = allocator.new_object<task_type>(graph_ref, allocator, *my_node);
-                    graph_ref.reserve_wait();
                     spawn_in_graph_arena(this->graph_ref, *t);
                 }
             }
@@ -768,10 +767,9 @@
         {
             if(ports_with_no_items.fetch_sub(1) == 1) {
                 if(is_graph_active(this->graph_ref)) {
-                    small_object_allocator allocator{};
+                    d1::small_object_allocator allocator{};
                     typedef forward_task_bypass<base_node_type> task_type;
                     graph_task* t = allocator.new_object<task_type>(graph_ref, allocator, *my_node);
-                    graph_ref.reserve_wait();
                     if( !handle_task )
                         return t;
                     spawn_in_graph_arena(this->graph_ref, *t);
@@ -854,7 +852,7 @@
         enum op_type { res_count, inc_count, may_succeed, try_make };
         typedef join_node_FE<key_matching<key_type,key_hash_compare>, InputTuple, OutputTuple> class_type;
 
-        class key_matching_FE_operation : public aggregated_operation<key_matching_FE_operation> {
+        class key_matching_FE_operation : public d1::aggregated_operation<key_matching_FE_operation> {
         public:
             char type;
             unref_key_type my_val;
@@ -868,9 +866,9 @@
             key_matching_FE_operation(op_type t) : type(char(t)), my_output(nullptr), bypass_t(nullptr) {}
         };
 
-        typedef aggregating_functor<class_type, key_matching_FE_operation> handler_type;
-        friend class aggregating_functor<class_type, key_matching_FE_operation>;
-        aggregator<handler_type, key_matching_FE_operation> my_aggregator;
+        typedef d1::aggregating_functor<class_type, key_matching_FE_operation> handler_type;
+        friend class d1::aggregating_functor<class_type, key_matching_FE_operation>;
+        d1::aggregator<handler_type, key_matching_FE_operation> my_aggregator;
 
         // called from aggregator, so serialized
         // returns a task pointer if the a task would have been enqueued but we asked that
@@ -884,10 +882,9 @@
             if(join_helper<N>::get_items(my_inputs, l_out)) {  //  <== call back
                 this->push_back(l_out);
                 if(do_fwd) {  // we enqueue if receiving an item from predecessor, not if successor asks for item
-                    small_object_allocator allocator{};
+                    d1::small_object_allocator allocator{};
                     typedef forward_task_bypass<base_node_type> task_type;
                     rtask = allocator.new_object<task_type>(this->graph_ref, allocator, *my_node);
-                    this->graph_ref.reserve_wait();
                     do_fwd = false;
                 }
                 // retire the input values
@@ -1044,7 +1041,7 @@
         };
         typedef join_node_base<JP,InputTuple,OutputTuple> class_type;
 
-        class join_node_base_operation : public aggregated_operation<join_node_base_operation> {
+        class join_node_base_operation : public d1::aggregated_operation<join_node_base_operation> {
         public:
             char type;
             union {
@@ -1059,10 +1056,10 @@
             join_node_base_operation(op_type t) : type(char(t)), bypass_t(nullptr) {}
         };
 
-        typedef aggregating_functor<class_type, join_node_base_operation> handler_type;
-        friend class aggregating_functor<class_type, join_node_base_operation>;
+        typedef d1::aggregating_functor<class_type, join_node_base_operation> handler_type;
+        friend class d1::aggregating_functor<class_type, join_node_base_operation>;
         bool forwarder_busy;
-        aggregator<handler_type, join_node_base_operation> my_aggregator;
+        d1::aggregator<handler_type, join_node_base_operation> my_aggregator;
 
         void handle_operations(join_node_base_operation* op_list) {
             join_node_base_operation *current;
@@ -1073,10 +1070,9 @@
                 case reg_succ: {
                         my_successors.register_successor(*(current->my_succ));
                         if(tuple_build_may_succeed() && !forwarder_busy && is_graph_active(my_graph)) {
-                            small_object_allocator allocator{};
+                            d1::small_object_allocator allocator{};
                             typedef forward_task_bypass< join_node_base<JP, InputTuple, OutputTuple> > task_type;
                             graph_task* t = allocator.new_object<task_type>(my_graph, allocator, *this);
-                            my_graph.reserve_wait();
                             spawn_in_graph_arena(my_graph, *t);
                             forwarder_busy = true;
                         }

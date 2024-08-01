@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2023 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ template< typename OutputType >
 void run_continue_nodes( int p, tbb::flow::graph& g, tbb::flow::continue_node< OutputType >& n ) {
     fake_continue_sender fake_sender;
     for (size_t i = 0; i < N; ++i) {
-        tbb::detail::d1::register_predecessor(n, fake_sender);
+        tbb::detail::d2::register_predecessor(n, fake_sender);
     }
 
     for (size_t num_receivers = 1; num_receivers <= MAX_NODES; ++num_receivers ) {
@@ -138,7 +138,7 @@ void continue_nodes_with_copy( ) {
         tbb::flow::continue_node< OutputType > exe_node( g, cf );
         fake_continue_sender fake_sender;
         for (size_t i = 0; i < N; ++i) {
-            tbb::detail::d1::register_predecessor(exe_node, fake_sender);
+            tbb::detail::d2::register_predecessor(exe_node, fake_sender);
         }
 
         for (size_t num_receivers = 1; num_receivers <= MAX_NODES; ++num_receivers ) {
