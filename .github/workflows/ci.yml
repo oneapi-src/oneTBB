@@ -19,11 +19,7 @@ on:
     branches: [master]
 
   pull_request:
-<<<<<<< HEAD
-    branches: [master, dev/kboyarinov/try_put_and_wait_production, dev/kboyarinov/try_put_and_wait_function_node]
-=======
     branches: [master, dev/kboyarinov/try_put_and_wait_production]
->>>>>>> origin/dev/kboyarinov/try_put_and_wait_production
     types:
       - opened
       - synchronize
