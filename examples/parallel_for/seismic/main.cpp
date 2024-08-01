@@ -23,7 +23,6 @@
 
 #include "common/utility/utility.hpp"
 #include "common/utility/get_default_num_threads.hpp"
-#include "common/utility/measurements.hpp"
 
 #include "seismic_video.hpp"
 #include "universe.hpp"
@@ -150,6 +149,6 @@ int main(int argc, char *argv[]) {
     video.terminate();
     double rel_error = mu.computeRelError();
     utility::report_elapsed_time((oneapi::tbb::tick_count::now() - mainStartTime).seconds());
-    //utility::report_relative_error(rel_error);
+    utility::report_relative_error(rel_error);
     return 0;
 }
