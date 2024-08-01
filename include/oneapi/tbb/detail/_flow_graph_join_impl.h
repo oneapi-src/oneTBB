@@ -1190,6 +1190,13 @@
             return op_data.status == SUCCEEDED;
         }
 
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        // TODO: implement try_get with metainfo for join_node
+        bool try_get( output_type &v, message_metainfo& ) override {
+            return try_get(v);
+        }
+#endif
+
     protected:
         void reset_node(reset_flags f) override {
             input_ports_type::reset(f);

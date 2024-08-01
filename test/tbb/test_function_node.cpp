@@ -722,7 +722,6 @@ void test_try_put_and_wait() {
     test_try_put_and_wait_queueing(tbb::flow::unlimited);
 
     test_try_put_and_wait_rejecting(tbb::flow::serial);
-    // TODO: add integration test with buffering node before rejecting function_node
 }
 #endif // __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
 

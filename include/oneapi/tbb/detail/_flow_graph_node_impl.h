@@ -213,9 +213,12 @@ private:
         }
         else {
             input_type i;
-            if(my_predecessors.get_item(i)) {
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+            message_metainfo metainfo;
+#endif
+            if(my_predecessors.get_item(i __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo))) {
                 ++my_concurrency;
-                new_task = create_body_task(i __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo{}));
+                new_task = create_body_task(i __TBB_FLOW_GRAPH_METAINFO_ARG(std::move(metainfo)));
             }
         }
         return new_task;
@@ -351,8 +354,12 @@ private:
     }
 
     //! allocates a task to apply a body
-    graph_task* create_body_task( const input_type &input
-                                  __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo))
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    template <typename Metainfo>
+    graph_task* create_body_task( const input_type &input, Metainfo&& metainfo )
+#else
+    graph_task* create_body_task( const input_type &input )
+#endif
     {
         if (!is_graph_active(my_graph_ref)) {
             return nullptr;
@@ -363,7 +370,7 @@ private:
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
         if (!metainfo.empty()) {
             using task_type = apply_body_task_bypass<class_type, input_type, trackable_messages_graph_task>;
-            t = allocator.new_object<task_type>(my_graph_ref, allocator, *this, input, my_priority, metainfo);
+            t = allocator.new_object<task_type>(my_graph_ref, allocator, *this, input, my_priority, std::forward<Metainfo>(metainfo));
         } else
 #endif
         {
