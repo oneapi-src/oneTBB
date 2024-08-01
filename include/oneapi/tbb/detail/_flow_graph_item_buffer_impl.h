@@ -114,8 +114,11 @@ protected:
         if(element(i).state != no_item) {
             destroy_item(i);
         }
+        
         new(&(element(i).item)) item_type(o);
         new(&element(i).metainfo) message_metainfo(std::move(metainfo));
+        // Skipping the reservation on metainfo.waiters since the ownership
+        // is moving from metainfo to the cache
         element(i).state = has_item;
     }
 #endif
