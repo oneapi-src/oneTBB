@@ -1017,9 +1017,10 @@ protected:
         return emit_element<N>::emit_this(this->my_graph, t, output_ports());
     }
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    // TODO: add support for split_node
-    graph_task* try_put_task(const TupleType& t, const message_metainfo&) override {
-        return try_put_task(t);
+    graph_task* try_put_task(const TupleType& t, const message_metainfo& metainfo) override {
+        // Sending split messages in parallel is not justified, as overheads would prevail.
+        // Also, we do not have successors here. So we just tell the task returned here is successful.
+        return emit_element<N>::emit_this(this->my_graph, t, output_ports(), metainfo);
     }
 #endif
 
