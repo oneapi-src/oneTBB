@@ -44,6 +44,7 @@ class wait_context;
 class task_group_context;
 struct execution_data;
 class wait_tree_vertex_interface;
+class task_arena_base;
 }
 
 namespace d2 {
@@ -58,6 +59,7 @@ TBB_EXPORT void __TBB_EXPORTED_FUNC spawn(d1::task& t, d1::task_group_context& c
 TBB_EXPORT void __TBB_EXPORTED_FUNC execute_and_wait(d1::task& t, d1::task_group_context& t_ctx, d1::wait_context&, d1::task_group_context& w_ctx);
 TBB_EXPORT void __TBB_EXPORTED_FUNC wait(d1::wait_context&, d1::task_group_context& ctx);
 TBB_EXPORT d1::slot_id __TBB_EXPORTED_FUNC execution_slot(const d1::execution_data*);
+TBB_EXPORT d1::slot_id __TBB_EXPORTED_FUNC execution_slot(const d1::task_arena_base&);
 TBB_EXPORT d1::task_group_context* __TBB_EXPORTED_FUNC current_context();
 TBB_EXPORT d1::wait_tree_vertex_interface* get_thread_reference_vertex(d1::wait_tree_vertex_interface* wc);
 
@@ -157,7 +159,6 @@ class wait_tree_vertex_interface {
 public:
     virtual void reserve(std::uint32_t delta = 1) = 0;
     virtual void release(std::uint32_t delta = 1) = 0;
-    virtual void release(std::uint32_t delta, const d1::execution_data&) = 0;
 
 protected:
     virtual ~wait_tree_vertex_interface() = default;
@@ -186,11 +187,6 @@ private:
         return m_wait.continue_execution();
     }
 
-    void release(std::uint32_t, const d1::execution_data&) override {
-        __TBB_ASSERT(false,
-            "This method is overloaded only to fulfill the base class interface requirements, and thus, it should not be called.");
-    }
-
     wait_context m_wait;
 };
 
@@ -212,16 +208,6 @@ public:
             execute_continuation();
             destroy();
             parent->release();
-        }
-    }
-
-    void release(std::uint32_t delta, const d1::execution_data& ed) override {
-        std::uint64_t ref = m_ref_count.fetch_sub(static_cast<std::uint64_t>(delta)) - static_cast<std::uint64_t>(delta);
-        if (ref == 0) {
-            auto parent = my_parent;
-            execute_continuation();
-            destroy(ed);
-            parent->release(1, ed);
         }
     }
 
