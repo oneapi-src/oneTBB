@@ -184,9 +184,9 @@ public:
                                   const std::forward_list<d1::wait_context_vertex*>& msg_waiters)
         : trackable_messages_graph_task(g, allocator, no_priority, msg_waiters) {}
 
-    graph_task_with_message_waiters(graph& g, d1::small_object_allocator& allocator,
-                                    std::forward_list<d1::wait_context_vertex*>&& msg_waiters)
-        : graph_task_with_message_waiters(g, allocator, no_priority, std::move(msg_waiters)) {}
+    trackable_messages_graph_task(graph& g, d1::small_object_allocator& allocator,
+                                  std::forward_list<d1::wait_context_vertex*>&& msg_waiters)
+        : trackable_messages_graph_task(g, allocator, no_priority, std::move(msg_waiters)) {}
 
     const std::forward_list<d1::wait_context_vertex*> get_msg_wait_context_vertices() const {
         return my_msg_wait_context_vertices;
