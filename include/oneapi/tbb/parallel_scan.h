@@ -28,7 +28,6 @@
 #include "partitioner.h"
 #include "blocked_range.h"
 #include "task_group.h"
-#include <iostream>
 
 namespace tbb {
 namespace detail {
@@ -538,40 +537,6 @@ public:
     }
 };
 
-
-  template<typename BasePartitioner>
-  template<typename Range, typename Body>
-  void numa_partitioner<BasePartitioner>::execute_scan(const Range& range, Body& body) const{
-    if (range.is_divisible() && num_numa_nodes > 1) {
-      std::vector<Range> subranges;
-      split_range(range, subranges, num_numa_nodes);
-      std::vector<oneapi::tbb::task_group> task_groups(num_numa_nodes);
-      initialize_arena();
-      std::vector<long unsigned int> data;
-
-      for (std::size_t i = 0; i < num_numa_nodes; ++i) {
-	arenas[i].execute([&]() {
-	  task_groups[i].run([&, i] {
-	    subranges[i].first_touch(data);
-	  });
-	});
-	//TODO coordinate between 2 nodes
-	arenas[i].execute([&]() {
-	  task_groups[i].run([&, i] {
-	    parallel_scan(subranges[i], body, base_partitioner);
-	  });
-	});
-	body.print_output();
-      }
-      for (std::size_t i = 0; i < num_numa_nodes; ++i) {
-	arenas[i].execute([&task_groups, i]() {
-	  task_groups[i].wait();
-	});
-      }
-    }else{
-      parallel_scan(range , body, base_partitioner);
-    }
-  }
 // Requirements on Range concept are documented in blocked_range.h
 
 /** \page parallel_scan_body_req Requirements on parallel_scan body
@@ -599,14 +564,7 @@ template<typename Range, typename Body>
 void parallel_scan( const Range& range, Body& body ) {
     start_scan<Range, Body, __TBB_DEFAULT_PARTITIONER>::run(range,body,__TBB_DEFAULT_PARTITIONER());
 }
-//! Parallel prefix with numa_partitioner
-/** @ingroup algorithms **/
-template<typename Range, typename Body, typename T>
-__TBB_requires(tbb_range<Range> && parallel_scan_body<Body, Range>)
-  void parallel_scan( const Range& range, Body& body, numa_partitioner<T>& n_partitioner) {
-  n_partitioner.execute_scan(range, body);
-}
-  
+
 //! Parallel prefix with simple_partitioner
 /** @ingroup algorithms **/
 template<typename Range, typename Body>
