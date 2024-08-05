@@ -50,6 +50,9 @@
 #include <algorithm>
 #include <atomic>
 #include <type_traits>
+#include <tbb/blocked_range.h>
+#include <tbb/blocked_range2d.h>
+#include <tbb/blocked_range3d.h>
 
 #if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
     // Workaround for overzealous compiler warnings
@@ -659,10 +662,30 @@ private:
     typedef affinity_partition_type::split_type split_type;
 };
 
+  
   // Function to get the number of NUMA nodes in the system
 std::size_t get_number_of_numa_nodes() {
   return oneapi::tbb::info::numa_nodes().size();
 }
+
+  // Type traits to determine the range type
+  template<typename T>
+  struct is_blocked_range : std::false_type {};
+
+  template<typename valueT>
+  struct is_blocked_range<tbb::blocked_range<valueT>> : std::true_type {};
+
+  template<typename T>
+  struct is_blocked_range2d : std::false_type {};
+
+  template<typename valueT>
+  struct is_blocked_range2d<blocked_range2d<valueT>> : std::true_type {};
+
+  template<typename T>
+  struct is_blocked_range3d : std::false_type {};
+
+  template<typename valueT>
+  struct is_blocked_range3d<blocked_range3d<valueT>> : std::true_type {};
 
 template<typename BasePartitioner>
 class numa_partitioner {
@@ -684,25 +707,63 @@ public:
   void execute_for(const Range& range, const Body& body) const;
 
   template<typename Range, typename Body>
-  void execute_scan(const Range& range, Body& body) const;
-
-  template<typename Range, typename Body>
   void execute_reduce(const Range& range, Body& body) const;
 
 private:
   mutable std::vector<oneapi::tbb::task_arena>  arenas;
-    // Helper function to split a range into multiple subranges
-    template<typename Range>
-    void split_range(const Range& range, std::vector<Range>& subranges, std::size_t num_parts) const {
-        subranges.push_back(range); // Start with the full range
-        for (std::size_t i = 1; i < num_parts; ++i) {
+  // Helper function to split a range into multiple subranges
+  template<typename Range>
+  void split_range(const Range& range, std::vector<Range>& subranges, std::size_t num_parts) const {
+    subranges.push_back(range); // Start with the full range
+    for (std::size_t i = 1; i < num_parts; ++i) {
             if (!subranges.back().is_divisible()) break; // If the range is no longer divisible, stop splitting
             Range new_range = subranges.back(); // Copy the last range
             subranges.back()= Range(new_range, detail::split());
             subranges.push_back(new_range); // Add the new subrange
-        }
     }
-
+  }
+  
+  template <typename Range, typename Value>
+  void first_touch(const Range& range, std::vector<Value>& container) const{
+      if constexpr (is_blocked_range<Range>::value) {
+	printf("The range is a blocked_range (1D).\n");
+	int size = range.end() - range.begin();
+	if (size < 0) {
+	  // Handle error: end is before begin
+	  throw std::runtime_error("Invalid range: end is before begin");
+	}
+	
+	container.resize(size);
+	
+	for (int i = range.begin(); i != range.end(); ++i) {
+	  container[i - range.begin()] = static_cast<Value>(i); // Set each element to its index
+	}
+      } else if constexpr (is_blocked_range2d<Range>::value) {
+	printf("The range is a blocked_range2d (2D).\n");
+	auto my_rows = range.rows();
+	auto my_cols = range.cols();
+	
+	container.resize(my_rows.end() * my_cols.end());
+	for (auto r = my_rows.begin(); r != my_rows.end(); ++r) {
+	  for (auto c = my_cols.begin(); c != my_cols.end(); ++c) {
+	    container[r * my_cols.end() + c] = static_cast<Value>(r * my_cols.size() + c);
+	  }
+	}
+      } else {
+	auto my_rows = range.rows();
+	auto my_cols = range.cols();
+	auto my_pages = range.pages();
+	container.resize(my_rows.end() * my_cols.end() * my_pages.end());
+	for (auto p = my_pages.begin(); p != my_pages.end(); ++p) {
+	  for (auto r = my_rows.begin(); r != my_rows.end(); ++r) {
+	    for (auto c = my_cols.begin(); c != my_cols.end(); ++c) {
+	      container[(r * my_cols.size() + c) * my_pages.size() + p] = (r * my_cols.size() + c) * my_pages.size() + p; 
+	    }
+	  }
+	}
+      }
+	
+  }
 
 };
   
