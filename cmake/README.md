@@ -10,6 +10,7 @@ TBB_SANITIZE:STRING - Sanitizer parameter, passed to compiler/linker
 TBB_SIGNTOOL:FILEPATH - Tool for digital signing, used in post-install step for libraries if provided.
 TBB_SIGNTOOL_ARGS:STRING - Additional arguments for TBB_SIGNTOOL, used if TBB_SIGNTOOL is set.
 TBB_BUILD:BOOL - Enable Intel(R) oneAPI Threading Building Blocks (oneTBB) build (ON by default)
+DTBB_FIND_PACKAGE - Enable search for external oneTBB using find_package instead of build from sources (OFF by default)
 TBBMALLOC_BUILD:BOOL - Enable Intel(R) oneAPI Threading Building Blocks (oneTBB) memory allocator build (ON by default)
 TBBMALLOC_PROXY_BUILD:BOOL - Enable Intel(R) oneAPI Threading Building Blocks (oneTBB) memory allocator proxy build (requires TBBMALLOC_BUILD. ON by default)
 TBB4PY_BUILD:BOOL - Enable Intel(R) oneAPI Threading Building Blocks (oneTBB) Python module build (OFF by default)
@@ -234,9 +235,10 @@ make test_spec
 It is a configuration module that is used for the integration of prebuilt oneTBB. It consists of two files (``TBBConfig.cmake`` and ``TBBConfigVersion.cmake``) and can be used via the [find_package](https://cmake.org/cmake/help/latest/command/find_package.html) function.
 
 To use this module in your CMake project:
- 1. Let CMake know where to search for TBBConfig, e.g. specify the location of ``TBBConfig.cmake`` in `TBB_DIR` (for more details about search paths, see [find_package](https://cmake.org/cmake/help/latest/command/find_package.html)).
- 2. Use [find_package](https://cmake.org/cmake/help/latest/command/find_package.html) to find oneTBB.
- 3. Use provided variables and/or imported targets (described below) to work with the found oneTBB.
+ 1. Set TBB_FIND_PACKAGE=ON
+ 2. Let CMake know where to search for TBBConfig, e.g. specify the location of ``TBBConfig.cmake`` in `TBB_DIR` (for more details about search paths, see [find_package](https://cmake.org/cmake/help/latest/command/find_package.html)).
+ 3. Use [find_package](https://cmake.org/cmake/help/latest/command/find_package.html) to find oneTBB.
+ 4. Use provided variables and/or imported targets (described below) to work with the found oneTBB.
 
 Example:
 
@@ -268,7 +270,7 @@ Variable | Description
 `TBB_IMPORTED_TARGETS`  | All created oneTBB imported targets (not supported for builds from source code)
 
 Starting from [oneTBB 2021.1](https://github.com/oneapi-src/oneTBB/releases/tag/v2021.1), GitHub* release TBBConfig files in the binary packages are located under `<tbb-root>/lib/cmake/TBB`.
-For example, `TBB_DIR` should be set to `<tbb-root>/lib/cmake/TBB`.
+For example, 'TBB_FIND_PACKAGE' should be set to ON and `TBB_DIR` should be set to `<tbb-root>/lib/cmake/TBB`.
 
 TBBConfig files are automatically created during the build from source code and can be installed together with the library.
 Also, oneTBB provides a helper function that creates TBBConfig files from predefined templates. See `tbb_generate_config` in `cmake/config_generation.cmake`.
