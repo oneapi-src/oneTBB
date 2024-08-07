@@ -182,40 +182,28 @@ task* start_for<Range, Body, Partitioner>::cancel(execution_data& ed) {
 template<typename BasePartitioner>
 template<typename Range, typename Body>
 void numa_partitioner<BasePartitioner>::execute_for(const Range& range, const Body& body) const{
-  if (range.is_divisible() && num_numa_nodes > 1) {
-    std::vector<Range> subranges;
-    split_range(range, subranges, num_numa_nodes);
-    std::vector<oneapi::tbb::task_group> task_groups(num_numa_nodes);
-    initialize_arena();
-    std::vector<size_t> vec;
-    
-    for (std::size_t i = 0; i < num_numa_nodes; ++i) {
-      arenas[i].execute([&]() {
-	task_groups[i].run([&, i] {
-	  parallel_for(subranges[i].begin(),subranges[i].end(),
-		       [](auto& elem) {
-			 elem = 0;
-		       });
-	});
-      });
-
-      
-      arenas[i].execute([&]() {
-	task_groups[i].run([&, i] {
-	parallel_for(subranges[i], body, base_partitioner);
-	});
-      });
-      
+    if (range.is_divisible() && num_numa_nodes > 1) {
+        std::vector<Range> subranges;
+	split_range(range, subranges, num_numa_nodes);
+	std::vector<oneapi::tbb::task_group> task_groups(num_numa_nodes);
+	initialize_arena();
+	
+	for (std::size_t i = 0; i < num_numa_nodes; ++i) {
+	    arenas[i].execute([&]() {
+	        task_groups[i].run([&, i] {
+		    parallel_for(subranges[i], body, base_partitioner);
+		});
+	    });
+	}
+	for (std::size_t i = 0; i < num_numa_nodes; ++i) {
+	    arenas[i].execute([&task_groups, i]() {
+	        task_groups[i].wait();
+	    });
+	}
     }
-    for (std::size_t i = 0; i < num_numa_nodes; ++i) {
-      arenas[i].execute([&task_groups, i]() {
-	task_groups[i].wait();
-      });
+    else {
+        parallel_for(range,body,base_partitioner);
     }
-  }
-  else {
-    parallel_for(range,body,base_partitioner);
-  }
 }
     
 //! Calls the function with values from range [begin, end) with a step provided
@@ -300,7 +288,7 @@ void parallel_for( const Range& range, const Body& body, affinity_partitioner& p
     start_for<Range,Body,affinity_partitioner>::run(range,body,partitioner);
 }
 
-//! Parallel iteration over range with affinity_partitioner.
+//! Parallel iteration over range with numa_partitioner.
 /** @ingroup algorithms **/
   template<typename Range, typename Body, typename T>
 __TBB_requires(tbb_range<Range> && parallel_for_body<Body, Range>)
