@@ -179,8 +179,7 @@ public:
     }
 
 private:
-    using aligned_storage_type = typename std::aligned_storage<sizeof(value_type)>::type;
-    aligned_storage_type my_value;
+    alignas(value_type) alignas(max_nfs_size) char my_value[sizeof(value_type)];
 }; // class value_node
 
 template <typename Traits>
