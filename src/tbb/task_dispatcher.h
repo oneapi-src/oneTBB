@@ -256,7 +256,7 @@ d1::task* task_dispatcher::local_wait_for_all(d1::task* t, Waiter& waiter ) {
             task_disp.m_properties = old_properties;
 
             if (!is_initially_registered) {
-                task_disp.m_thread_data->my_arena->my_tc_client.get_pm_client()->unregister_thread();
+                // task_disp.m_thread_data->my_arena->my_tc_client.get_pm_client()->unregister_thread();
                 task_disp.m_thread_data->my_is_registered = false;
             }
 
@@ -289,7 +289,7 @@ d1::task* task_dispatcher::local_wait_for_all(d1::task* t, Waiter& waiter ) {
     m_properties.fifo_tasks_allowed = false;
 
     if (!dl_guard.is_initially_registered) {
-        m_thread_data->my_arena->my_tc_client.get_pm_client()->register_thread();
+        // m_thread_data->my_arena->my_tc_client.get_pm_client()->register_thread();
         m_thread_data->my_is_registered = true;
     }
 
