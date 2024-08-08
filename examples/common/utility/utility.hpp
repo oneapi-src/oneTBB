@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include <cassert>
 #include <cstring>
 #include <cstdlib>
+#include <cmath>
 
 #include <utility>
 #include <string>
@@ -32,6 +33,7 @@
 #include <stdexcept>
 #include <memory>
 #include <iostream>
+#include <chrono>
 // TBB headers should not be used, as some examples may need to be built without TBB.
 
 namespace utility {
@@ -356,6 +358,46 @@ public:
     }
 }; // class cli_argument_pack
 
+// utility class to aid relative error measurement of samples
+class measurements {
+public:
+    measurements() {
+        clear();
+    }
+    void clear() {
+        _secPerFrame.clear();
+    }
+    void start() {
+        _startTime = std::chrono::steady_clock::now();
+    }
+    void stop() {
+        _endTime = std::chrono::steady_clock::now();
+        std::chrono::duration<double> duration = _endTime - _startTime;
+        // store the duration in seconds
+        _secPerFrame.push_back(duration.count());
+    }
+    double computeRelError() {
+        auto averageTimePerFrame =
+            std::accumulate(_secPerFrame.begin(), _secPerFrame.end(), 0.0) / _secPerFrame.size();
+        std::vector<double> diff(_secPerFrame.size());
+        std::transform(_secPerFrame.begin(),
+                       _secPerFrame.end(),
+                       diff.begin(),
+                       [averageTimePerFrame](double x) {
+                           return (x - averageTimePerFrame);
+                       });
+        double sumOfSquareDiff = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
+        double stdDev = std::sqrt(sumOfSquareDiff / _secPerFrame.size());
+        double relError = 100 * (stdDev / averageTimePerFrame);
+        return relError;
+    }
+
+private:
+    std::vector<double> _secPerFrame;
+    std::chrono::steady_clock::time_point _startTime;
+    std::chrono::steady_clock::time_point _endTime;
+};
+
 namespace internal {
 template <typename T>
 bool is_power_of_2(T val) {
@@ -544,6 +586,11 @@ inline void report_elapsed_time(double seconds) {
 
 inline void report_skipped() {
     std::cout << "skip"
+              << "\n";
+}
+
+inline void report_relative_error(double err) {
+    std::cout << "Relative_Err : " << err << " %"
               << "\n";
 }
 
