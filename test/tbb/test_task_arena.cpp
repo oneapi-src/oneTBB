@@ -111,11 +111,13 @@ class ArenaObserver : public tbb::task_scheduler_observer {
     int myId;               // unique observer/arena id within a test
     int myMaxConcurrency;   // concurrency of the associated arena
     int myNumReservedSlots; // reserved slots in the associated arena
+    std::atomic<int> myNumActiveWorkers;
     void on_scheduler_entry( bool is_worker ) override {
         int current_index = tbb::this_task_arena::current_thread_index();
         CHECK(current_index < (myMaxConcurrency > 1 ? myMaxConcurrency : 2));
         if (is_worker) {
-            CHECK(current_index >= myNumReservedSlots);
+            int currNumActiveWorkers = ++myNumActiveWorkers;
+            CHECK(currNumActiveWorkers <= myMaxConcurrency - myNumReservedSlots);
         }
         CHECK_MESSAGE(!old_id.local(), "double call to on_scheduler_entry");
         old_id.local() = local_id.local();
@@ -123,19 +125,23 @@ class ArenaObserver : public tbb::task_scheduler_observer {
         local_id.local() = myId;
         slot_id.local() = current_index;
     }
-    void on_scheduler_exit( bool /*is_worker*/ ) override {
+    void on_scheduler_exit( bool is_worker ) override {
         CHECK_MESSAGE(local_id.local() == myId, "nesting of arenas is broken");
         CHECK(slot_id.local() == tbb::this_task_arena::current_thread_index());
         slot_id.local() = -2;
         local_id.local() = old_id.local();
         old_id.local() = 0;
+        if (is_worker) {
+            --myNumActiveWorkers;
+        }
     }
 public:
     ArenaObserver(tbb::task_arena &a, int maxConcurrency, int numReservedSlots, int id)
         : tbb::task_scheduler_observer(a)
         , myId(id)
         , myMaxConcurrency(maxConcurrency)
-        , myNumReservedSlots(numReservedSlots) {
+        , myNumReservedSlots(numReservedSlots)
+        , myNumActiveWorkers(0) {
         CHECK(myId);
         observe(true);
     }
@@ -433,12 +439,11 @@ void TestArenaEntryConsistency() {
 class TestArenaConcurrencyBody : utils::NoAssign {
     tbb::task_arena &my_a;
     int my_max_concurrency;
-    int my_reserved_slots;
     utils::SpinBarrier *my_barrier;
     utils::SpinBarrier *my_worker_barrier;
 public:
-    TestArenaConcurrencyBody( tbb::task_arena &a, int max_concurrency, int reserved_slots, utils::SpinBarrier *b = nullptr, utils::SpinBarrier *wb = nullptr )
-    : my_a(a), my_max_concurrency(max_concurrency), my_reserved_slots(reserved_slots), my_barrier(b), my_worker_barrier(wb) {}
+    TestArenaConcurrencyBody( tbb::task_arena &a, int max_concurrency, utils::SpinBarrier *b = nullptr, utils::SpinBarrier *wb = nullptr )
+    : my_a(a), my_max_concurrency(max_concurrency), my_barrier(b), my_worker_barrier(wb) {}
     // NativeParallelFor's functor
     void operator()( int ) const {
         CHECK_MESSAGE( local_id.local() == 0, "TLS was not cleaned?" );
@@ -453,12 +458,8 @@ public:
         int max_arena_concurrency = tbb::this_task_arena::max_concurrency();
         REQUIRE( max_arena_concurrency == my_max_concurrency );
         if ( my_worker_barrier ) {
-            if ( local_id.local() == 1 ) {
-                // External thread in a reserved slot
-                CHECK_MESSAGE( idx < my_reserved_slots, "External threads are supposed to use only reserved slots in this test" );
-            } else {
+            if ( local_id.local() != 1 ) {
                 // Worker thread
-                CHECK( idx >= my_reserved_slots );
                 my_worker_barrier->wait();
             }
         } else if ( my_barrier )
@@ -476,7 +477,7 @@ void TestArenaConcurrency( int p, int reserved = 0, int step = 1) {
             ResetTLS();
             utils::SpinBarrier b( p );
             utils::SpinBarrier wb( p-reserved );
-            TestArenaConcurrencyBody test( a, p, reserved, &b, &wb );
+            TestArenaConcurrencyBody test( a, p, &b, &wb );
             for ( int i = reserved; i < p; ++i ) // requests p-reserved worker threads
                 a.enqueue( test );
             if ( reserved==1 )
@@ -487,7 +488,7 @@ void TestArenaConcurrency( int p, int reserved = 0, int step = 1) {
         } { // Check if multiple external threads alone can achieve maximum concurrency.
             ResetTLS();
             utils::SpinBarrier b( p );
-            utils::NativeParallelFor( p, TestArenaConcurrencyBody( a, p, reserved, &b ) );
+            utils::NativeParallelFor( p, TestArenaConcurrencyBody( a, p, &b ) );
             a.debug_wait_until_empty();
         } { // Check oversubscription by external threads.
 #if !_WIN32 || !_WIN64
@@ -500,7 +501,7 @@ void TestArenaConcurrency( int p, int reserved = 0, int step = 1) {
 #endif
             {
                 ResetTLS();
-                utils::NativeParallelFor(2 * p, TestArenaConcurrencyBody(a, p, reserved));
+                utils::NativeParallelFor(2 * p, TestArenaConcurrencyBody(a, p));
                 a.debug_wait_until_empty();
             }
         }
@@ -1545,20 +1546,26 @@ class simple_observer : public tbb::task_scheduler_observer {
     int my_idx;
     int myMaxConcurrency;   // concurrency of the associated arena
     int myNumReservedSlots; // reserved slots in the associated arena
+    std::atomic<int> myNumActiveWorkers;
     void on_scheduler_entry( bool is_worker ) override {
         int current_index = tbb::this_task_arena::current_thread_index();
         CHECK(current_index < (myMaxConcurrency > 1 ? myMaxConcurrency : 2));
         if (is_worker) {
-            CHECK(current_index >= myNumReservedSlots);
+            int currNumActiveWorkers = ++myNumActiveWorkers;
+            CHECK(currNumActiveWorkers <= myMaxConcurrency - myNumReservedSlots);
         }
     }
-    void on_scheduler_exit( bool /*is_worker*/ ) override
-    {}
+    void on_scheduler_exit( bool is_worker ) override {
+        if (is_worker) {
+            --myNumActiveWorkers;
+        }
+    }
 public:
     simple_observer(tbb::task_arena &a, int maxConcurrency, int numReservedSlots)
         : tbb::task_scheduler_observer(a), my_idx(idx_counter++)
         , myMaxConcurrency(maxConcurrency)
-        , myNumReservedSlots(numReservedSlots) {
+        , myNumReservedSlots(numReservedSlots)
+        , myNumActiveWorkers(0) {
         observe(true);
     }
 
