@@ -94,6 +94,7 @@ endif()
 
 option(TBB_TEST "Enable testing" ON)
 option(TBB_EXAMPLES "Enable examples" OFF)
+option(TBB_STRIP_SYMBOLS "Enable examples" OFF)
 option(TBB_STRICT "Treat compiler warnings as errors" ON)
 option(TBB_WINDOWS_DRIVER "Build as Universal Windows Driver (UWD)" OFF)
 option(TBB_NO_APPCONTAINER "Apply /APPCONTAINER:NO (for testing binaries for Windows Store)" OFF)
