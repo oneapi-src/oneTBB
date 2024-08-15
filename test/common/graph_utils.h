@@ -416,6 +416,12 @@ struct harness_counting_sender : public tbb::flow::sender<T> {
         }
     }
 
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    bool try_get( T & v, tbb::detail::d2::message_metainfo& ) override {
+        return try_get(v);
+    }
+#endif
+
     bool try_put_once() {
         successor_type *s = my_receiver;
         size_t i = my_count++;

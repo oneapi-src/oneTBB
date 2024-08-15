@@ -84,6 +84,13 @@ protected:
         return element(i).item;
     }
 
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    message_metainfo& get_my_metainfo(size_t i) {
+        __TBB_ASSERT(my_item_valid(i), "attempt to get invalid item");
+        return element(i).metainfo;
+    }
+#endif
+
     // may be called with an empty slot or a slot that has already been constructed into.
     void set_my_item(size_t i, const item_type &o
                      __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo))
@@ -102,12 +109,36 @@ protected:
 #endif
     }
 
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    void set_my_item(size_t i, const item_type& o, message_metainfo&& metainfo) {
+        if(element(i).state != no_item) {
+            destroy_item(i);
+        }
+
+        new(&(element(i).item)) item_type(o);
+        new(&element(i).metainfo) message_metainfo(std::move(metainfo));
+        // Skipping the reservation on metainfo.waiters since the ownership
+        // is moving from metainfo to the cache
+        element(i).state = has_item;
+    }
+#endif
+
     // destructively-fetch an object from the buffer
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    void fetch_item(size_t i, item_type& o, message_metainfo& metainfo) {
+        __TBB_ASSERT(my_item_valid(i), "Trying to fetch an empty slot");
+        o = get_my_item(i);  // could have std::move assign semantics
+        metainfo = std::move(get_my_metainfo(i));
+        destroy_item(i);
+    }
+#else
     void fetch_item(size_t i, item_type &o) {
         __TBB_ASSERT(my_item_valid(i), "Trying to fetch an empty slot");
         o = get_my_item(i);  // could have std::move assign semantics
         destroy_item(i);
     }
+#endif
+
 
     // move an existing item from one slot to another.  The moved-to slot must be unoccupied,
     // the moved-from slot must exist and not be reserved.  The after, from will be empty,
@@ -115,9 +146,9 @@ protected:
     void move_item(size_t to, size_t from) {
         __TBB_ASSERT(!my_item_valid(to), "Trying to move to a non-empty slot");
         __TBB_ASSERT(my_item_valid(from), "Trying to move from an empty slot");
-        set_my_item(to, get_my_item(from));   // could have std::move semantics
+        // could have std::move semantics
+        set_my_item(to, get_my_item(from) __TBB_FLOW_GRAPH_METAINFO_ARG(get_my_metainfo(from)));
         destroy_item(from);
-
     }
 
     // put an item in an empty slot.  Return true if successful, else false
@@ -129,12 +160,29 @@ protected:
         return true;
     }
 
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    template <typename Metainfo>
+    bool place_item(size_t here, const item_type &me, Metainfo&& metainfo) {
+#if !TBB_DEPRECATED_SEQUENCER_DUPLICATES
+        if(my_item_valid(here)) return false;
+#endif
+        set_my_item(here, me, std::forward<Metainfo>(metainfo));
+        return true;
+    }
+#endif
+
     // could be implemented with std::move semantics
     void swap_items(size_t i, size_t j) {
         __TBB_ASSERT(my_item_valid(i) && my_item_valid(j), "attempt to swap invalid item(s)");
         item_type temp = get_my_item(i);
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        message_metainfo temp_metainfo = get_my_metainfo(i);
+        set_my_item(i, get_my_item(j), get_my_metainfo(j));
+        set_my_item(j, temp, temp_metainfo);
+#else
         set_my_item(i, get_my_item(j));
         set_my_item(j, temp);
+#endif
     }
 
     void destroy_item(size_type i) {
