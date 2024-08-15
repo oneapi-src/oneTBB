@@ -114,7 +114,7 @@ protected:
         if(element(i).state != no_item) {
             destroy_item(i);
         }
-        
+
         new(&(element(i).item)) item_type(o);
         new(&element(i).metainfo) message_metainfo(std::move(metainfo));
         // Skipping the reservation on metainfo.waiters since the ownership
@@ -124,12 +124,6 @@ protected:
 #endif
 
     // destructively-fetch an object from the buffer
-    void fetch_item(size_t i, item_type &o) {
-        __TBB_ASSERT(my_item_valid(i), "Trying to fetch an empty slot");
-        o = get_my_item(i);  // could have std::move assign semantics
-        destroy_item(i);
-    }
-
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
     void fetch_item(size_t i, item_type& o, message_metainfo& metainfo) {
         __TBB_ASSERT(my_item_valid(i), "Trying to fetch an empty slot");
@@ -137,7 +131,14 @@ protected:
         metainfo = std::move(get_my_metainfo(i));
         destroy_item(i);
     }
+#else
+    void fetch_item(size_t i, item_type &o) {
+        __TBB_ASSERT(my_item_valid(i), "Trying to fetch an empty slot");
+        o = get_my_item(i);  // could have std::move assign semantics
+        destroy_item(i);
+    }
 #endif
+
 
     // move an existing item from one slot to another.  The moved-to slot must be unoccupied,
     // the moved-from slot must exist and not be reserved.  The after, from will be empty,
