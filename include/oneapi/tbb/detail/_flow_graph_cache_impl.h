@@ -199,7 +199,7 @@ private:
             } else
 #endif
             {
-                successful_reserve = pred->try_reserve(v);
+                successful_reserve = pred->try_reserve( v );
             }
 
             if (successful_reserve == false) {
