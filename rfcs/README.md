@@ -21,7 +21,7 @@ Github issue or discussion. Small changes do not require a formal RFC.
 However, if the issue or discussion leads to an idea for a modification 
 or new feature that significantly impacts the library's public API or 
 architecture, it will be suggested that a PR be opened to add a new rfc 
-to the `rfcs/proposed` directory. The RFC contains a more detail description
+to the `rfcs/proposed` directory. The RFC contains a more detailed description
 and design for the feature.
 
 ## General Process
