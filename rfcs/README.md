@@ -59,7 +59,11 @@ The design documents are stored in the `rfcs` directory.
 - There must be a `README.md` file that contains the main RFC itself (or links to a file that contains it in the same directory).
   - The body of the RFC should be based on [template.md](template.md)
   - The directory can contain other supporting files, such as images, tex formulas, and sub-proposals / sub-RFCs.
-  - We will not insist on the use markdown or the exact template file for new RFCs. But we do strongly prefer a text-based file that can be rendered by Github to allow for easy collaboration using PR comments. Even so, files such as pdfs may be acceptable.
+  - It is not required to use the markdown file format based on the exact
+    template file for writing RFCs. However, it is strongly recommended to use
+    text-based file format that can be rendered by GitHub to allow for easy
+    collaboration using PR comments. Even so, files such as pdfs may be
+    acceptable.
 - If the RFC is written in markdown. The width of the text should be limited by
   80 symbols, unless there is a need to violate this rule, e.g. because of
   long links or wide tables.
