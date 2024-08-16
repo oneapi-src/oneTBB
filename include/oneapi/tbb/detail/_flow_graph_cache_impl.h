@@ -177,7 +177,8 @@ public:
         // Do not work with the passed pointer here as it may not be fully initialized yet
     }
 
-    bool try_reserve( output_type &v ) {
+private:
+    bool try_reserve_impl( output_type &v __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo* metainfo) ) {
         bool successful_reserve = false;
 
         do {
@@ -192,7 +193,14 @@ public:
             }
 
             // Try to get from this sender
-            successful_reserve = pred->try_reserve( v );
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+            if (metainfo) {
+                successful_reserve = pred->try_reserve( v, *metainfo );
+            } else
+#endif
+            {
+                successful_reserve = pred->try_reserve( v );
+            }
 
             if (successful_reserve == false) {
                 typename mutex_type::scoped_lock lock(this->my_mutex);
@@ -207,6 +215,16 @@ public:
 
         return successful_reserve;
     }
+public:
+    bool try_reserve( output_type& v ) {
+        return try_reserve_impl(v __TBB_FLOW_GRAPH_METAINFO_ARG(nullptr));
+    }
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    bool try_reserve( output_type& v, message_metainfo& metainfo ) {
+        return try_reserve_impl(v, &metainfo);
+    }
+#endif
 
     bool try_release() {
         reserved_src.load(std::memory_order_relaxed)->try_release();

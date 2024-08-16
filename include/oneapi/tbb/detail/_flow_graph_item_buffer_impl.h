@@ -139,7 +139,6 @@ protected:
     }
 #endif
 
-
     // move an existing item from one slot to another.  The moved-to slot must be unoccupied,
     // the moved-from slot must exist and not be reserved.  The after, from will be empty,
     // to will be occupied but not reserved
@@ -400,6 +399,18 @@ protected:
         this->reserve_item(this->my_head);
         return true;
     }
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    bool reserve_front(T& v, message_metainfo& metainfo) {
+        if (my_reserved || !my_item_valid(this->my_head)) return false;
+        my_reserved = true;
+        // reserving the head
+        v = this->front();
+        metainfo = this->front_metainfo();
+        this->reserve_item(this->my_head);
+        return true;
+    }
+#endif
 
     void consume_front() {
         __TBB_ASSERT(my_reserved, "Attempt to consume a non-reserved item");

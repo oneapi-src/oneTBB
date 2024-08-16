@@ -1465,7 +1465,13 @@ protected:
 
     virtual void internal_reserve(buffer_operation *op) {
         __TBB_ASSERT(op->elem, nullptr);
-        if(this->reserve_front(*(op->elem))) {
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        bool reserve_result = op->metainfo ? this->reserve_front(*(op->elem), *(op->metainfo))
+                                           : this->reserve_front(*(op->elem));
+#else
+        bool reserve_result = this->reserve_front(*(op->elem));
+#endif
+        if (reserve_result) {
             op->status.store(SUCCEEDED, std::memory_order_release);
         }
         else {
@@ -1567,12 +1573,13 @@ public:
     }
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-private:
-    // TODO: add real implementation
-    bool try_reserve(output_type& v, message_metainfo&) override {
-        return try_reserve(v);
+    bool try_reserve( output_type& v, message_metainfo& metainfo ) override {
+        buffer_operation op_data(res_item, metainfo);
+        op_data.elem = &v;
+        my_aggregator.execute(&op_data);
+        (void)enqueue_forwarding_task(op_data);
+        return op_data.status==SUCCEEDED;
     }
-public:
 #endif
 
     //! Release a reserved item.
@@ -1698,7 +1705,15 @@ protected:
             op->status.store(FAILED, std::memory_order_release);
         }
         else {
-            this->reserve_front(*(op->elem));
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+            if (op->metainfo) {
+                this->reserve_front(*(op->elem), *(op->metainfo));
+            }
+            else
+#endif
+            {
+                this->reserve_front(*(op->elem));
+            }
             op->status.store(SUCCEEDED, std::memory_order_release);
         }
     }
@@ -1913,6 +1928,12 @@ protected:
         }
         this->my_reserved = true;
         *(op->elem) = prio();
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        if (op->metainfo) {
+            *(op->metainfo) = std::move(prio_metainfo());
+            reserved_metainfo = *(op->metainfo);
+        }
+#endif
         reserved_item = *(op->elem);
         op->status.store(SUCCEEDED, std::memory_order_release);
         prio_pop();
@@ -1922,13 +1943,27 @@ protected:
         op->status.store(SUCCEEDED, std::memory_order_release);
         this->my_reserved = false;
         reserved_item = input_type();
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        for (auto waiter : reserved_metainfo.waiters()) {
+            waiter->release(1);
+        }
+
+        reserved_metainfo = message_metainfo{};
+#endif
     }
 
     void internal_release(prio_operation *op) override {
         op->status.store(SUCCEEDED, std::memory_order_release);
-        prio_push(reserved_item);
+        prio_push(reserved_item __TBB_FLOW_GRAPH_METAINFO_ARG(reserved_metainfo));
         this->my_reserved = false;
         reserved_item = input_type();
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        for (auto waiter : reserved_metainfo.waiters()) {
+            waiter->release(1);
+        }
+
+        reserved_metainfo = message_metainfo{};
+#endif
     }
 
 private:
@@ -1959,6 +1994,9 @@ private:
     size_type mark;
 
     input_type reserved_item;
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    message_metainfo reserved_metainfo;
+#endif
 
     // in case a reheap has not been done after a push, check if the mark item is higher than the 0'th item
     bool prio_use_tail() {
@@ -2137,9 +2175,12 @@ private:
         //SUCCESS
         // if we can reserve and can put, we consume the reservation
         // we increment the count and decrement the tries
-        if ( (my_predecessors.try_reserve(v)) == true ) {
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        message_metainfo metainfo;
+#endif
+        if ( (my_predecessors.try_reserve(v __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo))) == true ) {
             reserved = true;
-            if ( (rval = my_successors.try_put_task(v)) != nullptr ) {
+            if ( (rval = my_successors.try_put_task(v __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo))) != nullptr ) {
                 {
                     spin_mutex::scoped_lock lock(my_mutex);
                     ++my_count;
@@ -2268,8 +2309,10 @@ protected:
     template< typename R, typename B > friend class run_and_put_task;
     template<typename X, typename Y> friend class broadcast_cache;
     template<typename X, typename Y> friend class round_robin_cache;
+
+private:
     //! Puts an item to this receiver
-    graph_task* try_put_task( const T &t ) override {
+    graph_task* try_put_task_impl( const T &t __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo) ) {
         {
             spin_mutex::scoped_lock lock(my_mutex);
             if ( my_count + my_tries >= my_threshold )
@@ -2278,7 +2321,7 @@ protected:
                 ++my_tries;
         }
 
-        graph_task* rtask = my_successors.try_put_task(t);
+        graph_task* rtask = my_successors.try_put_task(t __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo));
         if ( !rtask ) {  // try_put_task failed.
             spin_mutex::scoped_lock lock(my_mutex);
             --my_tries;
@@ -2306,10 +2349,13 @@ protected:
         return rtask;
     }
 
+protected:
+    graph_task* try_put_task(const T& t) override {
+        return try_put_task_impl(t __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo{}));
+    }
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    // TODO: add support for limiter_node
-    graph_task* try_put_task(const T& t, const message_metainfo&) override {
-        return try_put_task(t);
+    graph_task* try_put_task(const T& t, const message_metainfo& metainfo) override {
+        return try_put_task_impl(t, metainfo);
     }
 #endif
 
