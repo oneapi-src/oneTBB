@@ -202,6 +202,13 @@ public:
     waiters_type&& waiters() && { return std::move(my_waiters); }
 
     bool empty() const { return my_waiters.empty(); }
+
+    void merge(const message_metainfo& other) {
+        // TODO: should we avoid duplications on merging
+        my_waiters.insert_after(my_waiters.before_begin(),
+                                other.waiters().begin(),
+                                other.waiters().end());
+    }
 private:
     waiters_type my_waiters;
 }; // class message_metainfo
@@ -398,15 +405,26 @@ protected:
 private:
     // execute body is supposed to be too small to create a task for.
     graph_task* try_put_task_impl( const input_type& __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo) ) {
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        message_metainfo predecessor_metainfo;
+#endif
         {
             spin_mutex::scoped_lock l(my_mutex);
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+            my_current_metainfo.merge(metainfo);
+#endif
             if ( ++my_current_count < my_predecessor_count )
                 return SUCCESSFULLY_ENQUEUED;
-            else
+            else {
                 my_current_count = 0;
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+                predecessor_metainfo = my_current_metainfo;
+                my_current_metainfo = message_metainfo{};
+#endif
+            }
         }
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-        graph_task* res = execute(metainfo);
+        graph_task* res = execute(predecessor_metainfo);
 #else
         graph_task* res = execute();
 #endif
@@ -428,6 +446,9 @@ protected:
     int my_predecessor_count;
     int my_current_count;
     int my_initial_predecessor_count;
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    message_metainfo my_current_metainfo;
+#endif
     node_priority_t my_priority;
     // the friend declaration in the base class did not eliminate the "protected class"
     // error in gcc 4.1.2

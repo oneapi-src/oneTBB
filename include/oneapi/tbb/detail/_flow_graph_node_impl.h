@@ -754,7 +754,7 @@ protected:
 
     friend class apply_body_task_bypass< class_type, continue_msg >;
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    friend class apply_body_task_bypass< class_type, continue_msg, graph_task_with_message_waiters >;
+    friend class apply_body_task_bypass< class_type, continue_msg, trackable_messages_graph_task >;
 #endif
 
     //! Applies the body to the provided input
@@ -790,7 +790,7 @@ protected:
             graph_task* t = nullptr;
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
             if (!metainfo.empty()) {
-                using task_type = apply_body_task_bypass<class_type, continue_msg, graph_task_with_message_waiters>;
+                using task_type = apply_body_task_bypass<class_type, continue_msg, trackable_messages_graph_task>;
                 t = allocator.new_object<task_type>( graph_reference(), allocator, *this, continue_msg(), my_priority, metainfo );
             } else
 #endif
