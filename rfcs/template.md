@@ -31,7 +31,7 @@ discussions clear.
 
 Pay close attention to the following aspects of the library:
 - API and ABI backwards compatibility. The library follows semantic versioning
-  so if any of those interfaces are to be broken, we need to state that
+  so if any of those interfaces are to be broken, the RFC needs to state that
   explicitly.
 - Performance implications, as performance is one of the main goals of the library.
 - Changes to the build system. While the library's primary building system is
