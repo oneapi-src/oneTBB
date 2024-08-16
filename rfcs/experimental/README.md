@@ -11,7 +11,7 @@ There is no commitment to backwards compatibility for a preview
 feature.
 
 Since documents in this directory describe preview features, they
-should include a list the exit conditions that need to be met to move from
+should include a list of the exit conditions that need to be met to move from
 preview to fully supported. These conditions might include demonstrated
 performance improvements, demonstrated interest from the community,
 acceptance of the required oneTBB specification changes, etc. 
