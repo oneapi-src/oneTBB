@@ -141,6 +141,7 @@ void test_try_put_and_wait_queueing() {
         }
 
         CHECK_MESSAGE(processed_items[check_index++] == wait_message, "Unexpected wait_message processing");
+        CHECK_MESSAGE(check_index == processed_items.size(), "Unexpected number of messages");
 
         g.wait_for_all();
 
@@ -151,7 +152,7 @@ void test_try_put_and_wait_queueing() {
 }
 
 void test_try_put_and_wait_reserving() {
-    tbb::task_arena arena;
+    tbb::task_arena arena(1);
 
     arena.execute([]{
         tbb::flow::graph g;
@@ -216,6 +217,7 @@ void test_try_put_and_wait_reserving() {
         }
 
         CHECK_MESSAGE(processed_items[check_index++] == wait_message, "Unexpected wait_message processing");
+        CHECK_MESSAGE(check_index == processed_items.size(), "Unexpected number of messages");
 
         g.wait_for_all();
 
