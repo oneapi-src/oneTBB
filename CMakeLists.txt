@@ -109,7 +109,7 @@ option(TBB_FUZZ_TESTING "Enable fuzz testing" OFF)
 option(TBB_INSTALL "Enable installation" ON)
 if(LINUX)
 option(TBB_LINUX_SEPARATE_DBG "Enable separation of the debug symbols during the build" OFF)
-endif
+endif()
 if(APPLE)
 option(TBB_BUILD_APPLE_FRAMEWORKS "Build as Apple Frameworks" OFF)
 endif()
