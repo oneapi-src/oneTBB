@@ -240,8 +240,8 @@ struct int_wrapper {
         return i;
     }
 
-    bool operator==(const int_wrapper& rhs) {
-        return i == rhs.i;
+    friend bool operator==(const int_wrapper& lhs, const int_wrapper& rhs) {
+        return lhs.i == rhs.i;
     }
 };
 
