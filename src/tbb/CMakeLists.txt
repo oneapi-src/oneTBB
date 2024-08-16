@@ -138,6 +138,7 @@ if(TBB_LINUX_SEPARATE_DBG)
             COMMAND objcopy --add-gnu-debuglink=$<TARGET_FILE:tbb>.dbg $<TARGET_FILE:tbb>
             COMMENT "Creating and associating .dbg file with tbb"
         )
+    endif()
 endif()
 
 if(TBB_BUILD_APPLE_FRAMEWORKS)
