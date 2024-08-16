@@ -36,8 +36,8 @@ Pay close attention to the following aspects of the library:
 - Performance implications, as performance is one of the main goals of the library.
 - Changes to the build system. While the library's primary building system is
   CMake, there are some frameworks that may build the library directly from the sources.
-- Dependencies and support matrix: does the proposal brings any new
-  dependencies or affects the supported configurations.
+- Dependencies and support matrix: does the proposal bring any new
+  dependencies or affect the supported configurations?
 
 Some other common subsections here are:
 - Discussion: some people like to list all the options first (as separate
