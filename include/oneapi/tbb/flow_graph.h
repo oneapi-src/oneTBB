@@ -1045,9 +1045,10 @@ protected:
         return emit_element<N>::emit_this(this->my_graph, t, output_ports());
     }
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    // TODO: add support for split_node
-    graph_task* try_put_task(const TupleType& t, const message_metainfo&) override {
-        return try_put_task(t);
+    graph_task* try_put_task(const TupleType& t, const message_metainfo& metainfo) override {
+        // Sending split messages in parallel is not justified, as overheads would prevail.
+        // Also, we do not have successors here. So we just tell the task returned here is successful.
+        return emit_element<N>::emit_this(this->my_graph, t, output_ports(), metainfo);
     }
 #endif
 
@@ -1208,21 +1209,25 @@ public:
         return true;
     }
 
+private:
+    graph_task* try_put_task_impl(const T& t __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo)) {
+        graph_task* new_task = my_successors.try_put_task(t __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo));
+        if (!new_task) new_task = SUCCESSFULLY_ENQUEUED;
+        return new_task;
+    }
+
 protected:
     template< typename R, typename B > friend class run_and_put_task;
     template<typename X, typename Y> friend class broadcast_cache;
     template<typename X, typename Y> friend class round_robin_cache;
     //! build a task to run the successor if possible.  Default is old behavior.
-    graph_task *try_put_task(const T& t) override {
-        graph_task *new_task = my_successors.try_put_task(t);
-        if (!new_task) new_task = SUCCESSFULLY_ENQUEUED;
-        return new_task;
+    graph_task* try_put_task(const T& t) override {
+        return try_put_task_impl(t __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo{}));
     }
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    // TODO: add support for broadcast_node
-    graph_task* try_put_task(const T& t, const message_metainfo&) override {
-        return try_put_task(t);
+    graph_task* try_put_task(const T& t, const message_metainfo& metainfo) override {
+        return try_put_task_impl(t, metainfo);
     }
 #endif
 
