@@ -127,13 +127,17 @@ target_link_libraries(tbb
 )
 
 #strip symbols to a separate dbg file
-if(TBB_STRIP_SYMBOLS)
-    add_custom_command(TARGET tbb POST_BUILD
-        COMMAND objcopy --only-keep-debug $<TARGET_FILE:tbb> $<TARGET_FILE:tbb>.dbg
-        COMMAND objcopy --strip-debug $<TARGET_FILE:tbb>
-        COMMAND objcopy --add-gnu-debuglink=$<TARGET_FILE:tbb>.dbg $<TARGET_FILE:tbb>
-        COMMENT "Creating and associating .dbg file with tbb"
-    )
+if(TBB_LINUX_SEPARATE_DBG)
+    find_program(OBJCOPY_COMMAND objcopy)
+    if(NOT OBJCOPY_COMMAND)
+        message(STATUS "objcopy command not found in the system")
+    else()
+        add_custom_command(TARGET tbb POST_BUIL
+            COMMAND objcopy --only-keep-debug $<TARGET_FILE:tbb> $<TARGET_FILE:tbb>.dbg
+            COMMAND objcopy --strip-debug $<TARGET_FILE:tbb>
+            COMMAND objcopy --add-gnu-debuglink=$<TARGET_FILE:tbb>.dbg $<TARGET_FILE:tbb>
+            COMMENT "Creating and associating .dbg file with tbb"
+        )
 endif()
 
 if(TBB_BUILD_APPLE_FRAMEWORKS)
@@ -168,10 +172,11 @@ if (TBB_INSTALL)
                 COMPONENT devel
         )
     endif()
-    if(TBB_STRIP_SYMBOLS)
+    if(TBB_LINUX_SEPARATE_DBG)
         install(FILES
                 $<TARGET_FILE:tbb>.dbg
                 DESTINATION lib
+                COMPONENT devel
         )
     endif()
     set(_tbb_pc_lib_name tbb)

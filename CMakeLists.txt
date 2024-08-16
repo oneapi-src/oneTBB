@@ -94,7 +94,6 @@ endif()
 
 option(TBB_TEST "Enable testing" ON)
 option(TBB_EXAMPLES "Enable examples" OFF)
-option(TBB_STRIP_SYMBOLS "Enable examples" OFF)
 option(TBB_STRICT "Treat compiler warnings as errors" ON)
 option(TBB_WINDOWS_DRIVER "Build as Universal Windows Driver (UWD)" OFF)
 option(TBB_NO_APPCONTAINER "Apply /APPCONTAINER:NO (for testing binaries for Windows Store)" OFF)
@@ -108,6 +107,9 @@ option(TBB_DISABLE_HWLOC_AUTOMATIC_SEARCH "Disable HWLOC automatic search by pkg
 option(TBB_ENABLE_IPO "Enable Interprocedural Optimization (IPO) during the compilation" ON)
 option(TBB_FUZZ_TESTING "Enable fuzz testing" OFF)
 option(TBB_INSTALL "Enable installation" ON)
+if(LINUX)
+option(TBB_LINUX_SEPARATE_DBG "Enable separation of the debug symbols during the build" OFF)
+endif
 if(APPLE)
 option(TBB_BUILD_APPLE_FRAMEWORKS "Build as Apple Frameworks" OFF)
 endif()
