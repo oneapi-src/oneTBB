@@ -89,16 +89,48 @@
             return true;
         }
 
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        template <typename InputTuple, typename OutputTuple>
+        static inline bool reserve(InputTuple& my_input, OutputTuple& out, message_metainfo& metainfo) {
+            message_metainfo element_metainfo;
+            if (!std::get<N - 1>(my_input).reserve(std::get<N - 1>(out), element_metainfo)) return false;
+            if (!join_helper<N - 1>::reserve(my_input, out, metainfo)) {
+                release_my_reservation(my_input);
+                return false;
+            }
+            metainfo.merge(element_metainfo);
+            return true;
+
+        }
+#endif
+
         template<typename InputTuple, typename OutputTuple>
         static inline bool get_my_item( InputTuple &my_input, OutputTuple &out) {
             bool res = std::get<N-1>(my_input).get_item(std::get<N-1>(out) ); // may fail
             return join_helper<N-1>::get_my_item(my_input, out) && res;       // do get on other inputs before returning
         }
 
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        template <typename InputTuple, typename OutputTuple>
+        static inline bool get_my_item(InputTuple& my_input, OutputTuple& out, message_metainfo& metainfo) {
+            message_metainfo element_metainfo;
+            bool res = std::get<N-1>(my_input).get_item(std::get<N-1>(out), element_metainfo);
+            metainfo.merge(element_metainfo);
+            return join_helper<N-1>::get_my_item(my_input, out, metainfo) && res;
+        }
+#endif
+
         template<typename InputTuple, typename OutputTuple>
         static inline bool get_items(InputTuple &my_input, OutputTuple &out) {
             return get_my_item(my_input, out);
         }
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        template <typename InputTuple, typename OutputTuple>
+        static inline bool get_items(InputTuple& my_input, OutputTuple& out, message_metainfo& metainfo) {
+            return get_my_item(my_input, out, metainfo);
+        }
+#endif
 
         template<typename InputTuple>
         static inline void reset_my_port(InputTuple &my_input) {
@@ -163,15 +195,42 @@
             return std::get<0>( my_input ).reserve( std::get<0>( out ) );
         }
 
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        template <typename InputTuple, typename OutputTuple>
+        static inline bool reserve(InputTuple& my_input, OutputTuple& out, message_metainfo& metainfo) {
+            message_metainfo element_metainfo;
+            bool result = std::get<0>(my_input).reserve(std::get<0>(out), element_metainfo);
+            metainfo.merge(element_metainfo);
+            return result;
+        }
+#endif
+
         template<typename InputTuple, typename OutputTuple>
         static inline bool get_my_item( InputTuple &my_input, OutputTuple &out) {
             return std::get<0>(my_input).get_item(std::get<0>(out));
         }
 
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        template <typename InputTuple, typename OutputTuple>
+        static inline bool get_my_item(InputTuple& my_input, OutputTuple& out, message_metainfo& metainfo) {
+            message_metainfo element_metainfo;
+            bool res = std::get<0>(my_input).get_item(std::get<0>(out), element_metainfo);
+            metainfo.merge(element_metainfo);
+            return res;
+        }
+#endif
+
         template<typename InputTuple, typename OutputTuple>
         static inline bool get_items(InputTuple &my_input, OutputTuple &out) {
             return get_my_item(my_input, out);
         }
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        template <typename InputTuple, typename OutputTuple>
+        static inline bool get_items(InputTuple& my_input, OutputTuple& out, message_metainfo& metainfo) {
+            return get_my_item(my_input, out, metainfo);
+        }
+#endif
 
         template<typename InputTuple>
         static inline void reset_my_port(InputTuple &my_input) {
@@ -223,8 +282,16 @@
                 T *my_arg;
                 predecessor_type *my_pred;
             };
-            reserving_port_operation(const T& e, op_type t) :
-                type(char(t)), my_arg(const_cast<T*>(&e)) {}
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+            message_metainfo* metainfo;
+#endif
+            reserving_port_operation(const T& e, op_type t __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo& info)) :
+                type(char(t)), my_arg(const_cast<T*>(&e))
+                __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo(&info)) {}
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+            reserving_port_operation(const T& e, op_type t)
+                : type(char(t)), my_arg(const_cast<T*>(&e)), metainfo(nullptr) {}
+#endif
             reserving_port_operation(const predecessor_type &s, op_type t) : type(char(t)),
                 my_pred(const_cast<predecessor_type *>(&s)) {}
             reserving_port_operation(op_type t) : type(char(t)) {}
@@ -262,14 +329,26 @@
                     if ( reserved ) {
                         current->status.store( FAILED, std::memory_order_release);
                     }
-                    else if ( my_predecessors.try_reserve( *(current->my_arg) ) ) {
-                        reserved = true;
-                        current->status.store( SUCCEEDED, std::memory_order_release);
-                    } else {
-                        if ( my_predecessors.empty() ) {
-                            my_join->increment_port_count();
+                    else {
+                        bool reserve_result = false;
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+                        if (current->metainfo) {
+                            reserve_result = my_predecessors.try_reserve(*(current->my_arg),
+                                                                         *(current->metainfo));
+                        } else
+#endif
+                        {
+                            reserve_result = my_predecessors.try_reserve(*(current->my_arg));
                         }
-                        current->status.store( FAILED, std::memory_order_release);
+                        if (reserve_result) {
+                            reserved = true;
+                            current->status.store( SUCCEEDED, std::memory_order_release);
+                        } else {
+                            if ( my_predecessors.empty() ) {
+                                my_join->increment_port_count();
+                            }
+                            current->status.store( FAILED, std::memory_order_release);
+                        }
                     }
                     break;
                 case rel_res:
@@ -295,7 +374,6 @@
         }
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    // TODO: add support for rejecting join_node
     graph_task* try_put_task(const T&, const message_metainfo&) override { return nullptr; }
 #endif
 
@@ -337,6 +415,14 @@
             my_aggregator.execute(&op_data);
             return op_data.status == SUCCEEDED;
         }
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        bool reserve( T& v, message_metainfo& metainfo ) {
+            reserving_port_operation op_data(v, res_item, metainfo);
+            my_aggregator.execute(&op_data);
+            return op_data.status == SUCCEEDED;
+        }
+#endif
 
         //! Release the port
         void release( ) {
@@ -387,19 +473,34 @@
             T my_val;
             T* my_arg;
             graph_task* bypass_t;
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+            message_metainfo* metainfo;
+#endif
             // constructor for value parameter
-            queueing_port_operation(const T& e, op_type t) :
-                type(char(t)), my_val(e), my_arg(nullptr)
+            queueing_port_operation(const T& e, op_type t __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& info))
+                : type(char(t)), my_val(e), my_arg(nullptr)
                 , bypass_t(nullptr)
+                __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo(const_cast<message_metainfo*>(&info)))
             {}
             // constructor for pointer parameter
-            queueing_port_operation(const T* p, op_type t) :
+            queueing_port_operation(const T* p, op_type t __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo& info)) :
                 type(char(t)), my_arg(const_cast<T*>(p))
                 , bypass_t(nullptr)
+                __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo(&info))
             {}
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+            queueing_port_operation(const T& e, op_type t)
+                : type(char(t)), my_val(e), my_arg(nullptr), bypass_t(nullptr), metainfo(nullptr)
+            {}
+
+            queueing_port_operation(const T* p, op_type t)
+                : type(char(t)), my_arg(const_cast<T*>(p)), bypass_t(nullptr), metainfo(nullptr)
+            {}
+#endif
             // constructor with no parameter
             queueing_port_operation(op_type t) : type(char(t)), my_arg(nullptr)
                 , bypass_t(nullptr)
+                __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo(nullptr))
             {}
         };
 
@@ -417,7 +518,14 @@
                 case try__put_task: {
                         graph_task* rtask = nullptr;
                         was_empty = this->buffer_empty();
-                        this->push_back(current->my_val);
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+                        if (current->metainfo) {
+                            this->push_back(current->my_val, *(current->metainfo));
+                        } else
+#endif
+                        {
+                            this->push_back(current->my_val);
+                        }
                         if (was_empty) rtask = my_join->decrement_port_count(false);
                         else
                             rtask = SUCCESSFULLY_ENQUEUED;
@@ -429,6 +537,11 @@
                     if(!this->buffer_empty()) {
                         __TBB_ASSERT(current->my_arg, nullptr);
                         *(current->my_arg) = this->front();
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+                        if (current->metainfo) {
+                            *(current->metainfo) = this->front_metainfo();
+                        }
+#endif
                         current->status.store( SUCCEEDED, std::memory_order_release);
                     }
                     else {
@@ -452,19 +565,25 @@
         template< typename R, typename B > friend class run_and_put_task;
         template<typename X, typename Y> friend class broadcast_cache;
         template<typename X, typename Y> friend class round_robin_cache;
-        graph_task* try_put_task(const T &v) override {
-            queueing_port_operation op_data(v, try__put_task);
+
+    private:
+        graph_task* try_put_task_impl(const T& v __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo)) {
+            queueing_port_operation op_data(v, try__put_task __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo));
             my_aggregator.execute(&op_data);
             __TBB_ASSERT(op_data.status == SUCCEEDED || !op_data.bypass_t, "inconsistent return from aggregator");
             if(!op_data.bypass_t) return SUCCESSFULLY_ENQUEUED;
             return op_data.bypass_t;
         }
 
+    protected:
+        graph_task* try_put_task(const T &v) override {
+            return try_put_task_impl(v __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo{}));
+        }
+
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    // TODO: add support for queueing join_node
-    graph_task* try_put_task(const T& v, const message_metainfo&) override {
-        return try_put_task(v);
-    }
+        graph_task* try_put_task(const T& v, const message_metainfo& metainfo) override {
+            return try_put_task_impl(v, metainfo);
+        }
 #endif
 
         graph& graph_reference() const override {
@@ -492,6 +611,14 @@
             my_aggregator.execute(&op_data);
             return op_data.status == SUCCEEDED;
         }
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        bool get_item( T& v, message_metainfo& metainfo ) {
+            queueing_port_operation op_data(&v, get__item, metainfo);
+            my_aggregator.execute(&op_data);
+            return op_data.status == SUCCEEDED;
+        }
+#endif
 
         // reset_port is called when item is accepted by successor, but
         // is initiated by join_node.
@@ -744,6 +871,13 @@
             return join_helper<N>::reserve(my_inputs, out);
         }
 
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        bool try_to_make_tuple(output_type &out, message_metainfo& metainfo) {
+            if (ports_with_no_inputs) return false;
+            return join_helper<N>::reserve(my_inputs, out, metainfo);
+        }
+#endif
+
         void tuple_accepted() {
             join_helper<N>::consume_reservations(my_inputs);
         }
@@ -816,6 +950,13 @@
             if(ports_with_no_items) return false;
             return join_helper<N>::get_items(my_inputs, out);
         }
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        bool try_to_make_tuple(output_type &out, message_metainfo& metainfo) {
+            if(ports_with_no_items) return false;
+            return join_helper<N>::get_items(my_inputs, out, metainfo);
+        }
+#endif
 
         void tuple_accepted() {
             reset_port_count();
@@ -1026,6 +1167,12 @@
             return op_data.status == SUCCEEDED;
         }
 
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        bool try_to_make_tuple(output_type &out, message_metainfo&) {
+            return try_to_make_tuple(out);
+        }
+#endif
+
         void tuple_accepted() {
             reset_port_count();  // reset current_key after ports reset.
         }
@@ -1068,8 +1215,16 @@
                 successor_type *my_succ;
             };
             graph_task* bypass_t;
-            join_node_base_operation(const output_type& e, op_type t) : type(char(t)),
-                my_arg(const_cast<output_type*>(&e)), bypass_t(nullptr) {}
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+            message_metainfo* metainfo;
+#endif
+            join_node_base_operation(const output_type& e, op_type t __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo& info))
+                : type(char(t)), my_arg(const_cast<output_type*>(&e)), bypass_t(nullptr)
+                  __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo(&info)) {}
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+            join_node_base_operation(const output_type& e, op_type t)
+                : type(char(t)), my_arg(const_cast<output_type*>(&e)), bypass_t(nullptr), metainfo(nullptr) {}
+#endif
             join_node_base_operation(const successor_type &s, op_type t) : type(char(t)),
                 my_succ(const_cast<successor_type *>(&s)), bypass_t(nullptr) {}
             join_node_base_operation(op_type t) : type(char(t)), bypass_t(nullptr) {}
@@ -1104,7 +1259,26 @@
                     break;
                 case try__get:
                     if(tuple_build_may_succeed()) {
-                        if(try_to_make_tuple(*(current->my_arg))) {
+                        bool make_tuple_result = false;
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+                        if (current->metainfo) {
+                            make_tuple_result = try_to_make_tuple(*(current->my_arg), *(current->metainfo));
+                        } else
+#endif
+                        {
+                            make_tuple_result = try_to_make_tuple(*(current->my_arg));
+                        }
+                        if(make_tuple_result) {
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+                            if (current->metainfo) {
+                                // Since elements would be removed from queues while calling to tuple_accepted
+                                // together with corresponding message_metainfo objects
+                                // we need to prolong the wait until the successor would create a task for removed elements
+                                for (auto waiter : current->metainfo->waiters()) {
+                                    waiter->reserve();
+                                }
+                            }
+#endif
                             tuple_accepted();
                             current->status.store( SUCCEEDED, std::memory_order_release);
                         }
@@ -1125,9 +1299,14 @@
                         // them from the input ports after forwarding is complete?
                         if(tuple_build_may_succeed()) {  // checks output queue of FE
                             do {
-                                build_succeeded = try_to_make_tuple(out);  // fetch front_end of queue
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+                                message_metainfo metainfo;
+#endif
+                                // fetch front_end of queue
+                                build_succeeded = try_to_make_tuple(out __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo));
                                 if(build_succeeded) {
-                                    graph_task *new_task = my_successors.try_put_task(out);
+                                    graph_task *new_task =
+                                        my_successors.try_put_task(out __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo));
                                     last_task = combine_tasks(my_graph, last_task, new_task);
                                     if(new_task) {
                                         tuple_accepted();
@@ -1191,9 +1370,10 @@
         }
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-        // TODO: implement try_get with metainfo for join_node
-        bool try_get( output_type &v, message_metainfo& ) override {
-            return try_get(v);
+        bool try_get( output_type &v, message_metainfo& metainfo) override {
+            join_node_base_operation op_data(v, try__get, metainfo);
+            my_aggregator.execute(&op_data);
+            return op_data.status == SUCCEEDED;
         }
 #endif
 
