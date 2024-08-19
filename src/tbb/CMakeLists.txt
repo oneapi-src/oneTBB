@@ -126,7 +126,7 @@ target_link_libraries(tbb
     ${TBB_COMMON_LINK_LIBS}
 )
 
-#strip symbols into a separate .dbg file
+# Strip debug symbols into a separate .dbg file
 if(TBB_LINUX_SEPARATE_DBG)
     if(NOT CMAKE_BUILD_TYPE STREQUAL "release")
         find_program(OBJCOPY_COMMAND objcopy)
