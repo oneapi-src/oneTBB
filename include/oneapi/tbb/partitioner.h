@@ -668,8 +668,8 @@ class numa_partitioner {
     BasePartitioner& base_partitioner;
 
 public:
-  numa_partitioner() : num_numa_nodes(get_number_of_numa_nodes()), base_partitioner() {}
-  numa_partitioner(BasePartitioner& bp) : num_numa_nodes(get_number_of_numa_nodes()), base_partitioner(bp) {}
+  numa_partitioner() : num_numa_nodes(get_number_of_numa_nodes()), base_partitioner() { initialize_arena();}
+  numa_partitioner(BasePartitioner& bp) : num_numa_nodes(get_number_of_numa_nodes()), base_partitioner(bp) { initialize_arena();}
   
   void initialize_arena() const {
     for (std::size_t node = 0; node < num_numa_nodes; ++node) {
@@ -705,6 +705,35 @@ private:
     }
   }
 };
+
+template<typename BasePartitioner>
+template<typename Range, typename Body>
+void numa_partitioner<BasePartitioner>::execute_for(const Range& range, const Body& body) const{
+    if (range.is_divisible() && num_numa_nodes > 1) {
+        std::vector<Range> subranges;
+        split_range(range, subranges, num_numa_nodes);
+        std::vector<oneapi::tbb::task_group> task_groups(num_numa_nodes);
+        //initialize_arena();
+
+        for (std::size_t i = 0; i < num_numa_nodes; ++i) {
+            arenas[i].execute([&]() {
+                task_groups[i].run([&, i] {
+                    parallel_for(subranges[i], body, base_partitioner);
+                });
+            });
+        }
+        for (std::size_t i = 0; i < num_numa_nodes; ++i) {
+            arenas[i].execute([&task_groups, i]() {
+                task_groups[i].wait();
+            });
+        }
+    }
+    else {
+        parallel_for(range,body,base_partitioner);
+    }
+}
+
+
   
 } // namespace d1
 } // namespace detail
