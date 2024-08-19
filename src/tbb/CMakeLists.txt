@@ -126,13 +126,13 @@ target_link_libraries(tbb
     ${TBB_COMMON_LINK_LIBS}
 )
 
-#strip symbols to a separate dbg file
+#strip symbols into a separate .dbg file
 if(TBB_LINUX_SEPARATE_DBG)
     find_program(OBJCOPY_COMMAND objcopy)
     if(NOT OBJCOPY_COMMAND)
-        message(STATUS "objcopy command not found in the system")
+        message(WARNING "objcopy command not found in the system")
     else()
-        add_custom_command(TARGET tbb POST_BUIL
+        add_custom_command(TARGET tbb POST_BUILD
             COMMAND objcopy --only-keep-debug $<TARGET_FILE:tbb> $<TARGET_FILE:tbb>.dbg
             COMMAND objcopy --strip-debug $<TARGET_FILE:tbb>
             COMMAND objcopy --add-gnu-debuglink=$<TARGET_FILE:tbb>.dbg $<TARGET_FILE:tbb>
