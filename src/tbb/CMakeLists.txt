@@ -128,16 +128,20 @@ target_link_libraries(tbb
 
 #strip symbols into a separate .dbg file
 if(TBB_LINUX_SEPARATE_DBG)
-    find_program(OBJCOPY_COMMAND objcopy)
-    if(NOT OBJCOPY_COMMAND)
-        message(WARNING "objcopy command not found in the system")
+    if(NOT CMAKE_BUILD_TYPE STREQUAL "release")
+        find_program(OBJCOPY_COMMAND objcopy)
+        if(NOT OBJCOPY_COMMAND)
+            message(WARNING "objcopy command not found in the system")
+        else()
+            add_custom_command(TARGET tbb POST_BUILD
+                COMMAND objcopy --only-keep-debug $<TARGET_FILE:tbb> $<TARGET_FILE:tbb>.dbg
+                COMMAND objcopy --strip-debug $<TARGET_FILE:tbb>
+                COMMAND objcopy --add-gnu-debuglink=$<TARGET_FILE:tbb>.dbg $<TARGET_FILE:tbb>
+                COMMENT "Creating and associating .dbg file with tbb"
+            )
+        endif()
     else()
-        add_custom_command(TARGET tbb POST_BUILD
-            COMMAND objcopy --only-keep-debug $<TARGET_FILE:tbb> $<TARGET_FILE:tbb>.dbg
-            COMMAND objcopy --strip-debug $<TARGET_FILE:tbb>
-            COMMAND objcopy --add-gnu-debuglink=$<TARGET_FILE:tbb>.dbg $<TARGET_FILE:tbb>
-            COMMENT "Creating and associating .dbg file with tbb"
-        )
+        message(WARNING " TBB_LINUX_SEPARATE_DBG flag is not used on release config")
     endif()
 endif()
 
