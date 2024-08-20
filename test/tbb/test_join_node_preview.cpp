@@ -314,6 +314,7 @@ void test_try_put_and_wait_key_matching(Body... body) {
         }
 
         CHECK_MESSAGE(processed_items[check_index++] == wait_message, "Unexpected wait_message processing");
+        CHECK_MESSAGE(check_index == processed_items.size(), "Unexpected number of messages");
 
         g.wait_for_all();
 
