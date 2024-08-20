@@ -55,7 +55,7 @@ struct hash_buffer_element : public aligned_pair<ValueType, void*> {
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
 template <typename Key, typename ValueType>
-struct metainfo_hash_buffer_element : public aligned_three<ValueType, void*, message_metainfo> {
+struct metainfo_hash_buffer_element : public aligned_triple<ValueType, void*, message_metainfo> {
     using key_type = Key;
     using value_type = ValueType;
 
@@ -76,7 +76,7 @@ struct metainfo_hash_buffer_element : public aligned_three<ValueType, void*, mes
         this->third = metainfo;
 
         for (auto waiter : metainfo.waiters()) {
-            waiter->reserve();
+            waiter->reserve(1);
         }
     }
 
@@ -90,7 +90,7 @@ struct metainfo_hash_buffer_element : public aligned_three<ValueType, void*, mes
         get_value_ptr()->~value_type();
 
         for (auto waiter : get_metainfo().waiters()) {
-            waiter->release();
+            waiter->release(1);
         }
         get_metainfo() = message_metainfo{};
     }

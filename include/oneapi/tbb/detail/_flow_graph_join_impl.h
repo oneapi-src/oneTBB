@@ -1348,7 +1348,7 @@
                                 // together with corresponding message_metainfo objects
                                 // we need to prolong the wait until the successor would create a task for removed elements
                                 for (auto waiter : current->metainfo->waiters()) {
-                                    waiter->reserve();
+                                    waiter->reserve(1);
                                 }
                             }
 #endif

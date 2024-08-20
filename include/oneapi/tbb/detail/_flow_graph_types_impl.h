@@ -73,8 +73,6 @@ struct make_sequence < 0, S... > {
     typedef sequence<S...> type;
 };
 
-//! type mimicking std::pair but with trailing fill to ensure each element of an array
-//* will have the correct alignment
 template<class U> struct alignment_of {
     typedef struct { char t; U    padded; } test_alignment;
     static const size_t value = sizeof(test_alignment) - sizeof(U);
@@ -108,7 +106,7 @@ struct alignas(alignof(max_alignment_helper_t<T1, T2>)) aligned_pair {
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
 template <typename T1, typename T2, typename T3>
-struct alignas(alignof(max_alignment_helper_t<T1, T2, T3>)) aligned_three {
+struct alignas(alignof(max_alignment_helper_t<T1, T2, T3>)) aligned_triple {
     char first[sizeof(T1)];
     T2 second;
     T3 third;
