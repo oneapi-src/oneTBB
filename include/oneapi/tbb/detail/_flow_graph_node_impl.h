@@ -768,7 +768,7 @@ protected:
     }
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    graph_task* execute(const message_metainfo& metainfo) override {
+    graph_task* execute(message_metainfo&& metainfo) override {
 #else
     graph_task* execute() override {
 #endif
@@ -779,27 +779,33 @@ protected:
 #pragma warning (push)
 #pragma warning (disable: 4127)  /* suppress conditional expression is constant */
 #endif
+        graph_task* t = nullptr;
         if(has_policy<lightweight, Policy>::value) {
 #if _MSC_VER && !__INTEL_COMPILER
 #pragma warning (pop)
 #endif
-            return apply_body_bypass( continue_msg() __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo) );
+            t = apply_body_bypass(continue_msg() __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo));
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+            // No task spawned for this lightweight node, so decrement the reference count
+            for (auto waiter : metainfo.waiters()) {
+                waiter->release(1);
+            }
+#endif
         }
         else {
             d1::small_object_allocator allocator{};
-            graph_task* t = nullptr;
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
             if (!metainfo.empty()) {
                 using task_type = apply_body_task_bypass<class_type, continue_msg, trackable_messages_graph_task>;
-                t = allocator.new_object<task_type>( graph_reference(), allocator, *this, continue_msg(), my_priority, metainfo );
+                t = allocator.new_object<task_type>( graph_reference(), allocator, *this, continue_msg(), my_priority, std::move(metainfo) );
             } else
 #endif
             {
                 using task_type = apply_body_task_bypass<class_type, continue_msg>;
                 t = allocator.new_object<task_type>( graph_reference(), allocator, *this, continue_msg(), my_priority );
             }
-            return t;
         }
+        return t;
     }
 
     graph& graph_reference() const override {
