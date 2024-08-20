@@ -321,8 +321,8 @@ void test_try_put_and_wait_key_matching(Body... body) {
         for (auto item : new_work_items) {
             CHECK_MESSAGE(processed_items[check_index++] == item, "Unexpected start_work_items processing");
         }
+        CHECK_MESSAGE(check_index == processed_items.size(), "Unexpected number of messages");
     });
-   CHECK_MESSAGE(check_index == processed_items.size(), "Unexpected number of messages");
 }
 
 //! Test follows and precedes API
