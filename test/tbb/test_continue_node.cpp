@@ -421,7 +421,7 @@ void test_try_put_and_wait_lightweight() {
                 static int counter = 0;
                 int i = counter++;
                 if (i == wait_message) {
-                    for (int item : new_work_items) {
+                    for (auto item : new_work_items) {
                         (void)item;
                         start_node->try_put(tbb::flow::continue_msg{});
                     }
@@ -439,7 +439,8 @@ void test_try_put_and_wait_lightweight() {
 
         tbb::flow::make_edge(cont, writer);
 
-        for (int i = 0; i < wait_message; ++i) {
+        for (auto item : start_work_items) {
+            (void)item;
             cont.try_put(tbb::flow::continue_msg{});
         }
 
@@ -456,7 +457,6 @@ void test_try_put_and_wait_lightweight() {
             CHECK_MESSAGE(processed_items[check_index++] == item, "Unexpected items processing");
         }
 
-        // If the node is unlimited, it should process new_work_items immediately while processing the wait_message
         for (auto item : new_work_items) {
             CHECK_MESSAGE(processed_items[check_index++] == item, "Unexpected items processing");
         }
@@ -469,9 +469,58 @@ void test_try_put_and_wait_lightweight() {
     });
 }
 
+void test_metainfo_buffering() {
+    tbb::task_arena arena(1);
+
+    arena.execute([&] {
+        tbb::flow::graph g;
+
+        std::vector<char> call_order;
+
+        tbb::flow::continue_node<tbb::flow::continue_msg>* b_ptr = nullptr;
+
+        tbb::flow::continue_node<tbb::flow::continue_msg> a(g,
+            [&](tbb::flow::continue_msg) noexcept {
+                call_order.push_back('A');
+                static std::once_flag flag; // Send a signal to B only in the first call
+                std::call_once(flag, [&]{ b_ptr->try_put(tbb::flow::continue_msg{}); });
+            });
+
+        tbb::flow::continue_node<tbb::flow::continue_msg> b(g,
+            [&](tbb::flow::continue_msg) noexcept {
+                call_order.push_back('B');
+                a.try_put(tbb::flow::continue_msg{});
+            });
+
+        b_ptr = &b;
+
+        tbb::flow::continue_node<tbb::flow::continue_msg, tbb::flow::lightweight> c(g,
+            [&](tbb::flow::continue_msg) noexcept {
+                call_order.push_back('C');
+            });
+
+        tbb::flow::make_edge(a, c);
+        tbb::flow::make_edge(b, c);
+
+        a.try_put_and_wait(tbb::flow::continue_msg{});
+
+        // Inside the first call of A, we send a signal to B.
+        // Both of them send signals to C. Since C lightweight, it is processed immediately
+        // upon receiving signals from both predecessors. This completes the wait.
+        CHECK(call_order == std::vector<char>{'A', 'B', 'C'});
+
+        g.wait_for_all();
+
+        // B previously sent a signal to A, which has now been processed.
+        // A sends a signal to C, which is not processed because no signal is received from B this time.
+        CHECK(call_order == std::vector<char>{'A', 'B', 'C', 'A'});
+    });
+}
+
 void test_try_put_and_wait() {
     test_try_put_and_wait_default();
     test_try_put_and_wait_lightweight();
+    test_metainfo_buffering();
 }
 #endif // __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
 
