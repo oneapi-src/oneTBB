@@ -402,7 +402,7 @@ class threshold_regulator<T, continue_msg, void> : public continue_receiver, no_
     // Intentionally ignore the metainformation
     // If there are more items associated with passed metainfo to be processed
     // They should be stored in the buffer before the limiter_node
-    graph_task* execute(message_metainfo&&) override {
+    graph_task* execute(const message_metainfo&) override {
 #else
     graph_task* execute() override {
 #endif

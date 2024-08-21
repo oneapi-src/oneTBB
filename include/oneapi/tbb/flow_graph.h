@@ -428,7 +428,10 @@ private:
             }
         }
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-        graph_task* res = execute(std::move(predecessor_metainfo));
+        graph_task* res = execute(predecessor_metainfo);
+        for (auto waiter : predecessor_metainfo.waiters()) {
+            waiter->release(1);
+        }
 #else
         graph_task* res = execute();
 #endif
@@ -469,7 +472,7 @@ protected:
     /** This should be very fast or else spawn a task.  This is
         called while the sender is blocked in the try_put(). */
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    virtual graph_task* execute(message_metainfo&& metainfo) = 0;
+    virtual graph_task* execute(const message_metainfo& metainfo) = 0;
 #else
     virtual graph_task* execute() = 0;
 #endif
