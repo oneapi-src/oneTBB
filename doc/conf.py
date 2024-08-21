@@ -29,7 +29,7 @@ if BUILD_TYPE == 'oneapi' or BUILD_TYPE == 'dita':
     project = u'Intel® oneAPI Threading Building Blocks (oneTBB)'
 else:
     project = u'oneTBB'
-copyright = u'2023, Intel Corporation'
+copyright = u'Intel Corporation'
 author = u'Intel'
 
 # The short X.Y version
@@ -304,7 +304,7 @@ epub_exclude_files = ['search.html']
 # -- Options for intersphinx extension ---------------------------------------
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'https://docs.python.org/': None}
+intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
 
 # -- Options for todo extension ----------------------------------------------
 

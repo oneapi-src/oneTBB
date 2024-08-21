@@ -100,10 +100,10 @@ public:
 
 private:
     bool get_item_impl( output_type& v
-                        __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo* metainfo = nullptr))
+                        __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo* metainfo_ptr = nullptr) )
     {
 
-        bool msg = false;
+        bool successful_get = false;
 
         do {
             predecessor_type *src;
@@ -117,24 +117,23 @@ private:
 
             // Try to get from this sender
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-            if (metainfo) {
-                msg = src->try_get( v, *metainfo );
-            } else {
-                msg = src->try_get( v );
-            }
-#else
-            msg = src->try_get( v );
+            if (metainfo_ptr) {
+                successful_get = src->try_get( v, *metainfo_ptr );
+            } else
 #endif
+            {
+                successful_get = src->try_get( v );
+            }
 
-            if (msg == false) {
+            if (successful_get == false) {
                 // Relinquish ownership of the edge
                 register_successor(*src, *my_owner);
             } else {
                 // Retain ownership of the edge
                 this->add(*src);
             }
-        } while ( msg == false );
-        return msg;
+        } while ( successful_get == false );
+        return successful_get;
     }
 public:
     bool get_item( output_type& v ) {
@@ -178,8 +177,9 @@ public:
         // Do not work with the passed pointer here as it may not be fully initialized yet
     }
 
-    bool try_reserve( output_type &v ) {
-        bool msg = false;
+private:
+    bool try_reserve_impl( output_type &v __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo* metainfo) ) {
+        bool successful_reserve = false;
 
         do {
             predecessor_type* pred = nullptr;
@@ -193,9 +193,16 @@ public:
             }
 
             // Try to get from this sender
-            msg = pred->try_reserve( v );
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+            if (metainfo) {
+                successful_reserve = pred->try_reserve( v, *metainfo );
+            } else
+#endif
+            {
+                successful_reserve = pred->try_reserve( v );
+            }
 
-            if (msg == false) {
+            if (successful_reserve == false) {
                 typename mutex_type::scoped_lock lock(this->my_mutex);
                 // Relinquish ownership of the edge
                 register_successor( *pred, *this->my_owner );
@@ -204,10 +211,20 @@ public:
                 // Retain ownership of the edge
                 this->add( *pred);
             }
-        } while ( msg == false );
+        } while ( successful_reserve == false );
 
-        return msg;
+        return successful_reserve;
     }
+public:
+    bool try_reserve( output_type& v ) {
+        return try_reserve_impl(v __TBB_FLOW_GRAPH_METAINFO_ARG(nullptr));
+    }
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    bool try_reserve( output_type& v, message_metainfo& metainfo ) {
+        return try_reserve_impl(v, &metainfo);
+    }
+#endif
 
     bool try_release() {
         reserved_src.load(std::memory_order_relaxed)->try_release();
@@ -290,7 +307,7 @@ public:
 
     virtual graph_task* try_put_task( const T& t ) = 0;
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    virtual graph_task* try_put_task( const T& t, const message_metainfo& metainfo) = 0;
+    virtual graph_task* try_put_task( const T& t, const message_metainfo& metainfo ) = 0;
 #endif
 };  // successor_cache<T>
 
@@ -363,7 +380,7 @@ class broadcast_cache : public successor_cache<T, M> {
     typedef M mutex_type;
     typedef typename successor_cache<T,M>::successors_type successors_type;
 
-    graph_task* try_put_task_impl( const T& t __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo)) {
+    graph_task* try_put_task_impl( const T& t __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo) ) {
         graph_task * last_task = nullptr;
         typename mutex_type::scoped_lock l(this->my_mutex, /*write=*/true);
         typename successors_type::iterator i = this->my_successors.begin();
@@ -391,7 +408,6 @@ public:
         // Do not work with the passed pointer here as it may not be fully initialized yet
     }
 
-    // as above, but call try_put_task instead, and return the last task we received (if any)
     graph_task* try_put_task( const T &t ) override {
         return try_put_task_impl(t __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo{}));
     }
@@ -452,7 +468,7 @@ public:
 private:
 
     graph_task* try_put_task_impl( const T &t
-                                   __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo))
+                                   __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo) )
     {
         typename mutex_type::scoped_lock l(this->my_mutex, /*write=*/true);
         typename successors_type::iterator i = this->my_successors.begin();
@@ -474,15 +490,11 @@ private:
 
 public:
     graph_task* try_put_task(const T& t) override {
-#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-        return try_put_task_impl(t, message_metainfo{});
-#else
-        return try_put_task_impl(t);
-#endif
+        return try_put_task_impl(t __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo{}));
     }
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    graph_task* try_put_task(const T& t, const message_metainfo& metainfo) override {
+    graph_task* try_put_task( const T& t, const message_metainfo& metainfo ) override {
         return try_put_task_impl(t, metainfo);
     }
 #endif

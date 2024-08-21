@@ -162,9 +162,9 @@ protected:
 
 private:
 
-    friend class apply_body_task_bypass< class_type, input_type>;
+    friend class apply_body_task_bypass< class_type, input_type >;
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    friend class apply_body_task_bypass< class_type, input_type, graph_task_with_message_waiters>;
+    friend class apply_body_task_bypass< class_type, input_type, trackable_messages_graph_task >;
 #endif
     friend class forward_task_bypass< class_type >;
 
@@ -215,9 +215,10 @@ private:
             input_type i;
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
             message_metainfo metainfo;
-            if(my_predecessors.get_item(i, metainfo)) {
+#endif
+            if(my_predecessors.get_item(i __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo))) {
                 ++my_concurrency;
-                new_task = create_body_task(i, std::move(metainfo));
+                new_task = create_body_task(i __TBB_FLOW_GRAPH_METAINFO_ARG(std::move(metainfo)));
             }
 #else
             if (my_predecessors.get_item(i)) {
@@ -361,9 +362,10 @@ private:
     //! allocates a task to apply a body
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
     template <typename Metainfo>
+    graph_task* create_body_task( const input_type &input, Metainfo&& metainfo )
+#else
+    graph_task* create_body_task( const input_type &input )
 #endif
-    graph_task* create_body_task( const input_type &input
-                                  __TBB_FLOW_GRAPH_METAINFO_ARG(Metainfo&& metainfo))
     {
         if (!is_graph_active(my_graph_ref)) {
             return nullptr;
@@ -373,7 +375,7 @@ private:
         graph_task* t = nullptr;
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
         if (!metainfo.empty()) {
-            using task_type = apply_body_task_bypass<class_type, input_type, graph_task_with_message_waiters>;
+            using task_type = apply_body_task_bypass<class_type, input_type, trackable_messages_graph_task>;
             t = allocator.new_object<task_type>(my_graph_ref, allocator, *this, input, my_priority, std::forward<Metainfo>(metainfo));
         } else
 #endif
@@ -672,7 +674,7 @@ public:
     // the task we were successful.
     //TODO: consider moving common parts with implementation in function_input into separate function
     graph_task* apply_body_impl_bypass( const input_type &i
-                                        __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo) )
+                                        __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo&) )
     {
         fgt_begin_body( my_body );
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
@@ -742,6 +744,18 @@ struct emit_element {
         check_task_and_spawn(g, last_task);
         return emit_element<N-1>::emit_this(g,t,p);
     }
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    template <typename TupleType, typename PortsType>
+    static graph_task* emit_this(graph& g, const TupleType& t, PortsType& p,
+                                 const message_metainfo& metainfo)
+    {
+        // TODO: consider to collect all the tasks in task_list and spawn them all at once
+        graph_task* last_task = std::get<N-1>(p).try_put_task(std::get<N-1>(t), metainfo);
+        check_task_and_spawn(g, last_task);
+        return emit_element<N-1>::emit_this(g, t, p, metainfo);
+    }
+#endif
 };
 
 template<>
@@ -752,6 +766,17 @@ struct emit_element<1> {
         check_task_and_spawn(g, last_task);
         return SUCCESSFULLY_ENQUEUED;
     }
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    template <typename TupleType, typename PortsType>
+    static graph_task* emit_this(graph& g, const TupleType& t, PortsType& ports,
+                                 const message_metainfo& metainfo)
+    {
+        graph_task* last_task = std::get<0>(ports).try_put_task(std::get<0>(t), metainfo);
+        check_task_and_spawn(g, last_task);
+        return SUCCESSFULLY_ENQUEUED;
+    }
+#endif
 };
 
 //! Implements methods for an executable node that takes continue_msg as input
@@ -820,8 +845,7 @@ protected:
     friend class apply_body_task_bypass< class_type, continue_msg >;
 
     //! Applies the body to the provided input
-    graph_task* apply_body_bypass( input_type __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo&) )
-    {
+    graph_task* apply_body_bypass( input_type __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo&) ) {
         // There is an extra copied needed to capture the
         // body execution without the try_put
         fgt_begin_body( my_body );
@@ -931,6 +955,12 @@ protected:
     graph_task* try_put_task(const output_type &i) {
         return my_successors.try_put_task(i);
     }
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    graph_task* try_put_task(const output_type& i, const message_metainfo& metainfo) {
+        return my_successors.try_put_task(i, metainfo);
+    }
+#endif
 
     template <int N> friend struct emit_element;
 

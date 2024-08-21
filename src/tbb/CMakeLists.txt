@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2023 Intel Corporation
+# Copyright (c) 2020-2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -125,6 +125,16 @@ target_link_libraries(tbb
     ${TBB_LIB_LINK_LIBS}
     ${TBB_COMMON_LINK_LIBS}
 )
+
+if(TBB_BUILD_APPLE_FRAMEWORKS)
+    set_target_properties(tbb PROPERTIES
+        FRAMEWORK TRUE
+        FRAMEWORK_VERSION ${TBB_BINARY_VERSION}.${TBB_BINARY_MINOR_VERSION}
+        XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER com.intel.tbb
+        MACOSX_FRAMEWORK_IDENTIFIER com.intel.tbb
+        MACOSX_FRAMEWORK_BUNDLE_VERSION ${TBB_BINARY_VERSION}.${TBB_BINARY_MINOR_VERSION}
+        MACOSX_FRAMEWORK_SHORT_VERSION_STRING ${TBB_BINARY_VERSION})
+endif()
 
 tbb_install_target(tbb)
 
