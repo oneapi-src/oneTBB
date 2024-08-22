@@ -496,7 +496,11 @@ private:
         MALLOC_ASSERT(!pageSize, "Huge page size can't be set twice. Double initialization.");
 
         // Initialize object variables
-        pageSize       = hugePageSize * 1024; // was read in KB from meminfo
+        if (hugePageSize > -1) {
+            pageSize = hugePageSize * 1024; // was read in KB from meminfo
+        } else {
+            pageSize = 0;
+        }
         isHPAvailable  = hpAvailable;
         isTHPAvailable = thpAvailable;
     }
