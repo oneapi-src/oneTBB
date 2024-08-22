@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2023 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -38,8 +38,8 @@
 const int L = 10;
 const int N = 1000;
 
-using tbb::detail::d1::SUCCESSFULLY_ENQUEUED;
-using tbb::detail::d1::graph_task;
+using tbb::detail::d2::SUCCESSFULLY_ENQUEUED;
+using tbb::detail::d2::graph_task;
 
 template< typename T >
 struct serial_receiver : public tbb::flow::receiver<T>, utils::NoAssign {

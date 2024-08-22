@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2023 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@
 //! \brief Test for [flow_graph.broadcast_node] specification
 
 
-#define TBB_INTERNAL_NAMESPACE detail::d1
+#define TBB_INTERNAL_NAMESPACE detail::d2
 namespace tbb {
 using task = TBB_INTERNAL_NAMESPACE::graph_task;
 }
@@ -281,4 +281,3 @@ TEST_CASE("Deduction guides"){
     test_deduction_guides();
 }
 #endif
-

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2022 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
 #error Do not #include this internal file directly; use public TBB headers instead.
 #endif
 
-// included in namespace tbb::detail::d1 (in flow_graph.h)
+// included in namespace tbb::detail::d2 (in flow_graph.h)
 
 //! A node_cache maintains a std::queue of elements of type T.  Each operation is protected by a lock.
 template< typename T, typename M=spin_mutex >
