@@ -319,11 +319,11 @@ void test_overwrite_node_try_put_and_wait() {
         tbb::flow::graph g;
         tbb::flow::overwrite_node<int> buffer(g);
 
-        int processed_item = -42;
+        std::vector<int> processed_items;
 
         tbb::flow::function_node<int, int> f(g, tbb::flow::serial,
             [&](int input) {
-                processed_item = input;
+                processed_items.emplace_back(input);
                 buffer.clear();
                 return 0;
             });
@@ -332,11 +332,13 @@ void test_overwrite_node_try_put_and_wait() {
 
         buffer.try_put_and_wait(wait_message);
 
-        CHECK_MESSAGE(processed_item == wait_message, "unexpected processing");
+        CHECK_MESSAGE(processed_items.size() == 1, "Incorrect number of processed items");
+        CHECK_MESSAGE(processed_items.back() == wait_message, "unexpected processing");
 
         g.wait_for_all();
 
-        CHECK(processed_item == wait_message);
+        CHECK(processed_items.size() == 1);
+        CHECK(processed_items.back() == wait_message);
     }
 }
 #endif
