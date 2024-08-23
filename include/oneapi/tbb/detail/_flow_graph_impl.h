@@ -433,7 +433,7 @@ private:
     friend void spawn_in_graph_arena(graph& g, graph_task& arena_task);
     friend void enqueue_in_graph_arena(graph &g, graph_task& arena_task);
 
-    friend class task_arena_base;
+    friend class d1::task_arena_base;
     friend class graph_task;
 
     template <typename T>
