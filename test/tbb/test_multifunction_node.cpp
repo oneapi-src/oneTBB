@@ -623,3 +623,77 @@ TEST_CASE("constraints for multifunction_node body") {
     static_assert(!can_call_multifunction_node_ctor<input_type, output_type, WrongSecondInputOperatorRoundBrackets<input_type, output_type>>);
 }
 #endif // __TBB_CPP20_CONCEPTS_PRESENT
+
+TEST_CASE("abc") {
+    return; // Temp disable
+    tbb::task_arena arena(1);
+
+    arena.execute([] {
+        tbb::flow::graph g;
+
+        using mfnode_type = tbb::flow::multifunction_node<int, std::tuple<int, int>>;
+        mfnode_type multifunc(g, tbb::flow::unlimited,
+            [](int input, mfnode_type::output_ports_type& output_ports) {
+                std::cout << "MFnode processing input " << input << std::endl;
+                std::get<0>(output_ports).try_put(input);
+                std::get<1>(output_ports).try_put(input);
+            });
+
+        tbb::flow::function_node<int, int> func1(g, tbb::flow::unlimited,
+            [](int input) {
+                std::cout << "Func node 1 processing input " << input << std::endl;
+                return 0;
+            });
+
+        tbb::flow::function_node<int, int> func2(g, tbb::flow::unlimited,
+            [](int input) {
+                std::cout << "Func node 2 processing input " << input << std::endl;
+                return 0;
+            });
+
+        tbb::flow::make_edge(tbb::flow::output_port<0>(multifunc), func1);
+        tbb::flow::make_edge(tbb::flow::output_port<1>(multifunc), func2);
+
+        multifunc.try_put(10);
+        multifunc.try_put_and_wait(1);
+        std::cout << "AAAA" << std::endl;
+        g.wait_for_all();
+    });
+}
+
+TEST_CASE("bcd") {
+    tbb::task_arena arena(1);
+
+    arena.execute([] {
+        tbb::flow::graph g;
+
+        using async_node_type = tbb::flow::async_node<int, int>;
+
+        async_node_type async_node(g, tbb::flow::unlimited,
+            [](int input, typename async_node_type::gateway_type& async_gateway) {
+                std::cout << "Async activity process " << input << std::endl;
+                async_gateway.try_put(input);
+            });
+
+        tbb::flow::function_node<int, int> func1(g, tbb::flow::unlimited,
+            [](int input) {
+                std::cout << "Func node 1 processing input " << input << std::endl;
+                return 0;
+            });
+
+        tbb::flow::function_node<int, int> func2(g, tbb::flow::unlimited,
+            [](int input) {
+                std::cout << "Func node 2 processing input " << input << std::endl;
+                return 0;
+            });
+
+        tbb::flow::make_edge(async_node, func1);
+        tbb::flow::make_edge(async_node, func2);
+
+        async_node.try_put(1);
+        async_node.try_put_and_wait(10);
+
+        std::cout << "AAA" << std::endl;
+        g.wait_for_all();
+    });
+}

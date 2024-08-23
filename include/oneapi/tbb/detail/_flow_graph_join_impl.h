@@ -798,6 +798,13 @@
         }
 #endif
 
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        // TODO: add support for key_matching join_node
+        graph_task* try_put_task(const input_type& v, const message_metainfo&) override {
+            return try_put_task(v);
+        }
+#endif
+
         graph& graph_reference() const override {
             return my_join->graph_ref;
         }

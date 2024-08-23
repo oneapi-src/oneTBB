@@ -220,6 +220,12 @@ private:
                 ++my_concurrency;
                 new_task = create_body_task(i __TBB_FLOW_GRAPH_METAINFO_ARG(std::move(metainfo)));
             }
+#else
+            if (my_predecessors.get_item(i)) {
+                ++my_concurrency;
+                new_task = create_body_task(i __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo{}));
+            }
+#endif
         }
         return new_task;
     }
@@ -554,6 +560,64 @@ struct init_output_ports {
     }
 }; // struct init_output_ports
 
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+template <typename MFOutput>
+class output_ref_proxy : public sender<typename MFOutput::output_type> {
+public:
+    using output_type = typename MFOutput::output_type;
+    using base_type = sender<output_type>;
+    using successor_type = typename base_type::successor_type;
+
+    // TODO: add comment why take output_ref by constant reference
+    output_ref_proxy(const MFOutput& output_ref) : my_output_ref(const_cast<MFOutput&>(output_ref)) {}
+
+    const message_metainfo& get_metainfo() const { return my_metainfo; }
+
+    void assign_metainfo(const message_metainfo& metainfo) {
+        __TBB_ASSERT(my_metainfo.empty(), nullptr);
+        my_metainfo = metainfo;
+    }
+
+    bool register_successor(successor_type& s) override {
+        return my_output_ref.register_successor(s);
+    }
+
+    bool remove_successor(successor_type& s) override {
+        return my_output_ref.remove_successor(s);
+    }
+
+    bool try_put(const output_type& i) {
+        return my_output_ref.try_put(i, my_metainfo);
+    }
+
+    graph& graph_reference() const { return my_output_ref.graph_reference(); }
+
+    typename MFOutput::broadcast_cache_type& successors() { return my_output_ref.successors(); }
+private:
+    MFOutput& my_output_ref;
+    message_metainfo my_metainfo;
+}; // class output_ref_proxy
+
+template <std::size_t N, typename Tuple>
+struct assign_metainfo_helper_impl {
+    static void assign_metainfo(Tuple& tuple, const message_metainfo& metainfo) {
+        std::get<N - 1>(tuple).assign_metainfo(metainfo);
+        assign_metainfo_helper_impl<N - 1, Tuple>::assign_metainfo(tuple, metainfo);
+    }
+};
+
+template <typename Tuple>
+struct assign_metainfo_helper_impl<1, Tuple> {
+    static void assign_metainfo(Tuple& tuple, const message_metainfo& metainfo) {
+        std::get<0>(tuple).assign_metainfo(metainfo);
+    }
+};
+
+template <typename Tuple>
+using assign_metainfo_helper = assign_metainfo_helper_impl<std::tuple_size<Tuple>::value, Tuple>;
+
+#endif // __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+
 //! Implements methods for a function node that takes a type Input as input
 //  and has a tuple of output ports specified.
 template< typename Input, typename OutputPortSet, typename Policy, typename A>
@@ -561,7 +625,15 @@ class multifunction_input : public function_input_base<Input, Policy, A, multifu
 public:
     static const int N = std::tuple_size<OutputPortSet>::value;
     typedef Input input_type;
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    typedef OutputPortSet output_ports_base_type;
+    typedef typename wrap_tuple_elements<std::tuple_size<OutputPortSet>::value,
+                                         output_ref_proxy,
+                                         OutputPortSet>::type output_ports_type;
+#else
+    typedef OutputPortSet output_ports_base_type;
     typedef OutputPortSet output_ports_type;
+#endif
     typedef multifunction_body<input_type, output_ports_type> multifunction_body_type;
     typedef multifunction_input<Input, OutputPortSet, Policy, A> my_class;
     typedef function_input_base<Input, Policy, A, my_class> base_type;
@@ -570,19 +642,22 @@ public:
     // constructor
     template<typename Body>
     multifunction_input(graph &g, size_t max_concurrency,Body& body, node_priority_t a_priority )
-      : base_type(g, max_concurrency, a_priority, noexcept(tbb::detail::invoke(body, input_type(), my_output_ports)))
+      : base_type(g, max_concurrency, a_priority,
+                  noexcept(tbb::detail::invoke(body, input_type(), std::declval<output_ports_type&>())))
       , my_body( new multifunction_body_leaf<input_type, output_ports_type, Body>(body) )
       , my_init_body( new multifunction_body_leaf<input_type, output_ports_type, Body>(body) )
-      , my_output_ports(init_output_ports<output_ports_type>::call(g, my_output_ports)){
-    }
+      , my_output_ports(init_output_ports<output_ports_base_type>::call(g, my_output_ports))
+      __TBB_FLOW_GRAPH_METAINFO_ARG(my_ref_ports_proxy(my_output_ports))
+    {}
 
     //! Copy constructor
     multifunction_input( const multifunction_input& src ) :
         base_type(src),
         my_body( src.my_init_body->clone() ),
         my_init_body(src.my_init_body->clone() ),
-        my_output_ports( init_output_ports<output_ports_type>::call(src.my_graph_ref, my_output_ports) ) {
-    }
+        my_output_ports( init_output_ports<output_ports_base_type>::call(src.my_graph_ref, my_output_ports) )
+        __TBB_FLOW_GRAPH_METAINFO_ARG(my_ref_ports_proxy(my_output_ports))
+    {}
 
     ~multifunction_input() {
         delete my_body;
@@ -602,7 +677,14 @@ public:
                                         __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo&) )
     {
         fgt_begin_body( my_body );
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        // Proxy port ref
+        output_ports_type ports(my_output_ports);
+        assign_metainfo_helper<output_ports_type>::assign_metainfo(ports, metainfo);
+        (*my_body)(i, ports);
+#else
         (*my_body)(i, my_output_ports);
+#endif
         fgt_end_body( my_body );
         graph_task* ttask = nullptr;
         if(base_type::my_max_concurrency != 0) {
@@ -611,7 +693,13 @@ public:
         return ttask ? ttask : SUCCESSFULLY_ENQUEUED;
     }
 
-    output_ports_type &output_ports(){ return my_output_ports; }
+    output_ports_type &output_ports(){
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        return my_ref_ports_proxy;
+#else
+        return my_output_ports;
+#endif
+    }
 
 protected:
 
@@ -628,8 +716,10 @@ protected:
 
     multifunction_body_type *my_body;
     multifunction_body_type *my_init_body;
-    output_ports_type my_output_ports;
-
+    output_ports_base_type my_output_ports;
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    output_ports_type      my_ref_ports_proxy;
+#endif
 };  // multifunction_input
 
 // template to refer to an output port of a multifunction_node
@@ -860,6 +950,19 @@ public:
         }
         return true;
     }
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    bool try_put(const output_type& i, const message_metainfo& metainfo) {
+        graph_task* res = my_successors.try_put_task(i, metainfo);
+        if( !res ) return false;
+        if( res != SUCCESSFULLY_ENQUEUED ) {
+            // wrapping in task_arena::execute() is not needed since the method is called from
+            // inside task::execute()
+            spawn_in_graph_arena(graph_reference(), *res);
+        }
+        return true;
+    }
+#endif
 
     using base_type::graph_reference;
 
