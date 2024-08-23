@@ -401,23 +401,51 @@ protected:
     template< typename R, typename B > friend class run_and_put_task;
     template<typename X, typename Y> friend class broadcast_cache;
     template<typename X, typename Y> friend class round_robin_cache;
+
+private:
     // execute body is supposed to be too small to create a task for.
-    graph_task* try_put_task( const input_type & ) override {
+    graph_task* try_put_task_impl( const input_type& __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo) ) {
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        message_metainfo predecessor_metainfo;
+#endif
         {
             spin_mutex::scoped_lock l(my_mutex);
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+            // Prolong the wait and store the metainfo until receiving signals from all the predecessors
+            for (auto waiter : metainfo.waiters()) {
+                waiter->reserve(1);
+            }
+            my_current_metainfo.merge(metainfo);
+#endif
             if ( ++my_current_count < my_predecessor_count )
                 return SUCCESSFULLY_ENQUEUED;
-            else
+            else {
                 my_current_count = 0;
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+                predecessor_metainfo = my_current_metainfo;
+                my_current_metainfo = message_metainfo{};
+#endif
+            }
         }
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        graph_task* res = execute(predecessor_metainfo);
+        for (auto waiter : predecessor_metainfo.waiters()) {
+            waiter->release(1);
+        }
+#else
         graph_task* res = execute();
+#endif
         return res? res : SUCCESSFULLY_ENQUEUED;
     }
 
+protected:
+    graph_task* try_put_task( const input_type& input ) override {
+        return try_put_task_impl(input __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo{}));
+    }
+
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    // TODO: add metainfo support for continue_receiver
-    graph_task* try_put_task( const input_type& input, const message_metainfo& ) override {
-        return try_put_task(input);
+    graph_task* try_put_task( const input_type& input, const message_metainfo& metainfo ) override {
+        return try_put_task_impl(input, metainfo);
     }
 #endif
 
@@ -425,6 +453,9 @@ protected:
     int my_predecessor_count;
     int my_current_count;
     int my_initial_predecessor_count;
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    message_metainfo my_current_metainfo;
+#endif
     node_priority_t my_priority;
     // the friend declaration in the base class did not eliminate the "protected class"
     // error in gcc 4.1.2
@@ -440,7 +471,11 @@ protected:
     //! Does whatever should happen when the threshold is reached
     /** This should be very fast or else spawn a task.  This is
         called while the sender is blocked in the try_put(). */
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    virtual graph_task* execute(const message_metainfo& metainfo) = 0;
+#else
     virtual graph_task* execute() = 0;
+#endif
     template<typename TT, typename M> friend class successor_cache;
     bool is_continue_receiver() override { return true; }
 
@@ -3329,6 +3364,26 @@ public:
         return false;
     }
 
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    bool try_get( input_type &v, message_metainfo& metainfo ) override {
+        spin_mutex::scoped_lock l( my_mutex );
+        if (my_buffer_is_valid) {
+            v = my_buffer;
+            metainfo = my_buffered_metainfo;
+
+            // Since the successor of the node will use move semantics while wrapping the metainfo
+            // that is designed to transfer the ownership of the value from single-push buffer to the task
+            // It is required to reserve one more reference here because the value keeps in the buffer
+            // and the ownership is not transferred
+            for (auto msg_waiter : metainfo.waiters()) {
+                msg_waiter->reserve(1);
+            }
+            return true;
+        }
+        return false;
+    }
+#endif
+
     //! Reserves an item
     bool try_reserve( T &v ) override {
         return try_get(v);
@@ -3336,13 +3391,14 @@ public:
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
 private:
-    // TODO: add real implementation
-    bool try_reserve(T& v, message_metainfo&) override {
-        return try_reserve(v);
-    }
-
-    bool try_get( input_type& v, message_metainfo& ) override {
-        return try_get(v);
+    bool try_reserve(T& v, message_metainfo& metainfo) override {
+        spin_mutex::scoped_lock l( my_mutex );
+        if (my_buffer_is_valid) {
+            v = my_buffer;
+            metainfo = my_buffered_metainfo;
+            return true;
+        }
+        return false;
     }
 public:
 #endif
@@ -3361,6 +3417,12 @@ public:
     void clear() {
        spin_mutex::scoped_lock l( my_mutex );
        my_buffer_is_valid = false;
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+       for (auto msg_waiter : my_buffered_metainfo.waiters()) {
+           msg_waiter->release(1);
+       }
+       my_buffered_metainfo = message_metainfo{};
+#endif
     }
 
 protected:
@@ -3370,20 +3432,33 @@ protected:
     template<typename X, typename Y> friend class round_robin_cache;
     graph_task* try_put_task( const input_type &v ) override {
         spin_mutex::scoped_lock l( my_mutex );
-        return try_put_task_impl(v);
+        return try_put_task_impl(v __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo{}));
     }
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    // TODO: add support for overwrite_node
-    graph_task* try_put_task(const input_type& v, const message_metainfo&) override {
-        return try_put_task(v);
+    graph_task* try_put_task(const input_type& v, const message_metainfo& metainfo) override {
+        spin_mutex::scoped_lock l( my_mutex );
+        return try_put_task_impl(v, metainfo);
     }
 #endif
 
-    graph_task * try_put_task_impl(const input_type &v) {
+    graph_task * try_put_task_impl(const input_type &v __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo)) {
         my_buffer = v;
         my_buffer_is_valid = true;
-        graph_task* rtask = my_successors.try_put_task(v);
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        // Since the new item is pushed to the buffer - reserving the waiters
+        for (auto msg_waiter : metainfo.waiters()) {
+            msg_waiter->reserve(1);
+        }
+
+        // Since the item is taken out from the buffer - releasing the stored waiters
+        for (auto msg_waiter : my_buffered_metainfo.waiters()) {
+            msg_waiter->release(1);
+        }
+
+        my_buffered_metainfo = metainfo;
+#endif
+        graph_task* rtask = my_successors.try_put_task(v __TBB_FLOW_GRAPH_METAINFO_ARG(my_buffered_metainfo) );
         if (!rtask) rtask = SUCCESSFULLY_ENQUEUED;
         return rtask;
     }
@@ -3421,6 +3496,9 @@ protected:
     spin_mutex my_mutex;
     broadcast_cache< input_type, null_rw_mutex > my_successors;
     input_type my_buffer;
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    message_metainfo my_buffered_metainfo;
+#endif
     bool my_buffer_is_valid;
 
     void reset_node( reset_flags f) override {
@@ -3467,13 +3545,13 @@ protected:
     template<typename X, typename Y> friend class round_robin_cache;
     graph_task *try_put_task( const T &v ) override {
         spin_mutex::scoped_lock l( this->my_mutex );
-        return this->my_buffer_is_valid ? nullptr : this->try_put_task_impl(v);
+        return this->my_buffer_is_valid ? nullptr : this->try_put_task_impl(v __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo{}));
     }
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    // TODO: add support for write_once_node
-    graph_task* try_put_task(const T& v, const message_metainfo&) override {
-        return try_put_task(v);
+    graph_task* try_put_task(const T& v, const message_metainfo& metainfo) override {
+        spin_mutex::scoped_lock l( this->my_mutex );
+        return this->my_buffer_is_valid ? nullptr : this->try_put_task_impl(v, metainfo);
     }
 #endif
 }; // write_once_node
