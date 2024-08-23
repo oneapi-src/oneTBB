@@ -20,6 +20,9 @@ if (WIN32)
 else()
     include(${CMAKE_CURRENT_LIST_DIR}/Clang.cmake)
     set(TBB_IPO_COMPILE_FLAGS $<$<NOT:$<CONFIG:Debug>>:-ipo>)
+     # "--exclude-libs,ALL" is used to avoid accidental exporting of symbols
+    #  from statically linked libraries
+    set(TBB_LIB_LINK_FLAGS ${TBB_LIB_LINK_FLAGS} -static-intel -Wl,--exclude-libs,ALL)
     set(TBB_OPENMP_FLAG -qopenmp)
 endif()
 set(TBB_IPO_LINK_FLAGS ${TBB_IPO_LINK_FLAGS} ${TBB_IPO_COMPILE_FLAGS})
