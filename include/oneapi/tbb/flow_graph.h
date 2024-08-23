@@ -401,23 +401,51 @@ protected:
     template< typename R, typename B > friend class run_and_put_task;
     template<typename X, typename Y> friend class broadcast_cache;
     template<typename X, typename Y> friend class round_robin_cache;
+
+private:
     // execute body is supposed to be too small to create a task for.
-    graph_task* try_put_task( const input_type & ) override {
+    graph_task* try_put_task_impl( const input_type& __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo) ) {
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        message_metainfo predecessor_metainfo;
+#endif
         {
             spin_mutex::scoped_lock l(my_mutex);
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+            // Prolong the wait and store the metainfo until receiving signals from all the predecessors
+            for (auto waiter : metainfo.waiters()) {
+                waiter->reserve(1);
+            }
+            my_current_metainfo.merge(metainfo);
+#endif
             if ( ++my_current_count < my_predecessor_count )
                 return SUCCESSFULLY_ENQUEUED;
-            else
+            else {
                 my_current_count = 0;
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+                predecessor_metainfo = my_current_metainfo;
+                my_current_metainfo = message_metainfo{};
+#endif
+            }
         }
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+        graph_task* res = execute(predecessor_metainfo);
+        for (auto waiter : predecessor_metainfo.waiters()) {
+            waiter->release(1);
+        }
+#else
         graph_task* res = execute();
+#endif
         return res? res : SUCCESSFULLY_ENQUEUED;
     }
 
+protected:
+    graph_task* try_put_task( const input_type& input ) override {
+        return try_put_task_impl(input __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo{}));
+    }
+
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    // TODO: add metainfo support for continue_receiver
-    graph_task* try_put_task( const input_type& input, const message_metainfo& ) override {
-        return try_put_task(input);
+    graph_task* try_put_task( const input_type& input, const message_metainfo& metainfo ) override {
+        return try_put_task_impl(input, metainfo);
     }
 #endif
 
@@ -425,6 +453,9 @@ protected:
     int my_predecessor_count;
     int my_current_count;
     int my_initial_predecessor_count;
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    message_metainfo my_current_metainfo;
+#endif
     node_priority_t my_priority;
     // the friend declaration in the base class did not eliminate the "protected class"
     // error in gcc 4.1.2
@@ -440,7 +471,11 @@ protected:
     //! Does whatever should happen when the threshold is reached
     /** This should be very fast or else spawn a task.  This is
         called while the sender is blocked in the try_put(). */
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    virtual graph_task* execute(const message_metainfo& metainfo) = 0;
+#else
     virtual graph_task* execute() = 0;
+#endif
     template<typename TT, typename M> friend class successor_cache;
     bool is_continue_receiver() override { return true; }
 
