@@ -345,6 +345,7 @@ TEST_CASE("Test removal of the predecessor while having none") {
     test(connect_join_via_precedes);
 }
 
+//! \brief \ref error_guessing
 TEST_CASE("Test join_node try_put_and_wait") {
     test_try_put_and_wait_queueing();
     test_try_put_and_wait_reserving();
