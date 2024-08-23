@@ -3336,7 +3336,7 @@ public:
             v = my_buffer;
             metainfo = my_buffered_metainfo;
 
-            // Since the successor of the node will use move semantics while wrapping the matainfo
+            // Since the successor of the node will use move semantics while wrapping the metainfo
             // that is designed to transfer the ownership of the value from single-push buffer to the task
             // It is required to reserve one more reference here because the value keeps in the buffer
             // and the ownership is not transferred
