@@ -57,12 +57,10 @@ public:
     //! Type of a value.
     using value_type = Value;
 
-private:
     //! Helper type to construct range with N tbb::blocked_range<value_type> objects.
     template<std::size_t>
     using dim_range_type = tbb::blocked_range<value_type>;
 
-public:
     blocked_rangeNd_impl() = delete;
 
     //! Constructs N-dimensional range over N half-open intervals each represented as tbb::blocked_range<Value>.
