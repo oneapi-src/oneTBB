@@ -172,7 +172,8 @@ public:
         m_wait.reserve(delta);
     }
 
-    void release(std::uint32_t delta, d1::execution_data*) override {
+    void release(std::uint32_t delta = 1, d1::execution_data* ed = nullptr) override {
+        suppress_unused_warning(ed);
         m_wait.release(delta);
     }
 
@@ -201,7 +202,7 @@ public:
         }
     }
 
-    void release(std::uint32_t delta, d1::execution_data* ed) override {
+    void release(std::uint32_t delta = 1 , d1::execution_data* ed = nullptr) override {
         std::uint64_t ref = m_ref_count.fetch_sub(static_cast<std::uint64_t>(delta)) - static_cast<std::uint64_t>(delta);
         if (ref == 0) {
             auto parent = my_parent;
