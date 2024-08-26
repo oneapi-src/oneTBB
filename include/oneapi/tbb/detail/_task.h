@@ -201,12 +201,12 @@ public:
         }
     }
 
-    void release(std::uint32_t delta = 1) override {
+    void release(std::uint32_t delta = 1, const d1::execution_data* ed = nullptr) override {
         std::uint64_t ref = m_ref_count.fetch_sub(static_cast<std::uint64_t>(delta)) - static_cast<std::uint64_t>(delta);
         if (ref == 0) {
             auto parent = my_parent;
-            execute_continuation();
-            destroy();
+            execute_continuation(ed);
+            destroy(ed);
             parent->release();
         }
     }
@@ -216,8 +216,8 @@ public:
     }
 
 protected:
-    virtual void execute_continuation() {}
-    virtual void destroy() {}
+    virtual void execute_continuation(const d1::execution_data*) {}
+    virtual void destroy(const d1::execution_data*) {}
 
 private:
     wait_tree_vertex_interface* my_parent;
