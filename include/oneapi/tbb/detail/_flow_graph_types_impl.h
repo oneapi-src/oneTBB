@@ -94,6 +94,11 @@ struct max_alignment_helper<T1, T2> {
 template <typename... Types>
 using max_alignment_helper_t = typename max_alignment_helper<Types...>::type;
 
+#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
+#pragma warning(push)
+#pragma warning(disable: 4324) // warning C4324: structure was padded due to alignment specifier
+#endif
+
 // T1, T2 are actual types stored.  The space defined for T1 in the type returned
 // is a char array of the correct size.  Type T2 should be trivially-constructible,
 // T1 must be explicitly managed.
@@ -111,6 +116,11 @@ struct alignas(alignof(max_alignment_helper_t<T1, T2, T3>)) aligned_triple {
     T2 second;
     T3 third;
 };
+#endif
+
+
+#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
+#pragma warning(pop) // warning 4324 is back
 #endif
 
 // support for variant type
