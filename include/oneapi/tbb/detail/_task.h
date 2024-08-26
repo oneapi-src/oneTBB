@@ -158,7 +158,7 @@ public:
 class wait_tree_vertex_interface {
 public:
     virtual void reserve(std::uint32_t delta = 1) = 0;
-    virtual void release(std::uint32_t delta = 1) = 0;
+    virtual void release(std::uint32_t delta = 1, const d1::execution_data* ed = nullptr) = 0;
 
 protected:
     virtual ~wait_tree_vertex_interface() = default;
@@ -172,7 +172,7 @@ public:
         m_wait.reserve(delta);
     }
 
-    void release(std::uint32_t delta = 1) override {
+    void release(std::uint32_t delta = 1, const d1::execution_data* ed = nullptr) override {
         m_wait.release(delta);
     }
 
