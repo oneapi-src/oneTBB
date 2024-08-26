@@ -218,7 +218,6 @@ public:
 protected:
     virtual void execute_continuation() {}
     virtual void destroy() {}
-    virtual void destroy(const d1::execution_data&) {}
 
 private:
     wait_tree_vertex_interface* my_parent;
