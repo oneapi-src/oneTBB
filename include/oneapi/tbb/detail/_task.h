@@ -158,7 +158,7 @@ public:
 class wait_tree_vertex_interface {
 public:
     virtual void reserve(std::uint32_t delta = 1) = 0;
-    virtual void release(std::uint32_t delta = 1, const d1::execution_data* ed = nullptr) = 0;
+    virtual void release(std::uint32_t delta = 1, d1::execution_data* ed = nullptr) = 0;
 
 protected:
     virtual ~wait_tree_vertex_interface() = default;
@@ -172,7 +172,7 @@ public:
         m_wait.reserve(delta);
     }
 
-    void release(std::uint32_t delta, const d1::execution_data*) override {
+    void release(std::uint32_t delta, d1::execution_data*) override {
         m_wait.release(delta);
     }
 
@@ -201,7 +201,7 @@ public:
         }
     }
 
-    void release(std::uint32_t delta, const d1::execution_data* ed) override {
+    void release(std::uint32_t delta, d1::execution_data* ed) override {
         std::uint64_t ref = m_ref_count.fetch_sub(static_cast<std::uint64_t>(delta)) - static_cast<std::uint64_t>(delta);
         if (ref == 0) {
             auto parent = my_parent;
@@ -216,8 +216,8 @@ public:
     }
 
 protected:
-    virtual void execute_continuation(const d1::execution_data*) {}
-    virtual void destroy(const d1::execution_data*) {}
+    virtual void execute_continuation(d1::execution_data*) {}
+    virtual void destroy(d1::execution_data*) {}
 
 private:
     wait_tree_vertex_interface* my_parent;
