@@ -272,29 +272,57 @@ public:
 
 //! A task that calls a node's apply_body_bypass function, passing in an input of type Input
 //  return the task* unless it is SUCCESSFULLY_ENQUEUED, in which case return nullptr
-template< typename NodeType, typename Input >
-class apply_body_task_bypass : public graph_task {
+template< typename NodeType, typename Input, typename BaseTaskType = graph_task>
+class apply_body_task_bypass
+    : public BaseTaskType
+{
     NodeType &my_node;
     Input my_input;
-public:
 
-    apply_body_task_bypass( graph& g, d1::small_object_allocator& allocator, NodeType &n, const Input &i
-                            , node_priority_t node_priority = no_priority
-    ) : graph_task(g, allocator, node_priority),
-        my_node(n), my_input(i) {}
+    using check_metainfo = std::is_same<BaseTaskType, graph_task>;
+    using without_metainfo = std::true_type;
+    using with_metainfo = std::false_type;
+
+    graph_task* call_apply_body_bypass_impl(without_metainfo) {
+        return my_node.apply_body_bypass(my_input
+                                         __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo{}));
+    }
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    graph_task* call_apply_body_bypass_impl(with_metainfo) {
+        return my_node.apply_body_bypass(my_input, message_metainfo{this->get_msg_wait_context_vertices()});
+    }
+#endif
+
+    graph_task* call_apply_body_bypass() {
+        return call_apply_body_bypass_impl(check_metainfo{});
+    }
+
+public:
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    template <typename Metainfo>
+    apply_body_task_bypass( graph& g, d1::small_object_allocator& allocator, NodeType &n, const Input &i,
+                            node_priority_t node_priority, Metainfo&& metainfo )
+        : BaseTaskType(g, allocator, node_priority, std::forward<Metainfo>(metainfo).waiters())
+        , my_node(n), my_input(i) {}
+#endif
+
+    apply_body_task_bypass( graph& g, d1::small_object_allocator& allocator, NodeType& n, const Input& i,
+                            node_priority_t node_priority = no_priority )
+        : BaseTaskType(g, allocator, node_priority), my_node(n), my_input(i) {}
 
     d1::task* execute(d1::execution_data& ed) override {
-        graph_task* next_task = my_node.apply_body_bypass( my_input );
+        graph_task* next_task = call_apply_body_bypass();
         if (SUCCESSFULLY_ENQUEUED == next_task)
             next_task = nullptr;
         else if (next_task)
             next_task = prioritize_task(my_node.graph_reference(), *next_task);
-        finalize<apply_body_task_bypass>(ed);
+        BaseTaskType::template finalize<apply_body_task_bypass>(ed);
         return next_task;
     }
 
     d1::task* cancel(d1::execution_data& ed) override {
-        finalize<apply_body_task_bypass>(ed);
+        BaseTaskType::template finalize<apply_body_task_bypass>(ed);
         return nullptr;
     }
 };
@@ -343,6 +371,15 @@ protected:
         return result;
     }
 
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    // Intentionally ignore the metainformation
+    // If there are more items associated with passed metainfo to be processed
+    // They should be stored in the buffer before the limiter_node
+    graph_task* try_put_task(const DecrementType& value, const message_metainfo&) override {
+        return try_put_task(value);
+    }
+#endif
+
     graph& graph_reference() const override {
         return my_node->my_graph;
     }
@@ -361,7 +398,14 @@ class threshold_regulator<T, continue_msg, void> : public continue_receiver, no_
 
     T *my_node;
 
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+    // Intentionally ignore the metainformation
+    // If there are more items associated with passed metainfo to be processed
+    // They should be stored in the buffer before the limiter_node
+    graph_task* execute(const message_metainfo&) override {
+#else
     graph_task* execute() override {
+#endif
         return my_node->decrement_counter( 1 );
     }
 
