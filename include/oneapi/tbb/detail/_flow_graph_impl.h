@@ -146,6 +146,83 @@ private:
     friend graph_task* prioritize_task(graph& g, graph_task& gt);
 };
 
+inline bool is_this_thread_in_graph_arena(graph& g);
+
+#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+class trackable_messages_graph_task : public graph_task {
+public:
+    trackable_messages_graph_task(graph& g, d1::small_object_allocator& allocator,
+                                  node_priority_t node_priority,
+                                  const std::forward_list<d1::wait_context_vertex*>& msg_waiters)
+        : graph_task(g, allocator, node_priority)
+        , my_msg_wait_context_vertices(msg_waiters)
+    {
+        auto last_iterator = my_msg_reference_vertices.cbefore_begin();
+
+        for (auto& msg_waiter : my_msg_wait_context_vertices) {
+            // If the task is created by the thread outside the graph arena, the lifetime of the thread reference vertex
+            // may be shorter that the lifetime of the task, so thread reference vertex approach cannot be used
+            // and the task should be associated with the msg wait context itself
+            d1::wait_tree_vertex_interface* ref_vertex = is_this_thread_in_graph_arena(g) ?
+                                                         r1::get_thread_reference_vertex(msg_waiter) :
+                                                         msg_waiter;
+            last_iterator = my_msg_reference_vertices.emplace_after(last_iterator,
+                                                                    ref_vertex);
+            ref_vertex->reserve(1);
+        }
+    }
+
+    trackable_messages_graph_task(graph& g, d1::small_object_allocator& allocator,
+                                  node_priority_t node_priority,
+                                  std::forward_list<d1::wait_context_vertex*>&& msg_waiters)
+        : graph_task(g, allocator, node_priority)
+        , my_msg_wait_context_vertices(std::move(msg_waiters))
+    {
+    }
+
+    trackable_messages_graph_task(graph& g, d1::small_object_allocator& allocator,
+                                  const std::forward_list<d1::wait_context_vertex*>& msg_waiters)
+        : trackable_messages_graph_task(g, allocator, no_priority, msg_waiters) {}
+
+    trackable_messages_graph_task(graph& g, d1::small_object_allocator& allocator,
+                                  std::forward_list<d1::wait_context_vertex*>&& msg_waiters)
+        : trackable_messages_graph_task(g, allocator, no_priority, std::move(msg_waiters)) {}
+
+    const std::forward_list<d1::wait_context_vertex*> get_msg_wait_context_vertices() const {
+        return my_msg_wait_context_vertices;
+    }
+
+protected:
+    template <typename DerivedType>
+    void finalize(const d1::execution_data& ed) {
+        auto wait_context_vertices = std::move(my_msg_wait_context_vertices);
+        auto msg_reference_vertices = std::move(my_msg_reference_vertices);
+        graph_task::finalize<DerivedType>(ed);
+
+        // If there is no thread reference vertices associated with the task
+        // then this task was created by transferring the ownership from other metainfo
+        // instance (e.g. while taking from the buffer)
+        if (msg_reference_vertices.empty()) {
+            for (auto& msg_waiter : wait_context_vertices) {
+                msg_waiter->release(1);
+            }
+        } else {
+            for (auto& msg_waiter : msg_reference_vertices) {
+                msg_waiter->release(1);
+            }
+        }
+    }
+private:
+    // Each task that holds information about single message wait_contexts should hold two lists
+    // The first one is wait_contexts associated with the message itself. They are needed
+    // to be able to broadcast the list of wait_contexts to the node successors while executing the task.
+    // The second list is a list of reference vertices for each wait_context_vertex in the first list
+    // to support the distributed reference counting schema
+    std::forward_list<d1::wait_context_vertex*> my_msg_wait_context_vertices;
+    std::forward_list<d1::wait_tree_vertex_interface*> my_msg_reference_vertices;
+}; // class trackable_messages_graph_task
+#endif // __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
+
 struct graph_task_comparator {
     bool operator()(const graph_task* left, const graph_task* right) {
         return left->priority < right->priority;
@@ -356,8 +433,11 @@ private:
     friend void spawn_in_graph_arena(graph& g, graph_task& arena_task);
     friend void enqueue_in_graph_arena(graph &g, graph_task& arena_task);
 
-    friend class task_arena_base;
+    friend class d1::task_arena_base;
     friend class graph_task;
+
+    template <typename T>
+    friend class receiver;
 };  // class graph
 
 template<typename DerivedType>
