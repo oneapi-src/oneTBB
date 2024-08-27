@@ -81,7 +81,7 @@ public:
     }
 
     //! Dimensionality of a range.
-    static constexpr unsigned int ndims() { return N; }
+    static constexpr unsigned int dim_count() { return N; }
 
     //! Range in certain dimension.
     const tbb::blocked_range<value_type>& dim(unsigned int dimension) const {

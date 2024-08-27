@@ -159,7 +159,7 @@ int MakeInt(int i) { return i; }
 
 template<unsigned int DimAmount>
 void SerialTest() {
-    static_assert((oneapi::tbb::blocked_rangeNd<int, DimAmount>::ndims() == oneapi::tbb::blocked_rangeNd<AbstractValueType, DimAmount>::ndims()),
+    static_assert((oneapi::tbb::blocked_rangeNd<int, DimAmount>::dim_count() == oneapi::tbb::blocked_rangeNd<AbstractValueType, DimAmount>::dim_count()),
                          "different amount of dimensions");
 
     using range_t = oneapi::tbb::blocked_rangeNd<AbstractValueType, DimAmount>;
@@ -170,7 +170,7 @@ void SerialTest() {
 
     utils::AssertSameType(r.is_divisible(), bool());
     utils::AssertSameType(r.empty(), bool());
-    utils::AssertSameType(range_t::ndims(), 0U);
+    utils::AssertSameType(range_t::dim_count(), 0U);
 
     REQUIRE((r.empty() == utils_t::is_empty(r) && r.empty()));
     REQUIRE(r.is_divisible() == utils_t::is_divisible(r));
