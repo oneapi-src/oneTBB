@@ -33,9 +33,9 @@ _printmsg:  # \
 # \
 !else
 
-.PHONY : all clean cancel_group_execution1 cancel_group_execution2 cancel_group_execution3
+.PHONY : all clean cancel_group_execution1 cancel_group_execution2 cancel_group_execution3 cancel_group_execution4
 
-all : cancel_group_execution1 cancel_group_execution2 cancel_group_execution3
+all : cancel_group_execution1 cancel_group_execution2 cancel_group_execution3 cancel_group_execution4
 
 cancel_group_execution1 : 
 	$(CXX) $(CXXFLAGS) -o cancel_group_execution1 cancel_group_execution1.cpp $(LIBS)
@@ -46,8 +46,11 @@ cancel_group_execution2 :
 cancel_group_execution3 : 
 	$(CXX) $(CXXFLAGS) -o cancel_group_execution3 cancel_group_execution3.cpp $(LIBS)
 
+cancel_group_execution4 : 
+	$(CXX) $(CXXFLAGS) -o cancel_group_execution4 cancel_group_execution4.cpp $(LIBS)
+
 clean : 
-	rm -f cancel_group_execution1 cancel_group_execution2 cancel_group_execution3 cancel_group_execution1.o cancel_group_execution2.o cancel_group_execution3.o *.bmp *.txt out*.png
+	rm -f cancel_group_execution1 cancel_group_execution2 cancel_group_execution3 cancel_group_execution4 cancel_group_execution1.o cancel_group_execution2.o cancel_group_execution3.o cancel_group_execution4.o *.bmp *.txt out*.png
 
 
 # \
