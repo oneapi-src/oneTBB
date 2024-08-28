@@ -18,7 +18,7 @@
 #define __TBB_blocked_rangeNd_H
 
 #include <algorithm>    // std::any_of
-#include <vector>
+#include <array>
 #include <cstddef>
 #include <type_traits>  // std::is_same, std::enable_if
 
@@ -72,10 +72,7 @@ public:
       Value size[N],
       typename tbb::blocked_range<value_type>::size_type grainsize = 1
     ):
-      my_dims() {
-      for (int d=0; d<N; d++) {
-        my_dims.push_back( dim_range_type< tbb::blocked_range<value_type>::size_type >( 0, size[d], grainsize ) );
-      }
+      my_dims { dim_range_type<Is>(0, size[Is], grainsize)... } {
       __TBB_ASSERT(my_dims.size()==N, "range is not properly initialised" );
     }
 
@@ -125,7 +122,7 @@ private:
      * This has to be a vector, as there are situations where we can't
      * initialise the entries all in one go.
      */
-    std::vector<tbb::blocked_range<value_type>> my_dims;
+    std::array<tbb::blocked_range<value_type>, N> my_dims;
 
     template<typename split_type>
     void do_split(blocked_rangeNd_impl& r, split_type proportion) {
