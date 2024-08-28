@@ -66,10 +66,6 @@ struct metainfo_hash_buffer_element : public aligned_triple<ValueType, void*, me
     void set_next(metainfo_hash_buffer_element* new_next) { this->second = reinterpret_cast<void*>(new_next); }
     message_metainfo& get_metainfo() { return this->third; }
 
-    void create_element(const value_type& v) {
-        ::new(this->first) value_type(v);
-    }
-
     void create_element(const value_type& v, const message_metainfo& metainfo) {
         __TBB_ASSERT(this->third.empty(), nullptr);
         ::new(this->first) value_type(v);
@@ -368,12 +364,6 @@ private:
     using base_type = hash_buffer_impl<metainfo_hash_buffer_element<Key, ValueType>,
                                        ValueToKey, HashCompare, Allocator>;
 public:
-    bool find_with_key(const typename base_type::Knoref& k,
-                       typename base_type::value_type& v)
-    {
-        return base_type::find_with_key(k, v);
-    }
-
     bool find_with_key(const typename base_type::Knoref& k,
                        typename base_type::value_type& v, message_metainfo& metainfo)
     {

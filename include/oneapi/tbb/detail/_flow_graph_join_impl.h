@@ -519,13 +519,11 @@
                         graph_task* rtask = nullptr;
                         was_empty = this->buffer_empty();
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-                        if (current->metainfo) {
-                            this->push_back(current->my_val, *(current->metainfo));
-                        } else
+                        __TBB_ASSERT(current->metainfo, nullptr);
+                        this->push_back(current->my_val, *(current->metainfo));
+#else
+                        this->push_back(current->my_val);
 #endif
-                        {
-                            this->push_back(current->my_val);
-                        }
                         if (was_empty) rtask = my_join->decrement_port_count(false);
                         else
                             rtask = SUCCESSFULLY_ENQUEUED;
@@ -725,15 +723,12 @@
                 op_list = op_list->next;
                 switch(current->type) {
                 case try__put: {
-                        bool was_inserted = false;
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-                        if (current->metainfo) {
-                            was_inserted = this->insert_with_key(current->my_val, *(current->metainfo));
-                        } else
+                        __TBB_ASSERT(current->metainfo, nullptr);
+                        bool was_inserted = this->insert_with_key(current->my_val, *(current->metainfo));
+#else
+                        bool was_inserted = this->insert_with_key(current->my_val);
 #endif
-                        {
-                            was_inserted = this->insert_with_key(current->my_val);
-                        }
                         // return failure if a duplicate insertion occurs
                         current->status.store( was_inserted ? SUCCEEDED : FAILED, std::memory_order_release);
                     }
@@ -741,17 +736,13 @@
                 case get__item: {
                     // use current_key from FE for item
                     __TBB_ASSERT(current->my_arg, nullptr);
-                    bool find_result = false;
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-                    if (current->metainfo) {
-                        find_result = this->find_with_key(my_join->current_key, *(current->my_arg),
-                                                          *(current->metainfo));
-
-                    } else
+                    __TBB_ASSERT(current->metainfo, nullptr);
+                    bool find_result = this->find_with_key(my_join->current_key, *(current->my_arg),
+                                                           *(current->metainfo));
+#else
+                    bool find_result = this->find_with_key(my_join->current_key, *(current->my_arg));
 #endif
-                    {
-                        find_result = this->find_with_key(my_join->current_key, *(current->my_arg));
-                    }
 #if TBB_USE_DEBUG
                     if (!find_result) {
                         __TBB_ASSERT(false, "Failed to find item corresponding to current_key.");
