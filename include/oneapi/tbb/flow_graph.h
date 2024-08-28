@@ -1478,13 +1478,11 @@ protected:
     virtual bool internal_push(buffer_operation *op) {
         __TBB_ASSERT(op->elem, nullptr);
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-        if (op->metainfo) {
-            this->push_back(*(op->elem), (*op->metainfo));
-        } else
+        __TBB_ASSERT(op->metainfo, nullptr);
+        this->push_back(*(op->elem), (*op->metainfo));
+#else
+        this->push_back(*(op->elem));
 #endif
-        {
-            this->push_back(*(op->elem));
-        }
         op->status.store(SUCCEEDED, std::memory_order_release);
         return true;
     }

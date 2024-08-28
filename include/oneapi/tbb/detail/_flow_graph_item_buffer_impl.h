@@ -327,14 +327,6 @@ protected:
     }
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    void set_my_item(size_t i, const item_type&o) {
-        set_my_item(i, o, message_metainfo{});
-    }
-
-    bool push_back(item_type& v) {
-        return push_back(v, message_metainfo{});
-    }
-
     bool pop_back(item_type& v) {
         message_metainfo metainfo;
         return pop_back(v, metainfo);
