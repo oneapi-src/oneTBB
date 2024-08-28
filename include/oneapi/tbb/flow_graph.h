@@ -1478,13 +1478,11 @@ protected:
     virtual bool internal_push(buffer_operation *op) {
         __TBB_ASSERT(op->elem, nullptr);
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-        if (op->metainfo) {
-            this->push_back(*(op->elem), (*op->metainfo));
-        } else
+        __TBB_ASSERT(op->metainfo, nullptr);
+        this->push_back(*(op->elem), (*op->metainfo));
+#else
+        this->push_back(*(op->elem));
 #endif
-        {
-            this->push_back(*(op->elem));
-        }
         op->status.store(SUCCEEDED, std::memory_order_release);
         return true;
     }
@@ -1864,8 +1862,8 @@ private:
         this->my_tail = new_tail;
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-        bool place_item_result = op->metainfo ? this->place_item(tag, *(op->elem), *(op->metainfo))
-                                              : this->place_item(tag, *(op->elem));
+        __TBB_ASSERT(op->metainfo, nullptr);
+        bool place_item_result = this->place_item(tag, *(op->elem), *(op->metainfo));
         const op_stat res = place_item_result ? SUCCEEDED : FAILED;
 #else
         const op_stat res = this->place_item(tag, *(op->elem)) ? SUCCEEDED : FAILED;
