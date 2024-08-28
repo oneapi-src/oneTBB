@@ -32,9 +32,23 @@ namespace d2 {
 
 class task_handle;
 
+class continuation_vertex : public d1::reference_vertex {
+public:
+    continuation_vertex(d1::wait_tree_vertex_interface* parent, std::uint32_t ref_count, d1::task* continuation_task, d1::small_object_allocator& alloc)
+        : d1::reference_vertex(parent, ref_count)
+        , m_continuation_task(continuation_task)
+        , m_allocator(alloc)
+    {}
+private:
+    d1::task* m_continuation_task;
+    d1::small_object_allocator m_allocator;
+
+};
+
 class task_handle_task : public d1::task {
     std::uint64_t m_version_and_traits{};
     d1::wait_tree_vertex_interface* m_wait_tree_vertex;
+    bool m_is_continuation{false};
     d1::task_group_context& m_ctx;
     d1::small_object_allocator m_allocator;
 public:
@@ -42,6 +56,8 @@ public:
         if (ed) {
             m_allocator.delete_object(this, *ed);
         } else {
+            // task_group::run was never called for task_handle so there is no assosiated execution_data
+            __TBB_ASSERT(!m_is_continuation, "Continuation should be task_group::run before task_handle destruction");
             m_allocator.delete_object(this);
         }
     }
@@ -54,11 +70,25 @@ public:
         m_wait_tree_vertex->reserve();
     }
 
-    ~task_handle_task() override {
+    ~task_handle_task() {
         m_wait_tree_vertex->release();
     }
 
     d1::task_group_context& ctx() const { return m_ctx; }
+
+    bool is_continuation() const { return m_is_continuation; }
+
+    void add_predecessor(task_handle_task& predecessor) {
+        if (!m_is_continuation) {
+            d1::small_object_allocator alloc;
+            auto continuation = alloc.new_object<continuation_vertex>(m_wait_tree_vertex, 1, this, alloc);
+            m_wait_tree_vertex = continuation;
+            m_is_continuation = true;
+        }
+        m_wait_tree_vertex->reserve();
+        predecessor.m_wait_tree_vertex->release();
+        predecessor.m_wait_tree_vertex = m_wait_tree_vertex;
+    }
 };
 
 
@@ -73,6 +103,12 @@ public:
     task_handle() = default;
     task_handle(task_handle&&) = default;
     task_handle& operator=(task_handle&&) = default;
+
+    void add_predecessor(task_handle& th) { 
+        if (m_handle) {
+            m_handle->add_predecessor(*th.m_handle);
+        }
+    }
 
     explicit operator bool() const noexcept { return static_cast<bool>(m_handle); }
 
@@ -99,6 +135,7 @@ static d1::task_group_context&  ctx_of(task_handle& th)         {
     __TBB_ASSERT(th.m_handle, "ctx_of does not expect empty task_handle.");
     return th.m_handle->ctx();
 }
+static bool is_continuation(task_handle& th) { return th.m_handle->is_continuation(); }
 };
 
 inline bool operator==(task_handle const& th, std::nullptr_t) noexcept {

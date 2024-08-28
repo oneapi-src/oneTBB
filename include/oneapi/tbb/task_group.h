@@ -444,16 +444,16 @@ class function_stack_task : public d1::task {
     const F& m_func;
     d1::wait_tree_vertex_interface* m_wait_tree_vertex;
 
-    void finalize() {
-        m_wait_tree_vertex->release();
+    void finalize(d1::execution_data& ed) {
+        m_wait_tree_vertex->release(1, &ed);
     }
-    task* execute(d1::execution_data&) override {
+    task* execute(d1::execution_data& ed) override {
         task* res = d2::task_ptr_or_nullptr(m_func);
-        finalize();
+        finalize(ed);
         return res;
     }
-    task* cancel(d1::execution_data&) override {
-        finalize();
+    task* cancel(d1::execution_data& ed) override {
+        finalize(ed);
         return nullptr;
     }
 public:
