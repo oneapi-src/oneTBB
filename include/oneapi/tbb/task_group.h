@@ -414,6 +414,7 @@ private:
     friend struct r1::task_arena_impl;
     friend struct r1::task_group_context_impl;
     friend class d2::task_group_base;
+    friend class d2::continuation_vertex;
 }; // class task_group_context
 
 static_assert(sizeof(task_group_context) == 128, "Wrong size of task_group_context");
@@ -444,16 +445,18 @@ class function_stack_task : public d1::task {
     const F& m_func;
     d1::wait_tree_vertex_interface* m_wait_tree_vertex;
 
-    void finalize(d1::execution_data& ed) {
-        m_wait_tree_vertex->release(1, &ed);
+    void finalize() {
+        if (m_wait_tree_vertex) {
+            m_wait_tree_vertex->release();
+        }
     }
-    task* execute(d1::execution_data& ed) override {
+    task* execute(d1::execution_data&) override {
         task* res = d2::task_ptr_or_nullptr(m_func);
-        finalize(ed);
+        finalize();
         return res;
     }
-    task* cancel(d1::execution_data& ed) override {
-        finalize(ed);
+    task* cancel(d1::execution_data&) override {
+        finalize();
         return nullptr;
     }
 public:
@@ -581,13 +584,16 @@ public:
         using acs = d2::task_handle_accessor;
         __TBB_ASSERT(&acs::ctx_of(h) == &context(), "Attempt to schedule task_handle into different task_group");
 
-        d1::spawn(*acs::release(h), context());
+        if (!acs::is_continuation(h)) {
+            d1::spawn(*acs::release(h), context());
+        } else {
+            acs::release_continuation(h);
+        }
     }
 
     template<typename F>
     d2::task_handle defer(F&& f) {
         return prepare_task_handle(std::forward<F>(f));
-
     }
 
     template<typename F>
@@ -599,6 +605,23 @@ public:
         return internal_run_and_wait(std::move(h));
     }
 }; // class task_group
+
+inline void continuation_vertex::release(std::uint32_t delta) {
+    std::uint64_t ref = m_ref_count.fetch_sub(static_cast<std::uint64_t>(delta)) - static_cast<std::uint64_t>(delta);
+    if (ref == 0) {
+        d1::spawn(*m_continuation_task, m_ctx.actual_context());
+        m_allocator.delete_object(this);
+    }
+}
+
+inline void transfer_successors_to(d2::task_handle& h) {
+    task_handle_task* task = dynamic_cast<task_handle_task*>(d1::current_task());
+    __TBB_ASSERT_RELEASE(task, "Attempt to transfer successors from non-task_handle_task");
+    using acs = d2::task_handle_accessor;
+    __TBB_ASSERT(&acs::ctx_of(h) == &task->ctx(), "Attempt to transfer successors to task_handle into different task_group");
+
+    acs::transfer_successors_to(h, task);
+}
 
 #if TBB_PREVIEW_ISOLATED_TASK_GROUP
 class spawn_delegate : public d1::delegate_base {
@@ -701,6 +724,13 @@ using detail::d1::is_current_task_group_canceling;
 using detail::r1::missing_wait;
 
 using detail::d2::task_handle;
+
+namespace this_task_group {
+namespace current_task {
+    using detail::d2::transfer_successors_to;
+}
+}
+
 }
 
 } // namespace tbb

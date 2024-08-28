@@ -38,6 +38,8 @@
 #elif __APPLE__ && !__ARM_ARCH
 #include <unistd.h>
 #include <mach/mach.h>
+// Undef due to conflict with library API
+#undef current_task
 #include <AvailabilityMacros.h>
 #if MAC_OS_X_VERSION_MIN_REQUIRED >= __MAC_10_6 || __IPHONE_OS_VERSION_MIN_REQUIRED >= __IPHONE_8_0
 #include <mach/shared_region.h>

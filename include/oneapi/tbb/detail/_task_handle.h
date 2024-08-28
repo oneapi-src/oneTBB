@@ -34,21 +34,25 @@ class task_handle;
 
 class continuation_vertex : public d1::reference_vertex {
 public:
-    continuation_vertex(d1::wait_tree_vertex_interface* parent, std::uint32_t ref_count, d1::task* continuation_task, d1::small_object_allocator& alloc)
-        : d1::reference_vertex(parent, ref_count)
+    continuation_vertex(d1::task* continuation_task, d1::task_group_context& ctx, d1::small_object_allocator& alloc)
+        : d1::reference_vertex(nullptr, 1)
         , m_continuation_task(continuation_task)
+        , m_ctx(ctx)
         , m_allocator(alloc)
     {}
+
+    void release(std::uint32_t delta = 1) override;
+
 private:
     d1::task* m_continuation_task;
+    d1::task_group_context& m_ctx;
     d1::small_object_allocator m_allocator;
-
 };
 
 class task_handle_task : public d1::task {
     std::uint64_t m_version_and_traits{};
     d1::wait_tree_vertex_interface* m_wait_tree_vertex;
-    bool m_is_continuation{false};
+    continuation_vertex* m_continuation{nullptr};
     d1::task_group_context& m_ctx;
     d1::small_object_allocator m_allocator;
 public:
@@ -56,8 +60,6 @@ public:
         if (ed) {
             m_allocator.delete_object(this, *ed);
         } else {
-            // task_group::run was never called for task_handle so there is no assosiated execution_data
-            __TBB_ASSERT(!m_is_continuation, "Continuation should be task_group::run before task_handle destruction");
             m_allocator.delete_object(this);
         }
     }
@@ -71,23 +73,33 @@ public:
     }
 
     ~task_handle_task() {
-        m_wait_tree_vertex->release();
+        if (m_wait_tree_vertex) {
+            m_wait_tree_vertex->release();
+        }
     }
 
     d1::task_group_context& ctx() const { return m_ctx; }
 
-    bool is_continuation() const { return m_is_continuation; }
+    bool is_continuation() const { return m_continuation != nullptr; }
+
+    void release_continuation() { m_continuation->release(); }
+
+    void transfer_successors_to(task_handle_task* target) {
+        target->m_wait_tree_vertex->release();
+        target->m_wait_tree_vertex = m_wait_tree_vertex;
+        m_wait_tree_vertex = nullptr;
+    }
 
     void add_predecessor(task_handle_task& predecessor) {
-        if (!m_is_continuation) {
+        if (m_continuation == nullptr) {
             d1::small_object_allocator alloc;
-            auto continuation = alloc.new_object<continuation_vertex>(m_wait_tree_vertex, 1, this, alloc);
-            m_wait_tree_vertex = continuation;
-            m_is_continuation = true;
+            m_continuation = alloc.new_object<continuation_vertex>(this, m_ctx, alloc);
         }
-        m_wait_tree_vertex->reserve();
+        m_continuation->reserve();
+        // Continuation holds a reference on the wait_context
+        // therefore, we can release children's reference
         predecessor.m_wait_tree_vertex->release();
-        predecessor.m_wait_tree_vertex = m_wait_tree_vertex;
+        predecessor.m_wait_tree_vertex = m_continuation;
     }
 };
 
@@ -136,6 +148,13 @@ static d1::task_group_context&  ctx_of(task_handle& th)         {
     return th.m_handle->ctx();
 }
 static bool is_continuation(task_handle& th) { return th.m_handle->is_continuation(); }
+static void release_continuation(task_handle& th) {
+    th.m_handle->release_continuation();
+    th.release();
+}
+static void transfer_successors_to(task_handle& th, task_handle_task* task) {
+    task->transfer_successors_to(th.m_handle.get());
+}
 };
 
 inline bool operator==(task_handle const& th, std::nullptr_t) noexcept {
