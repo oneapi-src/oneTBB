@@ -69,13 +69,12 @@ public:
     }
 
     blocked_rangeNd_impl(
-      Value begin[N],
-      Value end[N],
-      typename tbb::blocked_range<value_type>::size_type grainsize
+      Value size[N],
+      typename tbb::blocked_range<value_type>::size_type grainsize = 1
     ):
       my_dims() {
       for (int d=0; d<N; d++) {
-        my_dims.push_back( dim_range_type< tbb::blocked_range<value_type>::size_type >( begin[d], end[d], grainsize ) );
+        my_dims.push_back( dim_range_type< tbb::blocked_range<value_type>::size_type >( 0, size[d], grainsize ) );
       }
       __TBB_ASSERT(my_dims.size()==N, "range is not properly initialised" );
     }
