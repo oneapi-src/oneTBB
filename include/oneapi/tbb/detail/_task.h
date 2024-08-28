@@ -204,22 +204,13 @@ public:
     void release(std::uint32_t delta = 1) override {
         std::uint64_t ref = m_ref_count.fetch_sub(static_cast<std::uint64_t>(delta)) - static_cast<std::uint64_t>(delta);
         if (ref == 0) {
-            auto parent = my_parent;
-            execute_continuation();
-            destroy();
-            parent->release();
+            my_parent->release();
         }
     }
 
     std::uint32_t get_num_child() {
         return static_cast<std::uint32_t>(m_ref_count.load(std::memory_order_acquire));
     }
-
-protected:
-    virtual void execute_continuation() {}
-    virtual void destroy() {}
-    virtual void destroy(const d1::execution_data&) {}
-
 private:
     wait_tree_vertex_interface* my_parent;
     std::atomic<std::uint64_t> m_ref_count;
