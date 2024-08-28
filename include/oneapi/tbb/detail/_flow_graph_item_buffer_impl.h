@@ -151,14 +151,6 @@ protected:
     }
 
     // put an item in an empty slot.  Return true if successful, else false
-    bool place_item(size_t here, const item_type &me) {
-#if !TBB_DEPRECATED_SEQUENCER_DUPLICATES
-        if(my_item_valid(here)) return false;
-#endif
-        set_my_item(here, me);
-        return true;
-    }
-
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
     template <typename Metainfo>
     bool place_item(size_t here, const item_type &me, Metainfo&& metainfo) {
@@ -166,6 +158,14 @@ protected:
         if(my_item_valid(here)) return false;
 #endif
         set_my_item(here, me, std::forward<Metainfo>(metainfo));
+        return true;
+    }
+#else
+    bool place_item(size_t here, const item_type &me) {
+#if !TBB_DEPRECATED_SEQUENCER_DUPLICATES
+        if(my_item_valid(here)) return false;
+#endif
+        set_my_item(here, me);
         return true;
     }
 #endif
