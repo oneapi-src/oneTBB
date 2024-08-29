@@ -64,17 +64,13 @@ public:
     blocked_rangeNd_impl() = delete;
 
     //! Constructs N-dimensional range over N half-open intervals each represented as tbb::blocked_range<Value>.
-    blocked_rangeNd_impl(const dim_range_type<Is>&... args) : my_dims{ {args...} } {
-      __TBB_ASSERT(my_dims.size()==N, "range is not properly initialised" );
-    }
+    blocked_rangeNd_impl(const dim_range_type<Is>&... args) : my_dims{ {args...} } {}
 
     blocked_rangeNd_impl(
       Value size[N],
       typename tbb::blocked_range<value_type>::size_type grainsize = 1
     ):
-      my_dims { dim_range_type<Is>(0, size[Is], grainsize)... } {
-      __TBB_ASSERT(my_dims.size()==N, "range is not properly initialised" );
-    }
+      my_dims { dim_range_type<Is>(0, size[Is], grainsize)... } {}
 
     //! Dimensionality of a range.
     static constexpr unsigned int dim_count() { return N; }
@@ -82,7 +78,6 @@ public:
     //! Range in certain dimension.
     const tbb::blocked_range<value_type>& dim(unsigned int dimension) const {
         __TBB_ASSERT(dimension < N, "out of bound");
-        __TBB_ASSERT(my_dims.size()==N, "range is not properly initialised" );
         return my_dims[dimension];
     }
 
@@ -106,22 +101,16 @@ public:
 
     blocked_rangeNd_impl(blocked_rangeNd_impl& r, proportional_split proportion) : my_dims(r.my_dims) {
         do_split(r, proportion);
-        __TBB_ASSERT(my_dims.size()==N, "range is not properly initialised" );
     }
 
     blocked_rangeNd_impl(blocked_rangeNd_impl& r, split proportion) : my_dims(r.my_dims) {
         do_split(r, proportion);
-        __TBB_ASSERT(my_dims.size()==N, "range is not properly initialised" );
     }
 
 private:
     static_assert(N != 0, "zero dimensional blocked_rangeNd can't be constructed");
 
-    /*! Ranges in each dimension.
-     *
-     * This has to be a vector, as there are situations where we can't
-     * initialise the entries all in one go.
-     */
+    //! Ranges in each dimension.
     std::array<tbb::blocked_range<value_type>, N> my_dims;
 
     template<typename split_type>
