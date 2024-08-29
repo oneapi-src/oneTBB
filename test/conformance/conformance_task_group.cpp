@@ -467,3 +467,72 @@ TEST_CASE("Test continuation - multiple successors") {
 
     REQUIRE(product_plus_sum == 42 * 42 + 42);
 }
+
+//! \brief \ref interface \ref requirement
+TEST_CASE("Test add_predecessor after task submission") {
+    tbb::task_group tg;
+
+    int x{}, y{};
+    int sum{};
+    auto sum_task = tg.defer([&] {
+        sum = x + y;
+    });
+
+    std::atomic<bool> is_ready{false};
+    auto y_task = tg.defer([&] {
+        y = 2;
+        while (!is_ready) ;
+    });
+
+    auto x_task = tg.defer([&] {
+        x = 40;
+        while (!is_ready) ;
+    });
+
+    tg.run(std::move(x_task));
+    tg.run(std::move(y_task));
+
+    sum_task.add_predecessor(x_task);
+    sum_task.add_predecessor(y_task);
+
+    is_ready = true;
+    tg.run(std::move(sum_task));
+
+    tg.wait();
+
+    REQUIRE(sum == 42);
+}
+
+//! \brief \ref interface \ref requirement
+TEST_CASE("Test add_predecessor after task finish") {
+    tbb::task_group tg;
+
+    int x{}, y{};
+    int sum{};
+    auto sum_task = tg.defer([&] {
+        sum = x + y;
+    });
+
+    std::atomic<bool> is_ready{};
+    auto y_task = tg.defer([&] {
+        y = 2;
+    });
+
+    auto x_task = tg.defer([&] {
+        x = 40;
+        is_ready = true;
+    });
+
+    tg.run(std::move(x_task));
+
+    while (!is_ready) ;
+    sum_task.add_predecessor(x_task);
+    sum_task.add_predecessor(y_task);
+
+    tg.run(std::move(y_task));
+    tg.run(std::move(sum_task));
+
+    tg.wait();
+
+    REQUIRE(sum == 42);
+}

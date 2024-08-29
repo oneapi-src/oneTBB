@@ -584,7 +584,7 @@ public:
         using acs = d2::task_handle_accessor;
         __TBB_ASSERT(&acs::ctx_of(h) == &context(), "Attempt to schedule task_handle into different task_group");
 
-        if (!acs::is_continuation(h)) {
+        if (!acs::has_dependency(h)) {
             d1::spawn(*acs::release(h), context());
         } else {
             acs::release_continuation(h);
