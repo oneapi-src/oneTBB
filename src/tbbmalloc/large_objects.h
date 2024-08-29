@@ -85,7 +85,10 @@ public:
         int sizeExp = (int)BitScanRev(size);
         MALLOC_ASSERT(sizeExp >= 0, "BitScanRev() cannot return -1, as size >= stepfactor > 0");
         MALLOC_ASSERT(sizeExp >= StepFactorExp, "sizeExp >= StepFactorExp, because size >= stepFactor");
+
         int minorStepExp = sizeExp - StepFactorExp;
+
+        if (minorStepExp < 0) return INT_MAX;
 
         return alignUp(size, 1ULL << minorStepExp);
     }
@@ -98,6 +101,8 @@ public:
         MALLOC_ASSERT(sizeExp >= 0, "BitScanRev() cannot return -1, as size >= stepfactor > 0");
         MALLOC_ASSERT(sizeExp >= StepFactorExp, "sizeExp >= StepFactorExp, because size >= stepFactor");
         int minorStepExp = sizeExp - StepFactorExp;
+
+        if (sizeExp < 0 || minorStepExp < 0) return INT_MAX;
 
         size_t majorStepSize = 1ULL << sizeExp;
         int minorIdx = (size - majorStepSize) >> minorStepExp;
