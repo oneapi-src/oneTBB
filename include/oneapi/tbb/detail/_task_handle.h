@@ -88,24 +88,23 @@ public:
     }
 
     void add_predecessor(task_handle_task& predecessor) {
+        this->add_dependency(predecessor);
+    }
+
+    void add_successor(task_handle_task& successor) {
+        successor.add_dependency(*this);
+    }
+
+private:
+    void add_dependency(task_handle_task& dependency) {
         if (m_continuation == nullptr) {
             d1::small_object_allocator alloc;
             m_continuation = alloc.new_object<continuation_vertex>(this, m_ctx, alloc);
         }
         m_continuation->reserve();
-        predecessor.m_wait_tree_vertex_successors.push_front(m_continuation);
+        dependency.m_wait_tree_vertex_successors.push_front(m_continuation);
     }
 
-    void add_successor(task_handle_task& successor) {
-        if (successor.m_continuation == nullptr) {
-            d1::small_object_allocator alloc;
-            successor.m_continuation = alloc.new_object<continuation_vertex>(&successor, successor.m_ctx, alloc);
-        }
-        successor.m_continuation->reserve();
-        m_wait_tree_vertex_successors.push_front(successor.m_continuation);
-    }
-
-private:
     void release_successors() {
         if (!m_wait_tree_vertex_successors.empty()) {
             for (auto successor : m_wait_tree_vertex_successors) {
