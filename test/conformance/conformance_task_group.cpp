@@ -411,3 +411,59 @@ TEST_CASE("Test continuation - fibonacci") {
     tg.wait();
     REQUIRE_MESSAGE(N == 832040, "Fibonacci(30) should be 832040");
 }
+
+//! \brief \ref interface \ref requirement
+TEST_CASE("Test continuation - multiple successors") {
+    tbb::task_group tg;
+
+    int x{}, y{};
+    int sum{};
+    auto sum_task = tg.defer([&] {
+        sum = x + y;
+    });
+
+    auto y_task = tg.defer([&] {
+        y = 2;
+    });
+
+    auto x_task = tg.defer([&] {
+        x = 40;
+    });
+
+    sum_task.add_predecessor(x_task);
+    sum_task.add_predecessor(y_task);
+
+    int multiplier{};
+    int product{};
+    auto mult_task = tg.defer([&] {
+        multiplier = 42;
+    });
+
+    auto product_task = tg.defer([&] {
+        product = sum * multiplier;
+    });
+
+    product_task.add_predecessor(sum_task);
+    product_task.add_predecessor(mult_task);
+
+    int product_plus_sum{};
+    auto total_results = tg.defer([&] {
+        product_plus_sum = product + sum;
+    });
+
+    product_task.add_successor(total_results);
+    sum_task.add_successor(total_results);
+    // total_results.add_predecessor(product_task);
+    // total_results.add_predecessor(sum_task);
+
+    tg.run(std::move(total_results));
+    tg.run(std::move(sum_task));
+    tg.run(std::move(x_task));
+    tg.run(std::move(y_task));
+    tg.run(std::move(mult_task));
+    tg.run(std::move(product_task));
+
+    tg.wait();
+
+    REQUIRE(product_plus_sum == 42 * 42 + 42);
+}

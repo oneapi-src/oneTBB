@@ -22,7 +22,11 @@
 #include "_task.h"
 #include "_small_object_pool.h"
 #include "_utils.h"
+#include "oneapi/tbb/rw_mutex.h"
+
 #include <memory>
+#include <forward_list>
+#include <iostream>
 
 namespace tbb {
 namespace detail {
@@ -50,11 +54,6 @@ private:
 };
 
 class task_handle_task : public d1::task {
-    std::uint64_t m_version_and_traits{};
-    d1::wait_tree_vertex_interface* m_wait_tree_vertex;
-    continuation_vertex* m_continuation{nullptr};
-    d1::task_group_context& m_ctx;
-    d1::small_object_allocator m_allocator;
 public:
     void finalize(const d1::execution_data* ed = nullptr) {
         if (ed) {
@@ -65,17 +64,16 @@ public:
     }
 
     task_handle_task(d1::wait_tree_vertex_interface* vertex, d1::task_group_context& ctx, d1::small_object_allocator& alloc)
-        : m_wait_tree_vertex(vertex)
+        : m_wait_tree_vertex_successors{vertex}
         , m_ctx(ctx)
-        , m_allocator(alloc) {
+        , m_allocator(alloc)
+    {
         suppress_unused_warning(m_version_and_traits);
-        m_wait_tree_vertex->reserve();
+        vertex->reserve();
     }
 
     ~task_handle_task() {
-        if (m_wait_tree_vertex) {
-            m_wait_tree_vertex->release();
-        }
+        release_successors();
     }
 
     d1::task_group_context& ctx() const { return m_ctx; }
@@ -85,9 +83,8 @@ public:
     void release_continuation() { m_continuation->release(); }
 
     void transfer_successors_to(task_handle_task* target) {
-        target->m_wait_tree_vertex->release();
-        target->m_wait_tree_vertex = m_wait_tree_vertex;
-        m_wait_tree_vertex = nullptr;
+        target->m_wait_tree_vertex_successors.splice_after(target->m_wait_tree_vertex_successors.begin(), m_wait_tree_vertex_successors);
+        m_wait_tree_vertex_successors.clear();
     }
 
     void add_predecessor(task_handle_task& predecessor) {
@@ -96,11 +93,32 @@ public:
             m_continuation = alloc.new_object<continuation_vertex>(this, m_ctx, alloc);
         }
         m_continuation->reserve();
-        // Continuation holds a reference on the wait_context
-        // therefore, we can release children's reference
-        predecessor.m_wait_tree_vertex->release();
-        predecessor.m_wait_tree_vertex = m_continuation;
+        predecessor.m_wait_tree_vertex_successors.push_front(m_continuation);
     }
+
+    void add_successor(task_handle_task& successor) {
+        if (successor.m_continuation == nullptr) {
+            d1::small_object_allocator alloc;
+            successor.m_continuation = alloc.new_object<continuation_vertex>(&successor, successor.m_ctx, alloc);
+        }
+        successor.m_continuation->reserve();
+        m_wait_tree_vertex_successors.push_front(successor.m_continuation);
+    }
+
+private:
+    void release_successors() {
+        if (!m_wait_tree_vertex_successors.empty()) {
+            for (auto successor : m_wait_tree_vertex_successors) {
+                successor->release();
+            }
+        }
+    }
+
+    std::uint64_t m_version_and_traits{};
+    std::forward_list<d1::wait_tree_vertex_interface*> m_wait_tree_vertex_successors;
+    continuation_vertex* m_continuation{nullptr};
+    d1::task_group_context& m_ctx;
+    d1::small_object_allocator m_allocator;
 };
 
 
@@ -111,6 +129,7 @@ class task_handle {
     using handle_impl_t = std::unique_ptr<task_handle_task, task_handle_task_finalizer_t>;
 
     handle_impl_t m_handle = {nullptr};
+    // rw_mutex m_mutex;
 public:
     task_handle() = default;
     task_handle(task_handle&&) = default;
@@ -119,6 +138,12 @@ public:
     void add_predecessor(task_handle& th) { 
         if (m_handle) {
             m_handle->add_predecessor(*th.m_handle);
+        }
+    }
+
+    void add_successor(task_handle& th) {
+        if (m_handle) {
+            m_handle->add_successor(*th.m_handle);
         }
     }
 
