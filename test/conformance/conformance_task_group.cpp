@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2021-2022 Intel Corporation
+    Copyright (c) 2021-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -536,3 +536,82 @@ TEST_CASE("Test add_predecessor after task finish") {
 
     REQUIRE(sum == 42);
 }
+
+namespace users {
+    template<typename T>
+    bool range_is_too_small(T b, T e) {
+        return std::distance(b, e) <= 4;
+    }
+
+    template<typename T>
+    void do_serial_sort(T b, T e) {
+        std::sort(b, e);
+    }
+
+    template<typename T>
+    void create_left_range(T& lb, T& le, T b, T e) {
+        lb = b;
+        le = b + std::distance(b, e) / 2;
+    }
+
+    template<typename T>
+    void create_right_range(T& rb, T& re, T b, T e) {
+        rb = b + std::distance(b, e) / 2;
+        re = e;
+    }
+
+    template<typename T>
+    void do_merge(T lb, T le, T rb, T re) {
+        std::vector<typename T::value_type> merged(std::distance(lb, le) + std::distance(rb, re));
+        std::merge(lb, le, rb, re, merged.begin());
+        std::copy(merged.begin(), merged.end(), lb);
+    }
+}
+
+template<typename T>
+void merge_sort(tbb::task_group& tg, T b, T e) {
+    if (users::range_is_too_small(b, e)) {
+        // base-case when range is small
+        users::do_serial_sort(b, e);
+    } else {
+        // calculate left and right ranges
+        T lb, le, rb, re;
+        users::create_left_range(lb, le, b, e);
+        users::create_right_range(rb, re, b, e);
+
+        // create the three tasks
+        tbb::task_handle sortleft = tg.defer([lb, le, &tg] { merge_sort(tg, lb, le); });
+
+        tbb::task_handle sortright = tg.defer([rb, re, &tg] { merge_sort(tg, rb, re); });
+        tbb::task_handle merge = tg.defer([rb, lb, le, re] { users::do_merge(lb, le, rb, re); });
+
+        // add predecessors for new merge task
+        merge.add_predecessor(sortleft);
+        merge.add_predecessor(sortright);
+
+        // insert new subgraph between currently executing
+        // task and its successors
+        tbb::this_task_group::current_task::transfer_successors_to(merge);
+
+        tg.run(std::move(sortleft));
+        tg.run(std::move(sortright));
+        tg.run(std::move(merge));
+    }
+}
+
+//! \brief \ref interface \ref requirement
+TEST_CASE("Test continuation - recursive decomposition") {
+    tbb::task_group tg;
+    int size = 10000;
+    std::vector<int> v(size);
+    for (int i = 0; i < size; ++i) {
+        v[i] = size - i;
+    }
+
+    tg.run_and_wait(tg.defer([&] { merge_sort(tg, v.begin(), v.end()); }));
+
+    for (int i = 0; i < size - 1; ++i) {
+        REQUIRE(v[i] <= v[i + 1]);
+    }
+}
+
