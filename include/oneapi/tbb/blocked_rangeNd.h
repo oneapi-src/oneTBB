@@ -27,7 +27,7 @@
 #include "detail/_namespace_injection.h"
 #include "detail/_range_common.h"
 
-#include <oneapi/tbb/blocked_range.h>
+#include "blocked_range.h"
 
 namespace tbb {
 namespace detail {
