@@ -36,6 +36,7 @@ namespace d2 {
 
 class task_handle;
 class task_handle_task;
+class task_state_handler;
 
 class continuation_vertex : public d1::reference_vertex {
 public:
@@ -54,50 +55,70 @@ private:
     d1::small_object_allocator m_allocator;
 };
 
+class transfer_vertex : public d1::reference_vertex {
+public:
+    transfer_vertex(task_state_handler* handler, d1::small_object_allocator& alloc)
+        : d1::reference_vertex(nullptr, 1)
+        , m_handler(handler)
+        , m_allocator(alloc)
+    {}
+
+    void release(std::uint32_t) override;
+
+    void add_successor(d1::wait_tree_vertex_interface* successor) {
+        m_wait_tree_vertex_successors.push_front(successor);
+    }
+
+private:
+    task_state_handler* m_handler{nullptr};
+    std::forward_list<d1::wait_tree_vertex_interface*> m_wait_tree_vertex_successors;
+    d1::small_object_allocator m_allocator;
+};
+
+class task_state_handler {
+public:
+    task_state_handler(task_handle_task* task, d1::small_object_allocator& alloc) : m_task(task), m_alloc(alloc) {}
+    void release() {
+        d1::mutex::scoped_lock lock(m_mutex);
+        release_impl(lock);
+    }
+
+    void complete_task(bool is_from_transfer = false) {
+        d1::mutex::scoped_lock lock(m_mutex);
+        if (m_transfer == nullptr || is_from_transfer) {
+            m_is_finished = true;
+        }
+        release_impl(lock);
+    }
+
+    void add_successor(task_handle_task& successor);
+    void transfer_successors_to(task_handle_task* target);
+
+    transfer_vertex* create_transfer_vertex() {
+        d1::small_object_allocator alloc;
+        ++m_num_references;
+        m_transfer = alloc.new_object<transfer_vertex>(this, alloc);
+        return m_transfer;
+    }
+
+private:
+    void release_impl(d1::mutex::scoped_lock& lock) {
+        if (--m_num_references == 0) {
+            lock.release();
+            m_alloc.delete_object(this);
+        }
+    }
+
+    task_handle_task* m_task;
+    bool m_is_finished{false};
+    transfer_vertex* m_transfer{nullptr};
+    int m_num_references{2};
+    d1::mutex m_mutex;
+    d1::small_object_allocator m_alloc;
+};
+
 class task_handle_task : public d1::task {
 public:
-    class task_state_handler {
-    public:
-        task_state_handler(task_handle_task* task, d1::small_object_allocator& alloc) : m_task(task), m_alloc(alloc) {}
-        void release() {
-            d1::mutex::scoped_lock lock(m_mutex);
-            release_impl(lock);
-        }
-
-        void complete_task() {
-            d1::mutex::scoped_lock lock(m_mutex);
-            m_is_finished = true;
-            release_impl(lock);
-        }
-
-        void add_successor(task_handle_task& successor) {
-            if (successor.m_continuation == nullptr) {
-                d1::small_object_allocator alloc;
-                successor.m_continuation = alloc.new_object<continuation_vertex>(&successor, successor.m_ctx, alloc);
-            }
-
-            d1::mutex::scoped_lock lock(m_mutex);
-            if (!m_is_finished) {
-                successor.m_continuation->reserve();
-                m_task->m_wait_tree_vertex_successors.push_front(successor.m_continuation);
-            }
-        }
-
-    private:
-        void release_impl(d1::mutex::scoped_lock& lock) {
-            if (--m_num_references == 0) {
-                lock.release();
-                m_alloc.delete_object(this);
-            }
-        }
-
-        task_handle_task* m_task;
-        bool m_is_finished{false};
-        int m_num_references{2};
-        d1::mutex m_mutex;
-        d1::small_object_allocator m_alloc;
-    };
-
     void finalize(const d1::execution_data* ed = nullptr) {
         if (ed) {
             m_allocator.delete_object(this, *ed);
@@ -128,18 +149,13 @@ public:
 
     void release_continuation() { m_continuation->release(); }
 
+    void unset_continuation() { m_continuation = nullptr; }
+
     void transfer_successors_to(task_handle_task* target) {
         // TODO: What if we set current task as a dependency later?
-        target->m_wait_tree_vertex_successors.splice_after(target->m_wait_tree_vertex_successors.begin(), m_wait_tree_vertex_successors);
-        m_wait_tree_vertex_successors.clear();
-    }
-
-    void add_predecessor(task_handle_task& predecessor) {
-        predecessor.m_state_holder->add_successor(*this);
-    }
-
-    void add_successor(task_handle_task& successor) {
-        this->m_state_holder->add_successor(successor);
+        if (m_state_holder) {
+            m_state_holder->transfer_successors_to(target);
+        }
     }
 
     task_state_handler* get_state_holder() {
@@ -150,13 +166,12 @@ public:
 
 private:
     void release_successors() {
-        if (!m_wait_tree_vertex_successors.empty()) {
-            for (auto successor : m_wait_tree_vertex_successors) {
-                successor->release();
-            }
+        for (auto successor : m_wait_tree_vertex_successors) {
+            successor->release();
         }
     }
 
+    friend task_state_handler;
     std::uint64_t m_version_and_traits{};
     task_state_handler* m_state_holder{nullptr};
     std::forward_list<d1::wait_tree_vertex_interface*> m_wait_tree_vertex_successors;
@@ -173,7 +188,7 @@ class task_handle {
     using handle_impl_t = std::unique_ptr<task_handle_task, task_handle_task_finalizer_t>;
 
     handle_impl_t m_handle = {nullptr};
-    task_handle_task::task_state_handler* m_state_holder = {nullptr};
+    task_state_handler* m_state_holder = {nullptr};
 public:
     task_handle() = default;
     task_handle(task_handle&& th) : m_handle(std::move(th.m_handle)), m_state_holder(th.m_state_holder) {

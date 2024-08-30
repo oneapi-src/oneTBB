@@ -615,3 +615,97 @@ TEST_CASE("Test continuation - recursive decomposition") {
     }
 }
 
+//! \brief \ref interface \ref requirement
+TEST_CASE("Test continuation - add dependency on pre-submitted task tree") {
+    tbb::task_group tg;
+    int sum{};
+    int x{}, y{};
+
+    auto init_sum_task = tg.defer([&] {
+
+        auto final_sum = tg.defer([&] {
+            sum = x + y;
+        });
+
+        tbb::this_task_group::current_task::transfer_successors_to(final_sum);
+        auto x_task = tg.defer([&] {
+            x = 40;
+        });
+
+        auto y_task = tg.defer([&] {
+            y = 2;
+        });
+
+        final_sum.add_predecessor(x_task);
+        final_sum.add_predecessor(y_task);
+
+        tg.run(std::move(final_sum));
+        tg.run(std::move(x_task));
+        tg.run(std::move(y_task));
+    });
+
+    int product{};
+    auto product_task = tg.defer([&] {
+        product = sum * sum;
+    });
+
+    product_task.add_predecessor(init_sum_task);
+
+    tg.run(std::move(init_sum_task));
+    tg.run(std::move(product_task));
+
+    tg.wait();
+
+    REQUIRE(product == 42 * 42);
+}
+
+//! \brief \ref interface \ref requirement
+TEST_CASE("Test continuation - add dependency after transfer_successors_to") {
+    tbb::task_group tg;
+    int sum{};
+    int x{}, y{};
+
+    std::atomic<bool> is_ready{false};
+    auto init_sum_task = tg.defer([&] {
+
+        auto final_sum = tg.defer([&] {
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+            sum = x + y;
+        });
+
+        tbb::this_task_group::current_task::transfer_successors_to(final_sum);
+        is_ready = true;
+
+        auto x_task = tg.defer([&] {
+            x = 40;
+        });
+
+        auto y_task = tg.defer([&] {
+            y = 2;
+        });
+
+        final_sum.add_predecessor(x_task);
+        final_sum.add_predecessor(y_task);
+
+        tg.run(std::move(final_sum));
+        tg.run(std::move(x_task));
+        tg.run(std::move(y_task));
+    });
+
+    int product{};
+    auto product_task = tg.defer([&] {
+        product = sum * sum;
+    });
+    tg.run(std::move(init_sum_task));
+
+    while (!is_ready) ;
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    product_task.add_predecessor(init_sum_task);
+
+    tg.run(std::move(product_task));
+
+    tg.wait();
+
+    REQUIRE(product == 42 * 42);
+}
+

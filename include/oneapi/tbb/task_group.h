@@ -609,9 +609,43 @@ public:
 inline void continuation_vertex::release(std::uint32_t delta) {
     std::uint64_t ref = m_ref_count.fetch_sub(static_cast<std::uint64_t>(delta)) - static_cast<std::uint64_t>(delta);
     if (ref == 0) {
+        m_continuation_task->unset_continuation();
         d1::spawn(*m_continuation_task, m_ctx.actual_context());
         m_allocator.delete_object(this);
     }
+}
+
+inline void task_state_handler::add_successor(task_handle_task& successor) {
+    if (successor.m_continuation == nullptr) {
+        d1::small_object_allocator alloc;
+        successor.m_continuation = alloc.new_object<continuation_vertex>(&successor, successor.m_ctx, alloc);
+    }
+
+    d1::mutex::scoped_lock lock(m_mutex);
+    if (!m_is_finished && m_transfer) {
+        successor.m_continuation->reserve();
+        m_transfer->add_successor(successor.m_continuation);
+    } else if (!m_is_finished) {
+        successor.m_continuation->reserve();
+        m_task->m_wait_tree_vertex_successors.push_front(successor.m_continuation);
+    }
+}
+
+inline void task_state_handler::transfer_successors_to(task_handle_task* target) {
+    d1::mutex::scoped_lock lock(m_mutex);
+
+    auto task_finalizer = create_transfer_vertex();
+    target->m_wait_tree_vertex_successors.push_front(task_finalizer);
+    target->m_wait_tree_vertex_successors.splice_after(target->m_wait_tree_vertex_successors.begin(), m_task->m_wait_tree_vertex_successors);
+    m_task->m_wait_tree_vertex_successors.clear();
+}
+
+inline void transfer_vertex::release(std::uint32_t) {
+    m_handler->complete_task(true);
+    for (auto successor : m_wait_tree_vertex_successors) {
+        successor->release();
+    }
+    m_allocator.delete_object(this);
 }
 
 inline void transfer_successors_to(d2::task_handle& h) {
