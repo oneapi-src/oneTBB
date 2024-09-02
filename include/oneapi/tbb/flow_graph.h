@@ -1931,13 +1931,11 @@ protected:
 
     bool internal_push(prio_operation *op) override {
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-        if (op->metainfo) {
-            prio_push(*(op->elem), *(op->metainfo));
-        } else
+        __TBB_ASSERT(op->metainfo, nullptr);
+        prio_push(*(op->elem), *(op->metainfo));
+#else
+        prio_push(*(op->elem));
 #endif
-        {
-            prio_push(*(op->elem));
-        }
         op->status.store(SUCCEEDED, std::memory_order_release);
         return true;
     }

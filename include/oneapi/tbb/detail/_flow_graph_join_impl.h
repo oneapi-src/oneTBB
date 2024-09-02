@@ -489,10 +489,6 @@
                 __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo(&info))
             {}
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-            queueing_port_operation(const T& e, op_type t)
-                : type(char(t)), my_val(e), my_arg(nullptr), bypass_t(nullptr), metainfo(nullptr)
-            {}
-
             queueing_port_operation(const T* p, op_type t)
                 : type(char(t)), my_arg(const_cast<T*>(p)), bypass_t(nullptr), metainfo(nullptr)
             {}
