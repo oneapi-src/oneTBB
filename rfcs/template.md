@@ -47,7 +47,7 @@ Some other common subsections here are:
 - Short explanation and links to the related sub-proposals, if any. Such
   sub-proposals could be organized as separate standalone RFCs, but this is
   not mandatory. If the change is insignificant or doesn't make any sense
-  without the original proposal it is fine to have it in the RFC.
+  without the original proposal, you can have it in the RFC.
 - Execution plan if approved, aka next steps.
 
 ## Process Specific Information
