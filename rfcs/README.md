@@ -31,17 +31,16 @@ and design for the feature.
 A template for RFCs is available as [template.md](template.md). Place the modified
 template in the subdirectory of the `rfcs/proposed` with a name
 of the form `<feature>_<extension_description>`. For example,
-a proposal for a new "my_op" flow graph node might be put into a directory
-`rfcs/proposed/flow_graph_my_op_node`. The [template.md](template.md) should
-be used to create the `README.md` file in that directory. The folder can 
+a proposal for a new ``my_op`` flow graph node should be put into the
+`rfcs/proposed/flow_graph_my_op_node` directory. Use [template.md](template.md) 
+to create the `README.md` file in that directory. The folder can 
 contain other files referenced by the `README.md` file, such as figures.
 
-When two maintainers approve the PR it will be merged to the `rfcs/proposed`
-directory. As the RFC moves to different states, the RFC document should be 
-updated with additional information.
+Once two maintainers approve the PR, it is merged into the `rfcs/proposed`
+directory. Update the RFC document with additional information as the RFC moves to different states. 
 
 A proposal that is subsequently implemented and released in oneTBB 
-as a preview feature will be moved to the `rfcs/experimental` folder. The
+as a preview feature is moved into the `rfcs/experimental` folder. The
 RFC for a preview feature in `rfcs/experimental` should include a description
 of what is required to move from experimental to fully supported -- for 
 example, feedback from users, demonstrated performance improvements, etc.
@@ -49,7 +48,7 @@ example, feedback from users, demonstrated performance improvements, etc.
 A proposal that is implemented, added to the oneTBB specification, and 
 supported as a full feature appears in the `rfcs/supported` directory. An RFC 
 for a fully supported feature in the `rfcs/supported` directory should 
-have a link to the section in the oneTBB specification that has its 
+have a link to the section in the oneTBB specification with its 
 formal wording.
 
 A feature that is removed or a proposal that is abandoned or rejected will 
@@ -57,22 +56,20 @@ be moved to the `rfcs/archived` folder.
 
 ## Document Style
 
-The design documents are stored in the `rfcs` directory.
+The design documents are stored in the `rfcs` directory, and each RFC is placed in its subdirectory under `rfcs/proposed/<feature>_<extension_description>`. 
 
-- Each RFC is stored in a separate subdirectory
-  `rfcs/proposed/<feature>_<extension_description>`
 - There must be a `README.md` file that contains the main RFC itself (or 
 links to a file that contains it in the same directory).
-  - The body of the RFC should be based on [template.md](template.md)
+  - The RFC should follow the [template.md](template.md) structure. 
   - The directory can contain other supporting files, such as images, tex 
   formulas, and sub-proposals / sub-RFCs.
-  - It is not required to use the markdown file format based on the exact
+  - We highly recommend using a text-based file format like markdown for easy collaboration on GitHub, but other formats like PDFs may also be acceptable.
     template file for writing RFCs. However, it is strongly recommended to use
     text-based file format that can be rendered by GitHub to allow for easy
     collaboration using PR comments. Even so, files such as pdfs may be
     acceptable.
-- If the RFC is written in markdown. The width of the text should be limited by
-  80 symbols, unless there is a need to violate this rule, e.g. because of
+- For the markdown-written RFC, keep the text width within
+  80 characters, unless there is a reason to violate this rule, e.g., 
   long links or wide tables.
 - It is also recommended to read through existing RFCs to better understand the 
 general writing style and required elements.

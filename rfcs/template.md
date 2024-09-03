@@ -1,4 +1,4 @@
-# Descriptive name for the proposal
+# Descriptive Name for the Proposal
 
 ## Introduction
 
@@ -16,11 +16,11 @@ discussions, etc.
 
 ## Proposal
 
-A full and detailed description of the proposal, with highlighted consequences.
+A full and detailed description of the proposal with highlighted consequences.
 
 Depending on the kind of the proposal, the description should cover:
 
-- New use cases that are supported by the extension.
+- New use cases supported by the extension.
 - The expected performance benefit for a modification. 
 - The interface of extensions including class definitions or function 
 declarations.

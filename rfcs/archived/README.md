@@ -5,10 +5,10 @@ two reasons:
 
 1. The document describes a feature or extension that has been deprecated and 
 then removed.
-2. The document describes a feature or extension that was proposed but did
-not (ultimately) become a fully support feature. 
+2. The document describes a proposed feature or extension that have
+not (ultimately) become a fully supported feature. 
 
-Design documents that appear in the `rfcs/archived` folder should include a 
-section that describes why the document has been archived. Documents may 
+Design documents that appear in the `rfcs/archived` folder should describe a 
+reason for archiving.  Documents may 
 remain in this folder indefinitely to serve as a source of information about
 previous proposals and features.
