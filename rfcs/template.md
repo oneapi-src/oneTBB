@@ -25,9 +25,9 @@ Depending on the kind of the proposal, the description should cover:
 - The interface of extensions including class definitions or function 
 declarations.
 
-A proposal should include the alternatives that were considered with listed
-pros and cons. The alternatives should be clearly separated to make possible
-discussions clear.
+A proposal should clearly outline the alternatives that were considered, 
+along with their pros and cons. Each alternative should be clearly separated 
+to make discussions easier to follow.
 
 Pay close attention to the following aspects of the library:
 - API and ABI backward compatibility. The library follows semantic versioning

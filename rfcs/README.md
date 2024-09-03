@@ -20,7 +20,10 @@ The possible RFC states are:
 
 Most modifications or new features will naturally start as a part of a 
 GitHub issue or discussion. Small changes do not require a formal RFC. 
-However, if the issue or discussion results in an idea for a significant change or new feature that affects the library's public API or architecture, we recommend opening a PR  to add a new RFC  to the `rfcs/proposed` directory. The RFC should provide a detailed description and design of the proposed feature.
+However, if the issue or discussion results in an idea for a significant 
+change or new feature that affects the library's public API or architecture, 
+we recommend opening a PR  to add a new RFC  to the `rfcs/proposed` directory. 
+The RFC should provide a detailed description and design of the proposed feature.
 or new feature that significantly impacts the library's public API or 
 architecture, it will be suggested that a PR be opened to add a new rfc 
 to the `rfcs/proposed` directory. The RFC contains a more detailed description
@@ -37,7 +40,8 @@ to create the `README.md` file in that directory. The folder can
 contain other files referenced by the `README.md` file, such as figures.
 
 Once two maintainers approve the PR, it is merged into the `rfcs/proposed`
-directory. Update the RFC document with additional information as the RFC moves to different states. 
+directory. Update the RFC document with additional information as the RFC moves 
+to different states. 
 
 A proposal that is subsequently implemented and released in oneTBB 
 as a preview feature is moved into the `rfcs/experimental` folder. The
@@ -56,14 +60,16 @@ be moved to the `rfcs/archived` folder.
 
 ## Document Style
 
-The design documents are stored in the `rfcs` directory, and each RFC is placed in its subdirectory under `rfcs/proposed/<feature>_<extension_description>`. 
+The design documents are stored in the `rfcs` directory, and each RFC is placed 
+in its subdirectory under `rfcs/proposed/<feature>_<extension_description>`. 
 
 - There must be a `README.md` file that contains the main RFC itself (or 
 links to a file that contains it in the same directory).
   - The RFC should follow the [template.md](template.md) structure. 
   - The directory can contain other supporting files, such as images, tex 
   formulas, and sub-proposals / sub-RFCs.
-  - We highly recommend using a text-based file format like markdown for easy collaboration on GitHub, but other formats like PDFs may also be acceptable.
+  - We highly recommend using a text-based file format like markdown for easy 
+  collaboration on GitHub, but other formats like PDFs may also be acceptable.
     template file for writing RFCs. However, it is strongly recommended to use
     text-based file format that can be rendered by GitHub to allow for easy
     collaboration using PR comments. Even so, files such as pdfs may be
