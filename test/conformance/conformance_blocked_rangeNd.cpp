@@ -233,7 +233,7 @@ TEST_CASE("Construction") {
     int sizes[] = {174, 39, 2481, 93};
     oneapi::tbb::blocked_rangeNd<int, 4> rNd(sizes, /*grainsize*/7);
 
-    for (int i = 0; i < sizeof(sizes)/sizeof(int); ++i) {
+    for (int i = 0; i < rNd.dim_count(); ++i) {
         oneapi::tbb::blocked_rangeNd<int, 4>::dim_range_type dri = rNd.dim(i);
         REQUIRE(dri.begin()==0);
         REQUIRE(dri.size()==sizes[i]);
