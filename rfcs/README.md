@@ -19,7 +19,7 @@ The possible RFC states are:
 5. Archived
 
 Most modifications or new features will naturally start as a part of a 
-Github issue or discussion. Small changes do not require a formal RFC. 
+GitHub issue or discussion. Small changes do not require a formal RFC. 
 However, if the issue or discussion leads to an idea for a modification 
 or new feature that significantly impacts the library's public API or 
 architecture, it will be suggested that a PR be opened to add a new rfc 
