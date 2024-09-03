@@ -2051,12 +2051,6 @@ private:
         __TBB_ASSERT(mark < this->my_tail, "mark outside bounds after push");
     }
 
-#if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
-    void prio_push(const T& src) {
-        return prio_push(src, message_metainfo{});
-    }
-#endif
-
     // prio_pop: deletes highest priority item from the array, and if it is item
     // 0, move last item to 0 and reheap.  If end of array, just destroy and decrement tail
     // and mark.  Assumes the array has already been tested for emptiness; no failure.
