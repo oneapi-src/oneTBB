@@ -1,12 +1,14 @@
 # oneTBB Design Documents/RFCs
 
-The purpose of the RFC process is to communicate the intent to make
-library-wide changes, get feedback prior to the actual implementation,
-increase the transparency on why and how decisions are made, and improve
-the alignment between different teams involved in oneTBB development.
+The RFC process intends to:
+
+- Communicate library-wide changes
+- Collect feedback before implementation
+- Increase transparency in decision-making 
+- Align different teams involved in oneTBB development
 
 This directory contains design documents (RFCs) approved 
-for implementation in oneTBB. 
+or rejected for implementation in oneTBB.
 
 The possible RFC states are:
 
@@ -41,14 +43,17 @@ updated with additional information.
 A proposal that is subsequently implemented and released in oneTBB 
 as a preview feature will be moved to the `rfcs/experimental` folder. The
 RFC for a preview feature in `rfcs/experimental` should include a description
-of what is required to move from experimental to fully supported -- for example, feedback from users, demonstrated performance improvements, etc.
+of what is required to move from experimental to fully supported -- for 
+example, feedback from users, demonstrated performance improvements, etc.
 
 A proposal that is implemented, added to the oneTBB specification, and 
-supported as a full feature appears in the `rfcs/supported` directory. An RFC for a fully supported feature in the `rfcs/supported` directory should 
+supported as a full feature appears in the `rfcs/supported` directory. An RFC 
+for a fully supported feature in the `rfcs/supported` directory should 
 have a link to the section in the oneTBB specification that has its 
 formal wording.
 
-A feature that is deprecated or removed or a proposal that is abandoned may be moved to the `rfcs/archived` folder.
+A feature that is removed or a proposal that is abandoned or rejected will 
+be moved to the `rfcs/archived` folder.
 
 ## Document Style
 
@@ -56,9 +61,11 @@ The design documents are stored in the `rfcs` directory.
 
 - Each RFC is stored in a separate subdirectory
   `rfcs/proposed/<feature>_<extension_description>`
-- There must be a `README.md` file that contains the main RFC itself (or links to a file that contains it in the same directory).
+- There must be a `README.md` file that contains the main RFC itself (or 
+links to a file that contains it in the same directory).
   - The body of the RFC should be based on [template.md](template.md)
-  - The directory can contain other supporting files, such as images, tex formulas, and sub-proposals / sub-RFCs.
+  - The directory can contain other supporting files, such as images, tex 
+  formulas, and sub-proposals / sub-RFCs.
   - It is not required to use the markdown file format based on the exact
     template file for writing RFCs. However, it is strongly recommended to use
     text-based file format that can be rendered by GitHub to allow for easy
@@ -67,4 +74,5 @@ The design documents are stored in the `rfcs` directory.
 - If the RFC is written in markdown. The width of the text should be limited by
   80 symbols, unless there is a need to violate this rule, e.g. because of
   long links or wide tables.
-- It is also recommended to read through existing RFCs to better understand the general writing style and required elements.
+- It is also recommended to read through existing RFCs to better understand the 
+general writing style and required elements.
