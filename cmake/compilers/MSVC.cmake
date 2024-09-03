@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2021 Intel Corporation
+# Copyright (c) 2020-2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -76,3 +76,5 @@ if (TBB_FILE_TRIM)
         "$<$<COMPILE_LANGUAGE:CXX>:/d1trimfile:${NATIVE_TBB_PROJECT_ROOT_DIR}\\>"
         "$<$<COMPILE_LANGUAGE:CXX>:/d1trimfile:${CMAKE_SOURCE_DIR}/>")
 endif()
+set(TBB_LIB_COMPILE_FLAGS ${TBB_LIB_COMPILE_FLAGS} /guard:cf)
+set(TBB_LIB_LINK_FLAGS ${TBB_LIB_LINK_FLAGS} /guard:cf)
