@@ -106,6 +106,9 @@ using make_index_sequence = typename make_index_sequence_impl<N>::type;
 
 #endif /* __TBB_CPP14_INTEGER_SEQUENCE_PRESENT */
 
+template<typename T, std::size_t>
+using enumerated_t = T;
+
 #if __TBB_CPP17_LOGICAL_OPERATIONS_PRESENT
 using std::conjunction;
 using std::disjunction;
