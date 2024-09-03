@@ -168,12 +168,15 @@ void strict_test() {
 
 } // namespace task_affinity_retention
 
+// global_control::max_allowed_parallelism functionality is not covered by TCM
+#if !__TBB_TCM_TESTING_ENABLED
 //! Testing affinitized tasks are not stolen
 //! \brief \ref error_guessing
 TEST_CASE("Threads respect task affinity") {
     task_affinity_retention::relaxed_test();
     task_affinity_retention::strict_test();
 }
+#endif
 
 template <typename Range>
 void test_custom_range(int diff_mult) {
