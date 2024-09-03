@@ -16,7 +16,7 @@ The possible RFC states are:
 2. Proposed
 3. Experimental
 4. Supported
-5. archived
+5. Archived
 
 Most modifications or new features will naturally start as a part of a 
 Github issue or discussion. Small changes do not require a formal RFC. 
