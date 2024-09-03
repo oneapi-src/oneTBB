@@ -5,7 +5,7 @@ library-wide changes, get feedback prior to the actual implementation,
 increase the transparency on why and how decisions are made, and improve
 the alignment between different teams involved in oneTBB development.
 
-This directory documents design documents (RFCs) that have been approved 
+This directory contains design documents (RFCs) approved 
 for implementation in oneTBB. 
 
 There are several possible states for an RFC:
