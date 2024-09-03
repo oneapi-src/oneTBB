@@ -14,7 +14,7 @@ The possible RFC states are:
 
 1. Initial 
 2. Proposed
-3. experimental
+3. Experimental
 4. supported
 5. archived
 
