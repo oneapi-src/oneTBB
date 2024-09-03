@@ -44,7 +44,7 @@ RFC for a preview feature in `rfcs/experimental` should include a description
 of what is required to move from experimental to fully supported -- for example, feedback from users, demonstrated performance improvements, etc.
 
 A proposal that is implemented, added to the oneTBB specification, and 
-supported as a full feature appears in the `rfcs/supported` directory. An RFC for a fully support feature in the `rfcs/supported` directory should 
+supported as a full feature appears in the `rfcs/supported` directory. An RFC for a fully supported feature in the `rfcs/supported` directory should 
 have a link to the section in the oneTBB specification that has its 
 formal wording.
 
