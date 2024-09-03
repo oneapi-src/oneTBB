@@ -61,7 +61,7 @@ public:
     using dim_range_type = tbb::blocked_range<value_type>;
 
     //! Type for the size of a range.
-    using size_type = dim_range_type::size_type;
+    using size_type = typename dim_range_type::size_type;
 
     blocked_rangeNd_impl() = delete;
 
