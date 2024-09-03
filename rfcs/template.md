@@ -30,7 +30,7 @@ pros and cons. The alternatives should be clearly separated to make possible
 discussions clear.
 
 Pay close attention to the following aspects of the library:
-- API and ABI backwards compatibility. The library follows semantic versioning
+- API and ABI backward compatibility. The library follows semantic versioning
   so if any of those interfaces are to be broken, the RFC needs to state that
   explicitly.
 - Performance implications, as performance is one of the main goals of the library.
