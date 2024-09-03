@@ -42,7 +42,7 @@ Pay close attention to the following aspects of the library:
 Some other common subsections here are:
 - Discussion: some people like to list all the options first (as separate
   subsections), and then have a dedicated section with the discussion.
-- Listing of the proposed API and examples of its usage.
+- List of the proposed API and examples of its usage.
 - Testing aspects.
 - Short explanation and links to the related sub-proposals, if any. Such
   sub-proposals could be organized as separate standalone RFCs, but this is
