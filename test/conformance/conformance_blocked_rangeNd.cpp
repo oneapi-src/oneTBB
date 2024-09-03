@@ -230,6 +230,18 @@ TEST_CASE("Construction") {
 
     oneapi::tbb::blocked_rangeNd<int, 2>(r1, r2);
 
+    int sizes[] = {174, 39, 2481, 93};
+    oneapi::tbb::blocked_rangeNd<int, 4> rN_1(sizes, /*grainsize*/7);
+
+    oneapi::tbb::blocked_rangeNd<int, 4> rN_2({174, 39, 2481, 93}, /*grainsize*/11);
+
+    for (int i = 0; i < sizeof(sizes)/sizeof(int); ++i) {
+        oneapi::tbb::blocked_rangeNd<int, 4>::dim_range_type dr1 = rn_1.dim(i);
+        oneapi::tbb::blocked_rangeNd<int, 4>::dim_range_type dr2 = rn_2.dim(i);
+        REQUIRE(dr1.size()==sizes[i] && dr2.size()==sizes[i]);
+        REQUIRE(dr1.grainsize()==7 && dr2.grainsize()==11);
+    }
+
     oneapi::tbb::blocked_rangeNd<AbstractValueType, 4>({ MakeAbstractValue(-3), MakeAbstractValue(13), 8 },
                                                { MakeAbstractValue(-53), MakeAbstractValue(23), 2 },
                                                { MakeAbstractValue(-23), MakeAbstractValue(33), 1 },
