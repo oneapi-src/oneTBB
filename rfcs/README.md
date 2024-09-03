@@ -29,7 +29,7 @@ and design for the feature.
 ## General Process
 
 A template for RFCs is available as [template.md](template.md). Place the modified
-template should be placed in subdirectory of the `rfcs/proposed` with a name
+template in the subdirectory of the `rfcs/proposed` with a name
 of the form `<feature>_<extension_description>`. For example,
 a proposal for a new "my_op" flow graph node might be put into a directory
 `rfcs/proposed/flow_graph_my_op_node`. The [template.md](template.md) should
