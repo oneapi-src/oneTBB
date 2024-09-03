@@ -15,7 +15,7 @@ The possible RFC states are:
 1. Initial 
 2. Proposed
 3. Experimental
-4. supported
+4. Supported
 5. archived
 
 Most modifications or new features will naturally start as a part of a 
