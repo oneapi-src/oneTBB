@@ -12,7 +12,7 @@ or rejected for implementation in oneTBB.
 
 The possible RFC states are:
 
-1. Initial RFC PR
+1. Initial 
 2. Proposed
 3. experimental
 4. supported
