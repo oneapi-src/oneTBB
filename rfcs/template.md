@@ -46,7 +46,7 @@ Some other common subsections here are:
 - Testing aspects.
 - Short explanation and links to the related sub-proposals, if any. Such
   sub-proposals could be organized as separate standalone RFCs, but this is
-  not mandatory. If the changes is insignificant, or doesn't make any sense
+  not mandatory. If the change is insignificant or doesn't make any sense
   without the original proposal it is fine to have it in the RFC.
 - Execution plan if approved, aka next steps.
 
