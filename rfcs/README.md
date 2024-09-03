@@ -11,7 +11,7 @@ for implementation in oneTBB.
 The possible RFC states are:
 
 1. Initial RFC PR
-2. proposed
+2. Proposed
 3. experimental
 4. supported
 5. archived
