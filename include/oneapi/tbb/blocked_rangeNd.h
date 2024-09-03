@@ -57,26 +57,25 @@ public:
     //! Type of a value.
     using value_type = Value;
 
-    //! Helper type to construct range with N tbb::blocked_range<value_type> objects.
-    template<std::size_t>
+    //! Type of a dimension range.
     using dim_range_type = tbb::blocked_range<value_type>;
+
+    //! Type for the size of a range.
+    using size_type = dim_range_type::size_type;
 
     blocked_rangeNd_impl() = delete;
 
     //! Constructs N-dimensional range over N half-open intervals each represented as tbb::blocked_range<Value>.
-    blocked_rangeNd_impl(const dim_range_type<Is>&... args) : my_dims{ {args...} } {}
+    blocked_rangeNd_impl(const enumerated_t<dim_range_type, Is>&... args) : my_dims{ {args...} } {}
 
-    blocked_rangeNd_impl(
-      Value size[N],
-      typename tbb::blocked_range<value_type>::size_type grainsize = 1
-    ):
-      my_dims { dim_range_type<Is>(0, size[Is], grainsize)... } {}
+    blocked_rangeNd_impl(value_type size[N], size_type grainsize = 1) :
+        my_dims { dim_range_type(0, size[Is], grainsize)... } {}
 
     //! Dimensionality of a range.
     static constexpr unsigned int dim_count() { return N; }
 
     //! Range in certain dimension.
-    const tbb::blocked_range<value_type>& dim(unsigned int dimension) const {
+    const dim_range_type& dim(unsigned int dimension) const {
         __TBB_ASSERT(dimension < N, "out of bound");
         return my_dims[dimension];
     }
@@ -87,14 +86,14 @@ public:
 
     //! True if at least one dimension is empty.
     bool empty() const {
-        return std::any_of(my_dims.begin(), my_dims.end(), [](const tbb::blocked_range<value_type>& d) {
+        return std::any_of(my_dims.begin(), my_dims.end(), [](const dim_range_type& d) {
             return d.empty();
         });
     }
 
     //! True if at least one dimension is divisible.
     bool is_divisible() const {
-        return std::any_of(my_dims.begin(), my_dims.end(), [](const tbb::blocked_range<value_type>& d) {
+        return std::any_of(my_dims.begin(), my_dims.end(), [](const dim_range_type& d) {
             return d.is_divisible();
         });
     }
@@ -111,20 +110,21 @@ private:
     static_assert(N != 0, "zero dimensional blocked_rangeNd can't be constructed");
 
     //! Ranges in each dimension.
-    std::array<tbb::blocked_range<value_type>, N> my_dims;
+    std::array<dim_range_type, N> my_dims;
 
     template<typename split_type>
     void do_split(blocked_rangeNd_impl& r, split_type proportion) {
-        static_assert((std::is_same<split_type, split>::value || std::is_same<split_type, proportional_split>::value), "type of split object is incorrect");
+        static_assert((std::is_same<split_type, split>::value || std::is_same<split_type, proportional_split>::value),
+                      "type of split object is incorrect");
         __TBB_ASSERT(r.is_divisible(), "can't split not divisible range");
 
-        auto my_it = std::max_element(my_dims.begin(), my_dims.end(), [](const tbb::blocked_range<value_type>& first, const tbb::blocked_range<value_type>& second) {
+        auto my_it = std::max_element(my_dims.begin(), my_dims.end(), [](const dim_range_type& first, const dim_range_type& second) {
             return (first.size() * second.grainsize() < second.size() * first.grainsize());
         });
 
         auto r_it = r.my_dims.begin() + (my_it - my_dims.begin());
 
-        my_it->my_begin = tbb::blocked_range<value_type>::do_split(*r_it, proportion);
+        my_it->my_begin = dim_range_type::do_split(*r_it, proportion);
 
         // (!(my_it->my_begin < r_it->my_end) && !(r_it->my_end < my_it->my_begin)) equals to
         // (my_it->my_begin == r_it->my_end), but we can't use operator== due to Value concept
