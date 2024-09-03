@@ -8,7 +8,7 @@ the alignment between different teams involved in oneTBB development.
 This directory contains design documents (RFCs) approved 
 for implementation in oneTBB. 
 
-There are several possible states for an RFC:
+The possible RFC states are:
 
 1. Initial RFC PR
 2. proposed
