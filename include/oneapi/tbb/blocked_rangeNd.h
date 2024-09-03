@@ -119,7 +119,7 @@ private:
         __TBB_ASSERT(r.is_divisible(), "can't split not divisible range");
 
         auto my_it = std::max_element(my_dims.begin(), my_dims.end(), [](const dim_range_type& first, const dim_range_type& second) {
-            return (first.size() * second.grainsize() < second.size() * first.grainsize());
+            return (first.size() * double(second.grainsize()) < second.size() * double(first.grainsize()));
         });
 
         auto r_it = r.my_dims.begin() + (my_it - my_dims.begin());
