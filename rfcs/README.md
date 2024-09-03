@@ -1,4 +1,4 @@
-# oneTBB Design Documents / RFCs
+# oneTBB Design Documents/RFCs
 
 The purpose of the RFC process is to communicate the intent to make
 library-wide changes, get feedback prior to the actual implementation,
