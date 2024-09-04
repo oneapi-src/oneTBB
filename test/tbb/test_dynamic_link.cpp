@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ static const tbb::detail::r1::dynamic_link_descriptor LinkTable[] = {
 #include "common/utils.h"
 #include "common/utils_dynamic_libs.h"
 
-void test_dynamic_link(const char* lib_name) {
+void test_dynamic_link(tbb::detail::r1::literal_const_string const& lib_name) {
 #if __TBB_DYNAMIC_LOAD_ENABLED
 #if !_WIN32
     // Check if the executable exports its symbols.

@@ -1985,7 +1985,7 @@ TEST_CASE("Workers oversubscription") {
 //! The test for error in scheduling empty task_handle
 //! \brief \ref requirement
 TEST_CASE("Empty task_handle cannot be scheduled"
-        * doctest::should_fail()    //Test needs to revised as implementation uses assertions instead of exceptions
+        * doctest::should_fail()    //Test needs to be revised as implementation uses assertions instead of exceptions
         * doctest::skip()           //skip the test for now, to not pollute the test log
 ){
     tbb::task_arena ta;

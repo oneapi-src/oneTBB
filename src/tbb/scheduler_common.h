@@ -28,6 +28,7 @@
 #include "co_context.h"
 #include "misc.h"
 #include "governor.h"
+#include "literal_const_string.h"
 
 #ifndef __TBB_SCHEDULER_MUTEX_TYPE
 #define __TBB_SCHEDULER_MUTEX_TYPE tbb::spin_mutex
@@ -602,7 +603,7 @@ struct task_group_context_impl {
 bool gcc_rethrow_exception_broken();
 void fix_broken_rethrow();
 //! Forward declaration: throws std::runtime_error with what() returning error_code description prefixed with aux_info
-void handle_perror(int error_code, const char* aux_info);
+void handle_perror(int error_code, const literal_const_string& aux_info);
 
 } // namespace r1
 } // namespace detail

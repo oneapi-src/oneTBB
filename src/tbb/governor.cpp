@@ -457,9 +457,10 @@ const char* load_tbbbind_shared_object() {
     GetNativeSystemInfo(&si);
     if (si.dwNumberOfProcessors > 32) return nullptr;
 #endif /* _WIN32 && !_WIN64 */
-    for (const auto& tbbbind_version : {TBBBIND_2_5_NAME, TBBBIND_2_0_NAME, TBBBIND_NAME}) {
+    using lcs = literal_const_string;
+    for (const auto& tbbbind_version : {lcs{TBBBIND_2_5_NAME}, lcs{TBBBIND_2_0_NAME}, lcs{TBBBIND_NAME}}) {
         if (dynamic_link(tbbbind_version, TbbBindLinkTable, LinkTableSize, nullptr, DYNAMIC_LINK_LOCAL_BINDING)) {
-            return tbbbind_version;
+            return tbbbind_version.c_str();
         }
     }
 #endif /* _WIN32 || _WIN64 || __unix__ || __APPLE__ */

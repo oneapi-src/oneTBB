@@ -18,6 +18,9 @@
 #include "oneapi/tbb/detail/_assert.h"
 #include "oneapi/tbb/detail/_template_helpers.h"
 
+#include "literal_const_string.h"
+#include "static_string.h"
+
 #include <cstring>
 #include <cstdio>
 #include <stdexcept> // std::runtime_error
@@ -101,22 +104,22 @@ void throw_exception ( exception_id eid ) {
    Design note: ADR put this routine off to the side in tbb_misc.cpp instead of
    Task.cpp because the throw generates a pathetic lot of code, and ADR wanted
    this large chunk of code to be placed on a cold page. */
-void handle_perror( int error_code, const char* what ) {
-    const int BUF_SIZE = 255;
-    char buf[BUF_SIZE + 1] = { 0 };
-    std::strncat(buf, what, BUF_SIZE);
-    std::size_t buf_len = std::strlen(buf);
+void handle_perror( int error_code, const literal_const_string& what ) {
+    static_string<255> buf;
+
+    buf = what;
+
     if (error_code) {
-        std::strncat(buf, ": ", BUF_SIZE - buf_len);
-        buf_len = std::strlen(buf);
-        std::strncat(buf, std::strerror(error_code), BUF_SIZE - buf_len);
-        buf_len = std::strlen(buf);
+        const char* err_desc = std::strerror(error_code);
+        // string returned by the std::strerror is guarantted to be null terminated,
+        // so it is perfectly OK to call std::strlen on it
+        buf += ": ";
+        buf.append(err_desc, std::strlen(err_desc));
     }
-    __TBB_ASSERT(buf_len <= BUF_SIZE && buf[buf_len] == 0, nullptr);
 #if TBB_USE_EXCEPTIONS
-    do_throw([&buf] { throw std::runtime_error(buf); });
+    do_throw([&buf] { throw std::runtime_error(buf.c_str()); });
 #else
-    PRINT_ERROR_AND_ABORT( "runtime_error", buf);
+    PRINT_ERROR_AND_ABORT( "runtime_error", buf.c_str());
 #endif /* !TBB_USE_EXCEPTIONS */
 }
 
