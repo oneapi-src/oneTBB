@@ -231,13 +231,17 @@ TEST_CASE("Construction") {
     oneapi::tbb::blocked_rangeNd<int, 2>(r1, r2);
 
     int sizes[] = {174, 39, 2481, 93};
-    oneapi::tbb::blocked_rangeNd<int, 4> rNd(sizes, /*grainsize*/7);
+    oneapi::tbb::blocked_rangeNd<int, 4> rNd_1(sizes, /*grainsize*/7);
 
-    for (unsigned i = 0; i < rNd.dim_count(); ++i) {
-        oneapi::tbb::blocked_rangeNd<int, 4>::dim_range_type dri = rNd.dim(i);
-        REQUIRE(dri.begin()==0);
-        REQUIRE(dri.size()==sizes[i]);
-        REQUIRE(dri.grainsize()==7);
+    oneapi::tbb::blocked_rangeNd<int, 4> rNd_2({174, 39, 2481, 93}, /*grainsize*/11);
+
+    for (unsigned i = 0; i < rNd_1.dim_count(); ++i) {
+        oneapi::tbb::blocked_rangeNd<int, 4>::dim_range_type dim1 = rNd_1.dim(i);
+        oneapi::tbb::blocked_rangeNd<int, 4>::dim_range_type dim2 = rNd_2.dim(i);
+        REQUIRE(dim1.begin()==0 && dim2.begin()==0);
+        REQUIRE(dim1.size()==sizes[i] && dim2.size()==sizes[i]);
+        REQUIRE(dim1.grainsize()==7);
+        REQUIRE(dim2.grainsize()==11);
     }
 
     oneapi::tbb::blocked_rangeNd<AbstractValueType, 4>({ MakeAbstractValue(-3), MakeAbstractValue(13), 8 },

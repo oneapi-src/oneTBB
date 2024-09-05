@@ -68,7 +68,7 @@ public:
     //! Constructs N-dimensional range over N half-open intervals each represented as tbb::blocked_range<Value>.
     blocked_rangeNd_impl(const indexed_t<dim_range_type, Is>&... args) : my_dims{ {args...} } {}
 
-    blocked_rangeNd_impl(value_type size[N], size_type grainsize = 1) :
+    blocked_rangeNd_impl(const value_type (&size)[N], size_type grainsize = 1) :
         my_dims { dim_range_type(0, size[Is], grainsize)... } {}
 
     //! Dimensionality of a range.
