@@ -239,7 +239,8 @@ TEST_CASE("Construction") {
         oneapi::tbb::blocked_rangeNd<int, 4>::dim_range_type dim1 = rNd_1.dim(i);
         oneapi::tbb::blocked_rangeNd<int, 4>::dim_range_type dim2 = rNd_2.dim(i);
         REQUIRE(dim1.begin()==0 && dim2.begin()==0);
-        REQUIRE(dim1.size()==sizes[i] && dim2.size()==sizes[i]);
+        unsigned int szi = sizes[i]; // to compare with unsigned integrals without warnings
+        REQUIRE(dim1.size()==szi && dim2.size()==szi);
         REQUIRE(dim1.grainsize()==7);
         REQUIRE(dim2.grainsize()==11);
     }
