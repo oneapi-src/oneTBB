@@ -14,10 +14,6 @@
     limitations under the License.
 */
 
-// avoid Windows macros
-#define NOMINMAX
-#include <algorithm>
-#include <iostream>
 #include <vector>
 #include <tbb/tbb.h>
 
@@ -48,6 +44,8 @@ void simpleParallelMatrixProduct(int M, int N, int K, const InMat1& a, const InM
     }
   });
 }
+
+#include <iostream>
 
 int main() {
   const int M = 1024;

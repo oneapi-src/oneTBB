@@ -1,0 +1,16 @@
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -tbb -pthread")
+set(CMAKE_CXX_LINKER_FLAGS "-tbb -pthread")
+
+foreach(tpp migrate_task_scheduler_init.cpp
+            migrate_parallel_do.cpp
+            migrate_priorities.cpp)
+  string(REPLACE ".cpp" "" texe ${tpp})
+  add_executable(${texe} ${tpp})
+  target_include_directories(${texe} PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../common>
+  )   
+  target_link_libraries(${texe} ${CMAKE_THREAD_LIBS_INIT})
+  set_property(TARGET ${texe} PROPERTY CXX_STANDARD 20) 
+  add_test(${texe} ${texe})
+endforeach()
+

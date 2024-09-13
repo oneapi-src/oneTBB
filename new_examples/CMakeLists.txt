@@ -11,5 +11,8 @@ include (CTest)
 if (BUILD_TESTING)
   enable_testing()
   add_subdirectory(algorithms)
+  add_subdirectory(graph)
+  add_subdirectory(performance_tuning)
+  add_subdirectory(migration)
 endif (BUILD_TESTING)
 
