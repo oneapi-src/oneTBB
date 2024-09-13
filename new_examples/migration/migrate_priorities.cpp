@@ -15,17 +15,24 @@
 */
 
 #include <tbb/tbb.h>
+#include <atomic>
+#include <chrono>
+#include <cstdio>
 #include <iostream>
 #include <string>
+#include <thread>
 
 void doWork(double sec);
 void taskFunction(const std::string& msg, int id);
 static void warmupTBB();
+void waitUntil(int N);
 
 #if TBB_VERSION_MAJOR > 2020
 auto P = tbb::info::default_concurrency();
 
 void enqueueSeveralTasks(int num_iterations) {
+  std::printf("Using oneTBB\n");
+
   tbb::task_arena low_arena{P, 0, tbb::task_arena::priority::low};
   tbb::task_arena normal_arena{P, 0, tbb::task_arena::priority::normal};
   tbb::task_arena high_arena{P, 0, tbb::task_arena::priority::high};
@@ -36,6 +43,32 @@ void enqueueSeveralTasks(int num_iterations) {
     high_arena.enqueue([i]() { taskFunction("H", i); }); 
   }
   doWork(1.0);
+}
+
+void runParallelForWithHighPriority() {
+  std::printf("Using oneTBB\n");
+
+  std::thread t0([]() {
+    waitUntil(2);
+    tbb::task_arena normal_arena{P, 0, tbb::task_arena::priority::normal};
+    normal_arena.execute([]() { 
+      tbb::parallel_for(0, 10, [](int i) { 
+        std::printf("N"); 
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      });
+    });
+  });
+  std::thread t1([]() {
+    waitUntil(2);
+    tbb::task_arena high_arena{P, 0, tbb::task_arena::priority::high};
+    high_arena.execute([]() { 
+      tbb::parallel_for(0, 10, [](int i) { std::printf("H"); });
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    });
+  });
+  t0.join();
+  t1.join();
+  std::printf("\n");
 }
 #else
 auto P = tbb::task_scheduler_init::default_num_threads();
@@ -56,6 +89,8 @@ private:
 };
 
 void enqueueSeveralTasks(int num_iterations) {
+  std::printf("Using older TBB\n");
+
   for (int i = 0; i < num_iterations; ++i) {
     tbb::task::enqueue(*new( tbb::task::allocate_root() ) 
                          MyTask( "L", i ), tbb::priority_low);
@@ -65,6 +100,34 @@ void enqueueSeveralTasks(int num_iterations) {
                          MyTask( "H", i ), tbb::priority_high);
   }
   doWork(1.0);
+}
+
+void runParallelForWithHighPriority() {
+  std::printf("Using older TBB\n");
+
+  std::thread t0([]() {
+    waitUntil(2);
+    tbb::task_group_context tgc;
+    tgc.set_priority(tbb::priority_normal);
+    tbb::parallel_for(0, 10, 
+                      [](int i) { 
+                          std::printf("N"); 
+                          std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                      }, tgc);
+  });
+  std::thread t1([]() {
+    waitUntil(2);
+    tbb::task_group_context tgc;
+    tgc.set_priority(tbb::priority_high);
+    tbb::parallel_for(0, 10, 
+                      [](int i) { 
+                          std::printf("H"); 
+                          std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                      }, tgc);
+  });
+  t0.join();
+  t1.join();
+  std::printf("\n");
 }
 #endif
 
@@ -88,10 +151,18 @@ void taskFunction(const std::string& msg, int id) {
   doWork(0.01); 
 }
 
+std::atomic<int> count_up = 0;
+
+void waitUntil(int N) {
+  ++count_up;
+  while (count_up != N);
+}
+
 int main() {
   warmupTBB();
   enqueueSeveralTasks(10*P);
   printTrace();
+  runParallelForWithHighPriority();
   return 0;
 }
 
