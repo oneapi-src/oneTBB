@@ -129,149 +129,149 @@ This section desc
     template <typename Output, typename Policy>
     bool continue_node<Output, Policy>::try_put_and_wait(const continue_msg& input)
 
-    **Effects**: Increments the count of input signals received. If the incremented count is equal to the number
-    of known predecessors, performs the ``body`` function object execution.
+**Effects**: Increments the count of input signals received. If the incremented count is equal to the number
+of known predecessors, performs the ``body`` function object execution.
 
-    Waits for the completion of the ``input`` in the Flow Graph meaning all tasks in each graph node related to ``input``
-    are exetutted and no buffered objects related to ``input`` in any buffer in the graph.
+Waits for the completion of the ``input`` in the Flow Graph meaning all tasks in each graph node related to ``input``
+are exetutted and no buffered objects related to ``input`` in any buffer in the graph.
 
-    **Returns**: ``true``.
+**Returns**: ``true``.
 
 .. code:: cpp
 
     template <typename Input, typename Output, typename Policy>
     bool function_node<Input, Output, Policy>::try_put_and_wait(const Input& input)
 
-    **Effects**: If the concurrency limit allows, executes the user-provided body on the incoming message ``input``.
-    Otherwise, depending on the ``Policy`` of the node, either queues the incoming message ``input`` or rejects it.
+**Effects**: If the concurrency limit allows, executes the user-provided body on the incoming message ``input``.
+Otherwise, depending on the ``Policy`` of the node, either queues the incoming message ``input`` or rejects it.
 
-    Waits for the completion of the ``input`` in the Flow Graph meaning all tasks in each graph node related to ``input``
-    are exetutted and no buffered objects related to ``input`` in any buffer in the graph.
+Waits for the completion of the ``input`` in the Flow Graph meaning all tasks in each graph node related to ``input``
+are exetutted and no buffered objects related to ``input`` in any buffer in the graph.
 
-    **Returns**: ``true`` if the input was accepted, ``false`` otherwise.
+**Returns**: ``true`` if the input was accepted, ``false`` otherwise.
 
 .. code:: cpp
 
     template <typename T>
     bool overwrite_node<T>::try_put_and_wait(const T& input)
 
-    **Effects**: Stores ``input`` in the internal single item buffer and broadcasts it to all successors.
+**Effects**: Stores ``input`` in the internal single item buffer and broadcasts it to all successors.
 
-    Waits for the completion of the ``input`` in the Flow Graph meaning all tasks in each graph node related to ``input``
-    are exetutted and no buffered objects related to ``input`` in any buffer in the graph.
+Waits for the completion of the ``input`` in the Flow Graph meaning all tasks in each graph node related to ``input``
+are exetutted and no buffered objects related to ``input`` in any buffer in the graph.
 
-    **Returns**: ``true``.
+**Returns**: ``true``.
 
-    .. caution::
+.. caution::
 
-        Since the input element is not retrieved from ``overwrite_node`` once accepted by the successor, the element should be
-        retrieved by explicitly calling the ``clear()`` method or by overwriting by another element to prevent
-        ``try_put_and_wait`` from endless waiting.
+    Since the input element is not retrieved from ``overwrite_node`` once accepted by the successor, the element should be
+    retrieved by explicitly calling the ``clear()`` method or by overwriting by another element to prevent
+    ``try_put_and_wait`` from endless waiting.
 
 .. code:: cpp
 
     template <typename T>
     bool write_once_node<T>::try_put_and_wait(const T& input)
 
-    **Effects**: Stores ``input`` in the internal single item buffer if it does not contain a valid value already.
-    If a new value is set, the node broadcast it to all successors.
+**Effects**: Stores ``input`` in the internal single item buffer if it does not contain a valid value already.
+If a new value is set, the node broadcast it to all successors.
 
-    Waits for the completion of the ``input`` in the Flow Graph meaning all tasks in each graph node related to ``input``
-    are exetutted and no buffered objects related to ``input`` in any buffer in the graph.
+Waits for the completion of the ``input`` in the Flow Graph meaning all tasks in each graph node related to ``input``
+are exetutted and no buffered objects related to ``input`` in any buffer in the graph.
 
-    **Returns**: ``true`` for the first time after construction or a call to ``clear()``.
+**Returns**: ``true`` for the first time after construction or a call to ``clear()``.
 
-    .. caution::
+.. caution::
 
-        Since the input element is not retrieved from the ``write_once_node`` once accepted by the successor, the element should
-        be retrieved by explicitly calling the ``clear()`` method to prevent ``try_put_and_wait`` from endless waiting.
+    Since the input element is not retrieved from the ``write_once_node`` once accepted by the successor, the element should
+    be retrieved by explicitly calling the ``clear()`` method to prevent ``try_put_and_wait`` from endless waiting.
 
 .. code:: cpp
 
     template <typename T>
     bool buffer_node<T>::try_put_and_wait(const T& input)
 
-    **Effects**: Adds ``input`` to the set of items managed by the node and tries forwarding it to a successor.
+**Effects**: Adds ``input`` to the set of items managed by the node and tries forwarding it to a successor.
 
-    Waits for the completion of the ``input`` in the Flow Graph meaning all tasks in each graph node related to ``input``
-    are exetutted and no buffered objects related to ``input`` in any buffer in the graph.
+Waits for the completion of the ``input`` in the Flow Graph meaning all tasks in each graph node related to ``input``
+are exetutted and no buffered objects related to ``input`` in any buffer in the graph.
 
-    **Returns**: ``true``.
+**Returns**: ``true``.
 
 .. code:: cpp
 
     template <typename T>
     bool queue_node<T>::try_put_and_wait(const T& input)
 
-    **Effects**: Adds ``input`` to the set of items managed by the node, and tries forwarding the least recently added item
-    to a successor.
+**Effects**: Adds ``input`` to the set of items managed by the node, and tries forwarding the least recently added item
+to a successor.
 
-    Waits for the completion of the ``input`` in the Flow Graph meaning all tasks in each graph node related to ``input``
-    are exetutted and no buffered objects related to ``input`` in any buffer in the graph.
+Waits for the completion of the ``input`` in the Flow Graph meaning all tasks in each graph node related to ``input``
+are exetutted and no buffered objects related to ``input`` in any buffer in the graph.
 
-    **Returns**: ``true``.
+**Returns**: ``true``.
 
 .. code:: cpp
 
     template <typename T, typename Compare>
     bool priority_queue_node<T>::try_put_and_wait(const T& input)
 
-    **Effects**: Adds ``input`` to the ``priority_queue_node`` and tries forwarding to a successor the item with the largest
-    priority among all of the items that were added to the node and have not been yet forwarded to the successors.
+**Effects**: Adds ``input`` to the ``priority_queue_node`` and tries forwarding to a successor the item with the largest
+priority among all of the items that were added to the node and have not been yet forwarded to the successors.
 
-    Waits for the completion of the ``input`` in the Flow Graph meaning all tasks in each graph node related to ``input``
-    are exetutted and no buffered objects related to ``input`` in any buffer in the graph.
+Waits for the completion of the ``input`` in the Flow Graph meaning all tasks in each graph node related to ``input``
+are exetutted and no buffered objects related to ``input`` in any buffer in the graph.
 
-    **Returns**: ``true``.
+**Returns**: ``true``.
 
 .. code:: cpp
 
     template <typename T>
     bool sequencer_node<T>::try_put_and_wait(const T& input)
 
-    **Effects**: Adds ``input`` to the ``sequencer_node`` and tries forwarding the next item in sequence to a successor.
+**Effects**: Adds ``input`` to the ``sequencer_node`` and tries forwarding the next item in sequence to a successor.
 
-    Waits for the completion of the ``input`` in the Flow Graph meaning all tasks in each graph node related to ``input``
-    are exetutted and no buffered objects related to ``input`` in any buffer in the graph.
+Waits for the completion of the ``input`` in the Flow Graph meaning all tasks in each graph node related to ``input``
+are exetutted and no buffered objects related to ``input`` in any buffer in the graph.
 
-    **Returns**: ``true``.
+**Returns**: ``true``.
 
 .. code:: cpp
 
     template <typename T, typename DecrementType>
     bool limiter_node<T, DecrementType>::try_put_and_wait(const T& input)
 
-    **Effects**: If the broadcast count is below the threshold, ``input`` is broadcasted to all successors.
+**Effects**: If the broadcast count is below the threshold, ``input`` is broadcasted to all successors.
 
-    Waits for the completion of the ``input`` in the Flow Graph meaning all tasks in each graph node related to ``input``
-    are exetutted and no buffered objects related to ``input`` in any buffer in the graph.
+Waits for the completion of the ``input`` in the Flow Graph meaning all tasks in each graph node related to ``input``
+are exetutted and no buffered objects related to ``input`` in any buffer in the graph.
 
-    **Returns**: ``true`` if ``input`` is broadcasted; ``false`` otherwise.
+**Returns**: ``true`` if ``input`` is broadcasted; ``false`` otherwise.
 
 .. code:: cpp
 
     template <typename T>
     bool broadcast_node<T>::try_put_and_wait(const T& input)
 
-    **Effects**: Broadcasts ``input`` to all successors.
+**Effects**: Broadcasts ``input`` to all successors.
 
-    Waits for the completion of the ``input`` in the Flow Graph meaning all tasks in each graph node related to ``input``
-    are exetutted and no buffered objects related to ``input`` in any buffer in the graph.
+Waits for the completion of the ``input`` in the Flow Graph meaning all tasks in each graph node related to ``input``
+are exetutted and no buffered objects related to ``input`` in any buffer in the graph.
 
-    **Returns**: ``true`` even if the node was unable to successfully forward the message to any of successors.
+**Returns**: ``true`` even if the node was unable to successfully forward the message to any of successors.
 
 .. code:: cpp
 
     template <typename TupleType>
     bool split_node<TupleType>::try_put_and_wait(const TupleType& input);
 
-    **Effects**: Broadcasts each element in the incoming tuple to the nodes connected to the ``split_node`` output ports.
-    The element at index ``i`` of ``input`` will be broadcasted through the output port number ``i``.
+**Effects**: Broadcasts each element in the incoming tuple to the nodes connected to the ``split_node`` output ports.
+The element at index ``i`` of ``input`` will be broadcasted through the output port number ``i``.
 
-    Waits for the completion of the ``input`` in the Flow Graph meaning all tasks in each graph node related to ``input``
-    are exetutted and no buffered objects related to ``input`` in any buffer in the graph.
+Waits for the completion of the ``input`` in the Flow Graph meaning all tasks in each graph node related to ``input``
+are exetutted and no buffered objects related to ``input`` in any buffer in the graph.
 
-    **Returns**: ``true``.
+**Returns**: ``true``.
 
 Example
 *******
