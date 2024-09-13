@@ -3,7 +3,8 @@ set(CMAKE_CXX_LINKER_FLAGS "-tbb -pthread")
 
 foreach(tpp migrate_task_scheduler_init.cpp
             migrate_parallel_do.cpp
-            migrate_priorities.cpp)
+            migrate_priorities.cpp
+            migrate_task_blocking.cpp)
   string(REPLACE ".cpp" "" texe ${tpp})
   add_executable(${texe} ${tpp})
   target_include_directories(${texe} PUBLIC
