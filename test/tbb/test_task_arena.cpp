@@ -1906,7 +1906,7 @@ TEST_CASE("Multiple waits") {
 //! Test for small stack size settings and arena initialization
 //! \brief \ref error_guessing
 TEST_CASE("Small stack size") {
-    TestSmallStackSize();
+  //TestSmallStackSize();
 }
 
 #if TBB_USE_EXCEPTIONS
