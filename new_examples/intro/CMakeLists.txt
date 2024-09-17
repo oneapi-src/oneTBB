@@ -1,7 +1,8 @@
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -tbb")
 set(CMAKE_CXX_LINKER_FLAGS "-tbb")
 
-foreach(tpp intro_flowgraph.cpp
+foreach(tpp intro_pi.cpp
+            intro_flowgraph.cpp
             intro_gamma.cpp
             intro_helloPSTL.cpp
             intro_helloTBB.cpp
