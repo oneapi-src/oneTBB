@@ -32,7 +32,7 @@ structure for Windows\*, relative to <*tbb_install_dir*>.
 
 where
 
-* ``<arch>`` - ``ia32`` or ``intel64``
+* ``<arch>`` - ``intel64``
 
 * ``<lib>`` - ``tbb``, ``tbbmalloc``, ``tbbmalloc_proxy`` or ``tbbbind``
 

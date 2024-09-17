@@ -27,7 +27,7 @@ structure for Linux\*, relative to *<tbb_install_dir>*
 
 where
 
-* ``<arch>`` - ``ia32`` or ``intel64``
+* ``<arch>`` - ``intel64``
 
 * ``<lib>`` - ``libtbb``, ``libtbbmalloc``, ``libtbbmalloc_proxy`` or ``libtbbbind``
 
