@@ -25,7 +25,7 @@ ImagePtr applyGamma(ImagePtr image_ptr, double gamma);
 ImagePtr applyTint(ImagePtr image_ptr, const double *tints);
 void writeImage(ImagePtr image_ptr);
 
-void fig_1_7(const std::vector<ImagePtr>& image_vector) {
+void myfuncG(const std::vector<ImagePtr>& image_vector) {
   const double tint_array[] = {0.75, 0, 0};
   for (ImagePtr img : image_vector) {
     img = applyGamma(img, 1.4);  
@@ -95,7 +95,7 @@ int main(int argc, char* argv[]) {
     image_vector.push_back(ch01::makeFractalImage(i));
 
   tbb::tick_count t0 = tbb::tick_count::now();
-  fig_1_7(image_vector);
+  myfuncG(image_vector);
   std::cout << "Time : " << (tbb::tick_count::now()-t0).seconds() 
             << " seconds" << std::endl;
   return 0;
