@@ -28,7 +28,7 @@
 
 using namespace std;
 
-#define HOWMANY 1234
+#define HOWMANY 10000
 
 // This program employs a "BBP-type" digit extraction scheme to produce hex digits of pi.
 // This code is valid up to ic = 2^24 on systems with IEEE arithmetic.
@@ -184,22 +184,31 @@ int main(int argc, char **argv)
 {
   auto values = std::vector<unsigned>(HOWMANY);
 
-  {
+  for ( auto idx = 1; idx < 225; idx++ ) {
+    // Limit the number of threads to two for all oneTBB parallel interfaces
+    tbb::global_control global_limit(tbb::global_control::max_allowed_parallelism, idx);
+    
     bbpHexPi bbp;
     
+    auto t1 =
+      chrono::steady_clock::now();  // Start timing
     tbb::parallel_for(tbb::blocked_range<int>(0,values.size()),
 		      [&](tbb::blocked_range<int> r) {
 			for (int i=r.begin(); i<r.end(); ++i) {
 			  values[i] = bbp.EightHexPiDigits(i*8);
 			}
 		      });
+    auto t2 =
+      chrono::steady_clock::now();  // Start timing
+    double timed =
+      (chrono::duration_cast<chrono::microseconds>(t2 - t1).count());
 
     for (unsigned eightdigits : values)
       printf("%.8x", eightdigits);
 
+    printf("\n%4d Time %20.0f\n",idx,timed);
+  
   }
-  
-  printf("\n");
-  
+
   return 0;
 }
