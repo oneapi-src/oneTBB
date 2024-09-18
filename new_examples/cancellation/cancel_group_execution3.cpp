@@ -35,11 +35,11 @@ void SerialSearch(long begin, long end) {
 }
 
 void ParallelSearch(long begin, long end) {
-  //uncommenting the following line will speedup this program even more!
-  //if(g.is_group_execution_cancelled()) return;
-  //if(g.context().is_group_execution_cancelled()) return;
-  //if(g.is_current_task_group_canceling()) return;
-  if(g.is_canceling()) return;
+  // tbb::is_current_task_group_canceling()) calls the equivalent of
+  // <group we are in>.context().is_group_execution_cancelled()
+  // which is not accessible directly since the context method is
+  // protected (private to the class)
+  if(tbb::is_current_task_group_canceling()) return;
   if((end-begin) < grainsize) { //cutoof equivalent
     return SerialSearch(begin, end);
   }
