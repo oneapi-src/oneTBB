@@ -18,8 +18,8 @@ opposite to ``graph.wait_for_all()`` function that waits for completion of all t
 Therefore, the following conditions are true:
 
 * Any task initiated by any node in the Flow Graph that involves on working with ``msg`` or any other intermediate result
-computted from ``msg`` is completed.
-* Any intermediate result computted from ``msg`` is retrieved from any buffer in the graph.
+computed from ``msg`` is completed.
+* Any intermediate result computed from ``msg`` is retrieved from any buffer in the graph.
 
 .. caution::
 
