@@ -107,6 +107,7 @@ option(TBB_DISABLE_HWLOC_AUTOMATIC_SEARCH "Disable HWLOC automatic search by pkg
 option(TBB_ENABLE_IPO "Enable Interprocedural Optimization (IPO) during the compilation" ON)
 option(TBB_FUZZ_TESTING "Enable fuzz testing" OFF)
 option(TBB_INSTALL "Enable installation" ON)
+option(TBB_FILE_TRIM "Enable __FILE__ trim" ON)
 if(LINUX)
 option(TBB_LINUX_SEPARATE_DBG "Enable separation of the debug symbols during the build" OFF)
 endif()
@@ -228,6 +229,12 @@ if (TBB_ENABLE_IPO AND BUILD_SHARED_LIBS AND NOT ANDROID_PLATFORM AND NOT TBB_SA
         message(STATUS "IPO enabled")
     endif()
 endif()
+
+if (TBB_FILE_TRIM)
+    file(RELATIVE_PATH TBB_RELATIVE_BIN_PATH ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_SOURCE_DIR})
+    file(TO_NATIVE_PATH ${CMAKE_SOURCE_DIR} NATIVE_TBB_PROJECT_ROOT_DIR)
+    file(TO_NATIVE_PATH ${TBB_RELATIVE_BIN_PATH} NATIVE_TBB_RELATIVE_BIN_PATH)
+endif ()
 
 set(TBB_COMPILER_SETTINGS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/cmake/compilers/${CMAKE_CXX_COMPILER_ID}.cmake)
 if (EXISTS ${TBB_COMPILER_SETTINGS_FILE})
