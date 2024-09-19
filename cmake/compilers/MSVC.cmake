@@ -71,5 +71,10 @@ endif()
 
 set(TBB_OPENMP_FLAG /openmp)
 
+if (TBB_FILE_TRIM)
+    add_compile_options(
+        "$<$<COMPILE_LANGUAGE:CXX>:/d1trimfile:${NATIVE_TBB_PROJECT_ROOT_DIR}\\>"
+        "$<$<COMPILE_LANGUAGE:CXX>:/d1trimfile:${CMAKE_SOURCE_DIR}/>")
+endif()
 set(TBB_LIB_COMPILE_FLAGS ${TBB_LIB_COMPILE_FLAGS} /guard:cf)
 set(TBB_LIB_LINK_FLAGS ${TBB_LIB_LINK_FLAGS} /guard:cf)
