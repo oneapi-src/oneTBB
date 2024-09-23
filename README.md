@@ -63,8 +63,5 @@ Use GitHub Issues for feature requests, bug reports, and minor inquiries. For br
 oneAPI Threading Building Blocks is licensed under [Apache License, Version 2.0](LICENSE.txt).
 By its terms, contributions submitted to the project are also done under that license.
 
-## Engineering team contacts
-* [Email us.](mailto:inteltbbdevelopers@intel.com)
-
 ------------------------------------------------------------------------
 \* All names and brands may be claimed as the property of others.
