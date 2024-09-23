@@ -137,25 +137,29 @@ public:
     }
 
     concurrent_queue& operator=( const concurrent_queue& other ) {
-        //TODO: implement support for std::allocator_traits::propagate_on_container_copy_assignment
-        if (my_queue_representation != other.my_queue_representation) {
-            clear();
+        if (my_queue_representation == other.my_queue_representation)
+            return *this;
+        clear();
+        if (queue_allocator_traits::propagate_on_container_move_assignment::value) {
             my_allocator = other.my_allocator;
-            my_queue_representation->assign(*other.my_queue_representation, my_allocator, copy_construct_item);
         }
+        my_queue_representation->assign(*other.my_queue_representation, my_allocator, copy_construct_item);
         return *this;
     }
 
     concurrent_queue& operator=( concurrent_queue&& other ) {
-        //TODO: implement support for std::allocator_traits::propagate_on_container_move_assignment
-        if (my_queue_representation != other.my_queue_representation) {
-            clear();
+        if (my_queue_representation == other.my_queue_representation)
+            return *this;
+        clear();
+        if (queue_allocator_traits::propagate_on_container_move_assignment::value) {
+            my_allocator = std::move(other.my_allocator);
+            internal_swap(other);
+        } else {
             if (my_allocator == other.my_allocator) {
                 internal_swap(other);
             } else {
-                my_queue_representation->assign(*other.my_queue_representation, other.my_allocator, move_construct_item);
+                my_queue_representation->assign(*other.my_queue_representation, my_allocator, move_construct_item);
                 other.clear();
-                my_allocator = std::move(other.my_allocator);
             }
         }
         return *this;
@@ -178,8 +182,12 @@ public:
     }
 
     void swap ( concurrent_queue& other ) {
-        //TODO: implement support for std::allocator_traits::propagate_on_container_swap
-        __TBB_ASSERT(my_allocator == other.my_allocator, "unequal allocators");
+        if (queue_allocator_traits::propagate_on_container_swap::value) {
+            using std::swap;
+            swap(my_allocator, other.my_allocator);
+        } else {
+            __TBB_ASSERT(my_allocator == other.my_allocator, "unequal allocators");
+        }
         internal_swap(other);
     }
 
@@ -253,15 +261,13 @@ private:
     template <typename Container, typename Value, typename A>
     friend class concurrent_queue_iterator;
 
-    static void copy_construct_item(T* location, const void* src) {
-        // TODO: use allocator_traits for copy construction
-        new (location) value_type(*static_cast<const value_type*>(src));
-        // queue_allocator_traits::construct(my_allocator, location, *static_cast<const T*>(src));
+
+    static void copy_construct_item(queue_allocator_type& allocator, T* location, const void* src) {
+        queue_allocator_traits::construct(allocator, location, *static_cast<const T*>(src));
     }
 
-    static void move_construct_item(T* location, const void* src) {
-        // TODO: use allocator_traits for move construction
-        new (location) value_type(std::move(*static_cast<value_type*>(const_cast<void*>(src))));
+    static void move_construct_item(queue_allocator_type& allocator, T* location, const void* src) {
+        queue_allocator_traits::construct(allocator, location, std::move(*static_cast<value_type*>(const_cast<void*>(src))));
     }
 
     queue_allocator_type my_allocator;
@@ -416,25 +422,29 @@ public:
     }
 
     concurrent_bounded_queue& operator=( const concurrent_bounded_queue& other ) {
-        //TODO: implement support for std::allocator_traits::propagate_on_container_copy_assignment
-        if (my_queue_representation != other.my_queue_representation) {
-            clear();
+        if (my_queue_representation == other.my_queue_representation)
+            return *this;
+        clear();
+        if (queue_allocator_traits::propagate_on_container_move_assignment::value) {
             my_allocator = other.my_allocator;
-            my_queue_representation->assign(*other.my_queue_representation, my_allocator, copy_construct_item);
         }
+        my_queue_representation->assign(*other.my_queue_representation, my_allocator, copy_construct_item);
         return *this;
     }
 
     concurrent_bounded_queue& operator=( concurrent_bounded_queue&& other ) {
-        //TODO: implement support for std::allocator_traits::propagate_on_container_move_assignment
-        if (my_queue_representation != other.my_queue_representation) {
-            clear();
+        if (my_queue_representation == other.my_queue_representation)
+            return *this;
+        clear();
+        if (queue_allocator_traits::propagate_on_container_move_assignment::value) {
+            my_allocator = std::move(other.my_allocator);
+            internal_swap(other);
+        } else {
             if (my_allocator == other.my_allocator) {
                 internal_swap(other);
             } else {
-                my_queue_representation->assign(*other.my_queue_representation, other.my_allocator, move_construct_item);
+                my_queue_representation->assign(*other.my_queue_representation, my_allocator, move_construct_item);
                 other.clear();
-                my_allocator = std::move(other.my_allocator);
             }
         }
         return *this;
@@ -457,8 +467,12 @@ public:
     }
 
     void swap ( concurrent_bounded_queue& other ) {
-        //TODO: implement support for std::allocator_traits::propagate_on_container_swap
-        __TBB_ASSERT(my_allocator == other.my_allocator, "unequal allocators");
+        if (queue_allocator_traits::propagate_on_container_swap::value) {
+            using std::swap;
+            swap(my_allocator, other.my_allocator);
+        } else {
+            __TBB_ASSERT(my_allocator == other.my_allocator, "unequal allocators");
+        }
         internal_swap(other);
     }
 
@@ -641,14 +655,12 @@ private:
         r1::abort_bounded_queue_monitors(my_monitors);
     }
 
-    static void copy_construct_item(T* location, const void* src) {
-        // TODO: use allocator_traits for copy construction
-        new (location) value_type(*static_cast<const value_type*>(src));
+    static void copy_construct_item(queue_allocator_type& ator, T* location, const void* src) {
+        queue_allocator_traits::construct(ator, location, *static_cast<const T*>(src));
     }
 
-    static void move_construct_item(T* location, const void* src) {
-        // TODO: use allocator_traits for move construction
-        new (location) value_type(std::move(*static_cast<value_type*>(const_cast<void*>(src))));
+    static void move_construct_item(queue_allocator_type& ator, T* location, const void* src) {
+        queue_allocator_traits::construct(ator, location, std::move(*static_cast<value_type*>(const_cast<void*>(src))));
     }
 
     template <typename Container, typename Value, typename A>
