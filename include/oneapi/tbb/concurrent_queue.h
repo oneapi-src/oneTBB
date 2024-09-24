@@ -140,9 +140,7 @@ public:
         if (my_queue_representation == other.my_queue_representation)
             return *this;
         clear();
-        if (queue_allocator_traits::propagate_on_container_move_assignment::value) {
-            my_allocator = other.my_allocator;
-        }
+        tbb::detail::copy_assign_allocators(my_allocator, other.my_allocator);
         my_queue_representation->assign(*other.my_queue_representation, my_allocator, copy_construct_item);
         return *this;
     }
@@ -152,7 +150,7 @@ public:
             return *this;
         clear();
         if (queue_allocator_traits::propagate_on_container_move_assignment::value) {
-            my_allocator = std::move(other.my_allocator);
+            tbb::detail::move_assign_allocators(my_allocator, other.my_allocator);
             internal_swap(other);
         } else {
             if (my_allocator == other.my_allocator) {
@@ -182,12 +180,7 @@ public:
     }
 
     void swap ( concurrent_queue& other ) {
-        if (queue_allocator_traits::propagate_on_container_swap::value) {
-            using std::swap;
-            swap(my_allocator, other.my_allocator);
-        } else {
-            __TBB_ASSERT(my_allocator == other.my_allocator, "unequal allocators");
-        }
+        tbb::detail::swap_allocators(my_allocator, other.my_allocator);
         internal_swap(other);
     }
 
@@ -425,9 +418,7 @@ public:
         if (my_queue_representation == other.my_queue_representation)
             return *this;
         clear();
-        if (queue_allocator_traits::propagate_on_container_move_assignment::value) {
-            my_allocator = other.my_allocator;
-        }
+        tbb::detail::copy_assign_allocators(my_allocator, other.my_allocator);
         my_queue_representation->assign(*other.my_queue_representation, my_allocator, copy_construct_item);
         return *this;
     }
@@ -437,7 +428,7 @@ public:
             return *this;
         clear();
         if (queue_allocator_traits::propagate_on_container_move_assignment::value) {
-            my_allocator = std::move(other.my_allocator);
+            tbb::detail::move_assign_allocators(my_allocator, other.my_allocator);
             internal_swap(other);
         } else {
             if (my_allocator == other.my_allocator) {
@@ -467,12 +458,7 @@ public:
     }
 
     void swap ( concurrent_bounded_queue& other ) {
-        if (queue_allocator_traits::propagate_on_container_swap::value) {
-            using std::swap;
-            swap(my_allocator, other.my_allocator);
-        } else {
-            __TBB_ASSERT(my_allocator == other.my_allocator, "unequal allocators");
-        }
+        tbb::detail::swap_allocators(my_allocator, other.my_allocator);
         internal_swap(other);
     }
 

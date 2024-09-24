@@ -91,7 +91,10 @@ void swap_allocators_impl( Allocator& lhs, Allocator& rhs, /*pocs = */ std::true
 }
 
 template <typename Allocator>
-void swap_allocators_impl( Allocator&, Allocator&, /*pocs = */ std::false_type ) {}
+void swap_allocators_impl( Allocator& lhs, Allocator& rhs, /*pocs = */ std::false_type ) {
+    // If the lhs and rhs are not equal, the behavior is undefined
+    __TBB_ASSERT(lhs == rhs, "unequal allocators");
+}
 
 // Swaps allocators only if propagate_on_container_swap is true
 template <typename Allocator>
