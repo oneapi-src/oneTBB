@@ -16,6 +16,12 @@ cmake_minimum_required(VERSION 3.5)
 
 # Enable CMake policies
 
+if (POLICY CMP0063)
+    # The NEW behavior for this policy is to honor the visibility properties for all target types.
+    cmake_policy(SET CMP0063 NEW)
+    set(CMAKE_POLICY_DEFAULT_CMP0063 NEW)
+endif()
+
 if (POLICY CMP0068)
     # RPATH settings do not affect install_name on macOS since CMake 3.9
     cmake_policy(SET CMP0068 NEW)
@@ -83,6 +89,11 @@ if (NOT MSVC)  # no need to cover MSVC as it uses C++14 by default.
 endif()
 
 set(CMAKE_CXX_EXTENSIONS OFF) # use -std=c++... instead of -std=gnu++...
+# ---------------------------------------------------------------------------------------------------------
+# Setup symbol visibility properties.
+
+set(CMAKE_VISIBILITY_INLINES_HIDDEN TRUE)
+set(CMAKE_CXX_VISIBILITY_PRESET "hidden")
 # ---------------------------------------------------------------------------------------------------------
 
 # Detect architecture (bitness).

@@ -528,7 +528,7 @@ TBBBIND_EXPORT int __TBB_internal_get_default_concurrency(int numa_id, int core_
     return system_topology::instance().get_default_concurrency(numa_id, core_type_id, max_threads_per_core);
 }
 
-void __TBB_internal_destroy_system_topology() {
+TBBBIND_EXPORT void __TBB_internal_destroy_system_topology() {
     return system_topology::destroy();
 }
 
