@@ -190,3 +190,61 @@ namespace oneapi {
 } // namespace oneapi
 
 
+
+
+
+
+
+namespace oneapi {
+  namespace tbb {
+
+    enum class filter_mode {
+      parallel = /* implementation defined */,
+      serial_in_order = /* implementation defined */,
+      serial_out_of_order = /* implementation defined */
+    };
+
+    //! Class representing a chain of type-safe pipeline filters
+    template<typename Input Type, typename OutputType>
+    class filter;
+
+    //! Create a filter to participate in parallel_pipeline
+    template<typename Body> filter<filter_input<Body>, filter_output<Body>>
+    make_filter( filter_mode mode, const Body& body );
+
+    //! Composition of filters left and right.
+    template<typename T, typename V, typename U> filter<T, U>
+    operator&( const filter<T,V>& left, const filter<V,U>& right );
+
+    //! Parallel pipeline over chain of filters with user-supplied context.
+    inline void
+    parallel_pipeline(size_t max_number_of_live_tokens,
+                      const filter<void, void>& filter_chain,
+                      task_group_context& context);
+
+    //! Parallel pipeline over chain of filters.
+    inline void
+    parallel_pipeline(size_t max_number_of_live_tokens,
+                      const filter<void, void>& filter_chain);
+
+    //! Parallel pipeline over sequence of filters.
+    template<typename F1, typename F2, typename ... FiltersContext> void
+    parallel_pipeline(size_t max_number_of_live_tokens,
+                      const F1& filter1,
+                      const F2& filter2,
+                      FiltersContext&& ... filters);
+
+  } // namespace tbb
+} // namespace oneapi
+
+
+
+
+
+
+
+
+
+
+
+
