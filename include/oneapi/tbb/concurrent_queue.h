@@ -137,27 +137,27 @@ public:
     }
 
     concurrent_queue& operator=( const concurrent_queue& other ) {
-        if (my_queue_representation == other.my_queue_representation)
-            return *this;
-        clear();
-        tbb::detail::copy_assign_allocators(my_allocator, other.my_allocator);
-        my_queue_representation->assign(*other.my_queue_representation, my_allocator, copy_construct_item);
+        if (this != &other) {
+            clear();
+            tbb::detail::copy_assign_allocators(my_allocator, other.my_allocator);
+            my_queue_representation->assign(*other.my_queue_representation, my_allocator, copy_construct_item);
+        }
         return *this;
     }
 
     concurrent_queue& operator=( concurrent_queue&& other ) {
-        if (my_queue_representation == other.my_queue_representation)
-            return *this;
-        clear();
-        if (queue_allocator_traits::propagate_on_container_move_assignment::value) {
-            tbb::detail::move_assign_allocators(my_allocator, other.my_allocator);
-            internal_swap(other);
-        } else {
-            if (my_allocator == other.my_allocator) {
+        if (this != &other) {
+            clear();
+            if (queue_allocator_traits::propagate_on_container_move_assignment::value) {
+                tbb::detail::move_assign_allocators(my_allocator, other.my_allocator);
                 internal_swap(other);
             } else {
-                my_queue_representation->assign(*other.my_queue_representation, my_allocator, move_construct_item);
-                other.clear();
+                if (my_allocator == other.my_allocator) {
+                    internal_swap(other);
+                } else {
+                    my_queue_representation->assign(*other.my_queue_representation, my_allocator, move_construct_item);
+                    other.clear();
+                }
             }
         }
         return *this;
@@ -415,27 +415,27 @@ public:
     }
 
     concurrent_bounded_queue& operator=( const concurrent_bounded_queue& other ) {
-        if (my_queue_representation == other.my_queue_representation)
-            return *this;
-        clear();
-        tbb::detail::copy_assign_allocators(my_allocator, other.my_allocator);
-        my_queue_representation->assign(*other.my_queue_representation, my_allocator, copy_construct_item);
+        if (this != &other) {
+            clear();
+            tbb::detail::copy_assign_allocators(my_allocator, other.my_allocator);
+            my_queue_representation->assign(*other.my_queue_representation, my_allocator, copy_construct_item);
+        }
         return *this;
     }
 
     concurrent_bounded_queue& operator=( concurrent_bounded_queue&& other ) {
-        if (my_queue_representation == other.my_queue_representation)
-            return *this;
-        clear();
-        if (queue_allocator_traits::propagate_on_container_move_assignment::value) {
-            tbb::detail::move_assign_allocators(my_allocator, other.my_allocator);
-            internal_swap(other);
-        } else {
-            if (my_allocator == other.my_allocator) {
+        if (this != &other) {
+            clear();
+            if (queue_allocator_traits::propagate_on_container_move_assignment::value) {
+                tbb::detail::move_assign_allocators(my_allocator, other.my_allocator);
                 internal_swap(other);
             } else {
-                my_queue_representation->assign(*other.my_queue_representation, my_allocator, move_construct_item);
-                other.clear();
+                if (my_allocator == other.my_allocator) {
+                    internal_swap(other);
+                } else {
+                    my_queue_representation->assign(*other.my_queue_representation, my_allocator, move_construct_item);
+                    other.clear();
+                }
             }
         }
         return *this;
