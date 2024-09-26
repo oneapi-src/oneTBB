@@ -50,19 +50,7 @@ Some other common subsections here are:
   without the original proposal, you can have it in the RFC.
 - Execution plan (next steps), if approved.
 
-## Process Specific Information
-
-Depending on the state of the proposal, additional information should be
-included.
+## Open Questions
 
 For new proposals (i.e., those in the `rfcs/proposed` directory), list any
 open questions.
-
-For proposals released as preview features that are in the `rfcs/experimental`
-directory, list the exit conditions to move from preview to fully supported.
-These conditions might include demonstrated performance improvements,
-acceptance of specification changes, etc.
-
-For proposals in the `rfcs/supported` directory, provide a link to the
-any section(s) in the oneTBB specification that related to the proposal.
-For modifications that do not affect the public API, no link is needed.

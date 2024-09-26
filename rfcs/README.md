@@ -70,12 +70,8 @@ links to a file that contains it in the same directory).
   formulas, and sub-proposals / sub-RFCs.
   - We highly recommend using a text-based file format like markdown for easy 
   collaboration on GitHub, but other formats like PDFs may also be acceptable.
-    template file for writing RFCs. However, it is strongly recommended to use
-    text-based file format that can be rendered by GitHub to allow for easy
-    collaboration using PR comments. Even so, files such as pdfs may be
-    acceptable.
 - For the markdown-written RFC, keep the text width within
-  80 characters, unless there is a reason to violate this rule, e.g., 
+  100 characters, unless there is a reason to violate this rule, e.g., 
   long links or wide tables.
 - It is also recommended to read through existing RFCs to better understand the 
 general writing style and required elements.
