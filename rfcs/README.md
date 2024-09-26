@@ -22,7 +22,7 @@ Most modifications or new features will naturally start as a part of a
 GitHub issue or discussion. Small changes do not require a formal RFC. 
 However, if the issue or discussion results in an idea for a significant 
 change or new feature that affects the library's public API or architecture, 
-we recommend opening a PR  to add a new RFC  to the `rfcs/proposed` directory. 
+we recommend opening a PR to add a new RFC to the `rfcs/proposed` directory. 
 The RFC should provide a detailed description and design of the proposed feature.
 or new feature that significantly impacts the library's public API or 
 architecture, it will be suggested that a PR be opened to add a new rfc 
