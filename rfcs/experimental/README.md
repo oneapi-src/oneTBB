@@ -20,7 +20,7 @@ For features that require oneTBB specification changes, the document might
 include wording for those changes or a link to any PRs that opened
 against the specification.
 
-Proposals should not remain in the experimental directory forever. The 
+Proposals should not remain in the experimental directory forever.
 It should move either to the
 supported folder when they become fully supported or the archived 
 folder if they are not fully accepted. It should be highly unusual for 
