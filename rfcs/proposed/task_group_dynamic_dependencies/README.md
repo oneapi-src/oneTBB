@@ -5,15 +5,15 @@
 Back in 2021, during the move from TBB 2020 to the first release of oneTBB, 
 the lowest level tasking interface changed significantly and was no longer 
 promoted as a user-facing feature. Instead, the guidance since then has been 
-to use the task_group or the flow graph APIs to express patterns that were 
+to use the `task_group` or the flow graph APIs to express patterns that were 
 previously expressed using with the lowest level tasking API. And for most 
-cases, this has been sufficient. However, there are some use cases that create 
-dynamically expanding graphs of dependent tasks are awkward to express using 
-the existing interfaces and so this proposal expands tbb::task_group to make 
-additional use cases easier to express.
+cases, this has been sufficient. However, there is one use case which is not 
+straightforward to express by the revised API: Dynamic task graphs which are 
+not trees. This proposal expands `tbb::task_group` to make additional use cases 
+easier to express.
 
 The current class definition in the latest oneTBB specification for 
-`tbb::task_group` is shown below. Note the `defer` function because this 
+`tbb::task_group` is shown below. Note the existing `defer` function because this 
 function and its return type, `task_handle`, are the foundation of our proposed
 extensions:
 
@@ -47,9 +47,17 @@ The following table summarizes the three primary extensions that are under
 consideration. The remainder of this post provides background and further 
 clarification on these proposed extensions.
 
-1. Extend semantics and useful lifetime of `task_handle`. We propose `task_handle` to represent tasks for the purpose of adding dependencies. The useful lifetime and semantics of `task_handle` will need to be extended to include tasks that have been submitted, are currently executing, or have been completed.
-2. Add functions to set task dependencies. In the current `task_group`, tasks can only be waited for as a group and there is no direct way to add any before-after relationships between individual tasks. We will discuss options for spelling.
-3. Add a function to move successors from a currently executing task to a new task. This functionality is necessary for recursively generated task graphs. This case represents a situation where it is safe to modify dependencies for an already submitted task. 
+1. Extend semantics and useful lifetime of `task_handle`. We propose `task_handle` 
+to represent tasks for the purpose of adding dependencies. The useful lifetime and 
+semantics of `task_handle` will need to be extended to include tasks that have been 
+submitted, are currently executing, or have been completed.
+2. Add functions to set task dependencies. In the current `task_group`, tasks can 
+only be waited for as a group and there is no direct way to add any before-after 
+relationships between individual tasks. We will discuss options for spelling.
+3. Add a function to move successors from a currently executing task to a new task. 
+This functionality is necessary for recursively generated task graphs. This case 
+represents a situation where it is safe to modify dependencies for an already 
+submitted task. 
 
 ### Extend the semantics and useful lifetime of task_handle
 
@@ -62,12 +70,12 @@ and when dependencies between tasks are specified.
 
 For the sake of discussion, let’s label four points in a task’s lifetime: 
 
-1. pre-submitted
-2. submitted for dependence tracking
+1. deferred
+2. submitted
 3. executing
-4. completed. 
+4. completed
 
-A pre-submitted task has been allocated but is not yet known to the scheduling
+A deferred task has been allocated but is not yet known to the scheduling
 algorithm and so cannot begin executing. A submitted task is known to the 
 scheduling algorithm and whenever its incoming dependencies (predecessor tasks)
 are complete it may be scheduled for execution. An executing task has started 
@@ -77,11 +85,11 @@ executed fully to completion.
 In the current specification for `task_group`, the function `task_group::defer`
 already provides a mechanism to separate task creation from submission. 
 `task_group::defer` returns a `tbb::task_handle`, which represents a deferred 
-task. A deferred task is in the pre-submitted state until it is submitted via
+task. A deferred task is in the deferred state until it is submitted via
 the `task_group::run` or `task_group::run_and_wait` functions. In the current 
 specification of `task_group`, accessing a `task_handle` after it is submitted
 via one of the run functions is undefined behavior. Currently, therefore, a 
-`task_handle` can only represent a pre-submitted task. And currently, any task
+`task_handle` can only represent a deferred task. And currently, any task
 that is run can immediately be scheduled for execution since there is no notion
 of task dependencies for task_group.
 
@@ -89,7 +97,7 @@ The first extension is to expand the semantics and usable lifetime of
 `task_handle` so that remains valid after it is passed to run and it can 
 represent tasks in any state, including submitted, executing, and completed 
 tasks. Similarly, a `task_handle` in the submitted state may represent a task
-that has predecessors that must complete before it can executed, andso passing
+that has predecessors that must complete before it can executed, and so passing
 a `task_handle` to `task_group::run` or `task_group::run_and_wait` only makes
 it available for dependency tracking, and does not make it immediately legal to
 execute.
@@ -98,18 +106,25 @@ execute.
 
 The obvious next extension is to add a mechanism for specifying dependencies
 between tasks. In the most conservative view, it should only be legal to add 
-additional predecessors / in-dependencies to tasks in the pre-submitted state. 
-After a task starts executing or is completed, it doesn’t make sense to add
-additional predecessors, since it’s too late for them to delay the start of the
-task’s execution. For a task in the submitted state, there can be a race between
+additional predecessors / in-dependencies to tasks in the deferred state. 
+After a task starts is completed, it doesn’t make sense to add additional 
+predecessors, since it’s too late for them to delay the start of the task’s 
+execution. 
+
+It can make sense to add additional predecessors to a task that is
+currently executing if the executing task is suspended until those 
+additional dependencies complete. However, in this proposal we do not intend 
+to support this suspension model. 
+
+For a task in the submitted state, there can be a race between
 adding a new predecessor and the scheduler deciding to execute the task when its 
 currently known predecessors have completed. We will revisit the discussion of 
 adding predecessors to submitted tasks in the next section when we discuss 
 recursively grown task graphs. 
 
-Having mostly settled the question about when a predecessors can be safely added,
+Having mostly settled the question about when a predecessors can be added,
 then next question is what can be added as a predecessor task? The most 
-user-friendly answer is to have no limitation; any valid task_handle can act as 
+user-friendly answer is to have no limitation; any valid `task_handle` can act as 
 a predecessor. In many cases, a developer may only know what work must be completed 
 before a task can start but does not know the state of that work.
 
@@ -181,17 +196,17 @@ complete, and its predecessors are the tasks modifying the predecessors!
 
 We therefore propose a very limited extension that allows the transfer of 
 all the successors of a currently executing task to become the successors 
-of a different pre-submitted task. This function can only access the successors
+of a different deferred task. This function can only access the successors
 of the currently executing task, and those tasks are prevented from executing 
 by a dependence on the current task itself, so we can ensure that we can safely 
 update the incoming dependencies for those tasks without worrying about any 
 potential race.
 
 One possible spelling for this function would be `transfer_successors_to(h)`, 
-where `h` is a `task_handle` to a pre-submitted task and the 
+where `h` is a `task_handle` to a deferred task and the 
 `transfer_successors_to` function must be called from within a task. Calling
 this function from outside a task, or passing anything other than a task in
-the pre-submitted state is undefined behavior.
+the deferred state is undefined behavior.
 
 ### Small examples
 
@@ -226,7 +241,7 @@ The dependency graph for this example is:
 
 The example below shows a graph where the dependencies are determined 
 dynamically. The state of the predecessors may be unknown – they may 
-be pre-submitted, submitted, executing or completed. Although not shown,
+be deferred, submitted, executing or completed. Although not shown,
 let's assume that the user's `users::find_predecessors` function 
 returns, based on application logic, the tasks that must complete 
 before the new work can start.
