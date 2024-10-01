@@ -18,27 +18,6 @@
 #include <tbb/tbb.h>
 #include <tbb/scalable_allocator.h>
 
-// No retry loop because we assume that
-// scalable_malloc does all it takes to allocate
-// the memory, so calling it repeatedly
-// will not improve the situation at all
-//
-// No use of std::new_handler because it cannot be
-// done in portable and thread-safe way (see sidebar)
-
-void* operator new (size_t size)
-{
-  if (size == 0) size = 1; 
-  if (void* ptr = scalable_malloc (size))
-    return ptr;
-  throw std::bad_alloc (  );
-}
-
-void* operator new[] (size_t size)
-{
-  return operator new (size);
-}
-
 void* operator new (size_t size, const std::nothrow_t&)
 {
   if (size == 0) size = 1; 
@@ -52,16 +31,6 @@ void* operator new[] (size_t size, const std::nothrow_t&)
   return operator new (size, std::nothrow);
 }
 
-void operator delete (void* ptr)
-{
-  if (ptr != 0) scalable_free (ptr);
-}
-
-void operator delete[] (void* ptr)
-{
-  operator delete (ptr);
-}
-
 void operator delete (void* ptr, const std::nothrow_t&)
 {
   if (ptr != 0) scalable_free (ptr);
@@ -73,14 +42,11 @@ void operator delete[] (void* ptr, const std::nothrow_t&)
 }
 
 /****************/
-/****************/
-/****************/
-/****************/
 
 const int N = 1000000;
 
 // don't forget ulimit –s unlimited on Linux, or STACK:10000000 on Windows
-// otherwise this will fail to run
+// otherwise this may fail to run
 
 int main() {
   double *a[N];

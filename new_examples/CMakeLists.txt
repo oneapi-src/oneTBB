@@ -19,5 +19,6 @@ if (BUILD_TESTING)
   add_subdirectory(memalloc)
   add_subdirectory(migration)
   add_subdirectory(performance_tuning)
+  add_subdirectory(synchronization)
 endif (BUILD_TESTING)
 
