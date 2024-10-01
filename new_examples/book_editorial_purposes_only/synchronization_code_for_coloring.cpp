@@ -22,6 +22,7 @@
 for (int i = 0; i < N; ++i) hist[image[i]]++;
 
 
+// my_mutex_t my_mutex; NOT here! Moved to the body! Yikes!
 parallel_for(tbb :: blocked_range<size_t>{0, image.size()},
   [&](const tbb :: blocked_range<size_t>& r)
   {
