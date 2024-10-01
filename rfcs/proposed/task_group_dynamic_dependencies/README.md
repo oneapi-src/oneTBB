@@ -12,10 +12,10 @@ straightforward to express by the revised API: Dynamic task graphs which are
 not trees. This proposal expands `tbb::task_group` to make additional use cases 
 easier to express.
 
-The current class definition in the latest oneTBB specification for 
-`tbb::task_group` is shown below. Note the existing `defer` function because this 
-function and its return type, `task_handle`, are the foundation of our proposed
-extensions:
+The class definition from section **[scheduler.task_group]** in the oneAPI 
+Threading Building Blocks (oneTBB) Specification 1.3-rev-1 for `tbb::task_group` 
+is shown below. Note the existing `defer` function because this function and 
+its return type, `task_handle`, are the foundation of our proposed extensions:
 
     class task_group {
     public:
@@ -70,12 +70,12 @@ and when dependencies between tasks are specified.
 
 For the sake of discussion, let’s label four points in a task’s lifetime: 
 
-1. deferred
+1. created
 2. submitted
 3. executing
 4. completed
 
-A deferred task has been allocated but is not yet known to the scheduling
+A created task has been allocated but is not yet known to the scheduling
 algorithm and so cannot begin executing. A submitted task is known to the 
 scheduling algorithm and whenever its incoming dependencies (predecessor tasks)
 are complete it may be scheduled for execution. An executing task has started 
@@ -84,12 +84,12 @@ executed fully to completion.
 
 In the current specification for `task_group`, the function `task_group::defer`
 already provides a mechanism to separate task creation from submission. 
-`task_group::defer` returns a `tbb::task_handle`, which represents a deferred 
-task. A deferred task is in the deferred state until it is submitted via
+`task_group::defer` returns a `tbb::task_handle`, which represents a created 
+task. A created task is in the created state until it is submitted via
 the `task_group::run` or `task_group::run_and_wait` functions. In the current 
 specification of `task_group`, accessing a `task_handle` after it is submitted
 via one of the run functions is undefined behavior. Currently, therefore, a 
-`task_handle` can only represent a deferred task. And currently, any task
+`task_handle` can only represent a created task. And currently, any task
 that is run can immediately be scheduled for execution since there is no notion
 of task dependencies for task_group.
 
@@ -106,7 +106,7 @@ execute.
 
 The obvious next extension is to add a mechanism for specifying dependencies
 between tasks. In the most conservative view, it should only be legal to add 
-additional predecessors / in-dependencies to tasks in the deferred state. 
+additional predecessors / in-dependencies to tasks in the created state. 
 After a task starts is completed, it doesn’t make sense to add additional 
 predecessors, since it’s too late for them to delay the start of the task’s 
 execution. 
@@ -144,11 +144,11 @@ for adding `h1` as an in-dependence / predecessor of `h2` include:
 - `h2 = defer([]() { … }, h1)`
 - `make_edge(h1, h2)`
 
-We propose including both of the first two options. Similarly, there could be
-versions of these two functions the accepted multiple predecessors at once:
+We propose including the first option. Similarly, there could be
+versions of these two functions the accepted multiple predecessors 
+at once:
 
 - `h.add_predecessors(h1, ..., hn)`
-- `h = defer([]() { … }, h1, ..., hn)`
 
 In the general case, it would be undefined behavior to add a new predecessor
 to a task in the submitted, executing or completed states.
@@ -196,17 +196,56 @@ complete, and its predecessors are the tasks modifying the predecessors!
 
 We therefore propose a very limited extension that allows the transfer of 
 all the successors of a currently executing task to become the successors 
-of a different deferred task. This function can only access the successors
+of a different created task. This function can only access the successors
 of the currently executing task, and those tasks are prevented from executing 
 by a dependence on the current task itself, so we can ensure that we can safely 
 update the incoming dependencies for those tasks without worrying about any 
 potential race.
 
 One possible spelling for this function would be `transfer_successors_to(h)`, 
-where `h` is a `task_handle` to a deferred task and the 
+where `h` is a `task_handle` to a created task and the 
 `transfer_successors_to` function must be called from within a task. Calling
 this function from outside a task, or passing anything other than a task in
-the deferred state is undefined behavior.
+the created state is undefined behavior.
+
+### Proposed changes to task_handle
+
+    namespace oneapi {
+    namespace tbb {
+        class task_handle {
+        public:
+
+            // existing functions
+            task_handle();
+            task_handle(task_handle&& src);
+            ~task_handle();
+            task_handle& operator=(task_handle&& th);
+            explicit operator bool() const noexcept;
+
+            // proposed additions
+            void add_predecessor(task_handle& th);
+            void add_successor(task_handle& th);
+        };
+
+        void transfer_successors_to(task_handle& th);
+    }
+    }
+
+
+#### void task_handle::add_predecessor(task_handle& th);
+
+Adds `th` as a predecessor that must complete before the task represnted by
+`*this` can start executing.
+
+#### void task_handle::add_successor(task_handle& th);
+
+Adds `th` as a successor that cannot start executing until the task represented by 
+`*this` is complete.
+
+#### void transfer_successors_to(task_handle& th);
+
+Transfers all of the successors from the currently executing task to the task 
+represented by `th`.
 
 ### Small examples
 
@@ -241,7 +280,7 @@ The dependency graph for this example is:
 
 The example below shows a graph where the dependencies are determined 
 dynamically. The state of the predecessors may be unknown – they may 
-be deferred, submitted, executing or completed. Although not shown,
+be created, submitted, executing or completed. Although not shown,
 let's assume that the user's `users::find_predecessors` function 
 returns, based on application logic, the tasks that must complete 
 before the new work can start.
