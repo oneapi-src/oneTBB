@@ -59,6 +59,12 @@ if (--refCount == 0) { ... /* body */ ... };
 
 tbb::atomic<uint_32_t> v;
 
+;
+
+
+ov=v; if (ov == old_v) v=new_v; return ov;
+
+;
 
 void fetch_and_triple(std::atomic<uint32_t>& v)
 {

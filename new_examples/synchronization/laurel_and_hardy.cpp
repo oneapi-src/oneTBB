@@ -18,20 +18,20 @@
 #include <iostream>
 #include <algorithm>
 #include <atomic>
-#include <tbb/parallel_for.h>
-#include <tbb/blocked_range.h>
-#include <tbb/tick_count.h>
-#include <tbb/cache_aligned_allocator.h>
-#include <tbb/enumerable_thread_specific.h>
-#include <tbb/parallel_reduce.h>
-#include <tbb/combinable.h>
-#include <tbb/queuing_mutex.h>
+#include <tbb/tbb.h>
+
+#define THREADS 8
+//#define SKIP_LAUREL_AND_HARDY
 
 int main(int argc, char** argv) {
   size_t N = 1000000000;
-  int nth = 2;
 
-  std::cout<<"Par_count with N: " << N << " and nth: "<< nth <<std::endl;
+  std::cout<<"Par_count with N: " << N << std::endl;
+
+  //  std::cout<<"Threads = " << tbb::info::default_concurrency() << std::endl;
+  tbb::global_control gc(tbb::global_control::max_allowed_parallelism, THREADS);
+  //  std::cout<<"Threads = " << tbb::info::default_concurrency() << std::endl;
+  std::cout<<"Threads = " << THREADS << std::endl;
 
   //for (int test = 0; test < 10 ; ++test)
   //{
@@ -64,6 +64,7 @@ int main(int argc, char** argv) {
   std::cout << " Time: " << t_p ;
   std::cout << "\tSpeedup: " << t_s/t_p << std::endl;
 
+#ifndef SKIP_LAUREL_AND_HARDY
   // Parallel execution (coarse)
   //using myMutex_t = spin_mutex;
   using my_mutex_t = tbb::queuing_mutex;
@@ -99,7 +100,8 @@ int main(int argc, char** argv) {
   if(sum_g != sum) std::cout << " (INCORRECT!) ";
   std::cout << " Time: " << t_p ;
   std::cout << "\tSpeedup: " << t_s/t_p << std::endl;
-
+#endif
+  
   // Parallel execution (atomic)
   t0_p = tbb::tick_count::now();
   std::atomic<long long> sum_a{0};
@@ -180,6 +182,18 @@ int main(int argc, char** argv) {
   }
 
 /*
+sixteen-core (limited to eight threads in code) circa 2024
+Par_count with N: 1000000000
+Serial   result: 1000000000 Time: 0.17135
+Parallel (Mistaken)      result: 999910711 (INCORRECT!)  Time: 0.0297814        Speedup: 5.75358
+Parallel (Hardy)         result: 1000000000 Time: 0.210511      Speedup: 0.813971
+Parallel (Laurel)        result: 1000000000 Time: 212.707       Speedup: 0.000805566
+Parallel (Nuclear)       result: 1000000000 Time: 18.0024       Speedup: 0.00951815
+Parallel (Local ETS)     result: 1000000000 Time: 0.0271777     Speedup: 6.30479
+Parallel (Local)         result: 1000000000 Time: 0.0272057     Speedup: 6.2983
+Parallel (Wise)          result: 1000000000 Time: 0.0271524     Speedup: 6.31067
+
+quad-core circa 2019
 Par_count with N: 1000000000 and nth: 4
 Serial 	 result: 1000000000 Time: 0.330783
 Parallel (Mistaken) 	 result: 269205706 (INCORRECT!)  Time: 0.098092	Speedup: 3.37217
