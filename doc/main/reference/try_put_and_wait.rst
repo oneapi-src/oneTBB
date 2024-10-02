@@ -11,16 +11,16 @@ Description
 ***********
 
 This feature adds a new ``try_put_and_wait`` interface to the receiving nodes in the Flow Graph.
-This function puts a message as an input into a Flow Graph and then waits until all work related to
+This function puts a message as an input into a Flow Graph and waits until all work related to
 that message is complete.
 ``try_put_and_wait`` may reduce latency compared to calling ``graph::wait_for_all`` since
-``graph::wait_for_all`` waits for all work, including unrelated to the input message, to complete.
+``graph::wait_for_all`` waits for all work, including work that is unrelated to the input message, to complete.
 
 ``node.try_put_and_wait(msg)`` performs ``node.try_put(msg)`` on the node and waits until the work on ``msg`` is completed.
 Therefore, the following conditions are true:
 
 * Any task initiated by any node in the Flow Graph that involves working with ``msg`` or any other intermediate result
-computed from ``msg`` is completed.
+  computed from ``msg`` is completed.
 * No intermediate results computed from ``msg`` remain in any buffers in the graph.
 
 .. caution::
@@ -132,7 +132,7 @@ Member Functions
 **Effects**: Increments the count of input signals received. If the incremented count is equal to the number
 of known predecessors, performs the ``body`` function object execution.
 
-Waits for the completion of the ``input`` in the Flow Graph meaning all tasks created by each node and
+Waits for the completion of the ``input`` in the Flow Graph, meaning all tasks created by each node and
 related to ``input`` are executed, and no related objects remain in any buffer within the graph.
 
 **Returns**: ``true``.
@@ -145,7 +145,7 @@ related to ``input`` are executed, and no related objects remain in any buffer w
 **Effects**: If the concurrency limit allows, executes the user-provided body on the incoming message ``input``.
 Otherwise, depending on the ``Policy`` of the node, either queues the incoming message ``input`` or rejects it.
 
-Waits for the completion of the ``input`` in the Flow Graph meaning all tasks created by each node and
+Waits for the completion of the ``input`` in the Flow Graph, meaning all tasks created by each node and
 related to ``input`` are executed, and no related objects remain in any buffer within the graph.
 
 **Returns**: ``true`` if the input is accepted, ``false`` otherwise.
@@ -155,9 +155,9 @@ related to ``input`` are executed, and no related objects remain in any buffer w
     template <typename T>
     bool overwrite_node<T>::try_put_and_wait(const T& input)
 
-**Effects**: Stores ``input`` in the internal single item buffer and broadcasts it to all successors.
+**Effects**: Stores ``input`` in the internal single-item buffer and broadcasts it to all successors.
 
-Waits for the completion of the ``input`` in the Flow Graph meaning all tasks created by each node and
+Waits for the completion of the ``input`` in the Flow Graph, meaning all tasks created by each node and
 related to ``input`` are executed, and no related objects remain in any buffer within the graph.
 
 **Returns**: ``true``.
@@ -173,10 +173,10 @@ related to ``input`` are executed, and no related objects remain in any buffer w
     template <typename T>
     bool write_once_node<T>::try_put_and_wait(const T& input)
 
-**Effects**: Stores ``input`` in the internal single item buffer if it does not contain a valid value already.
+**Effects**: Stores ``input`` in the internal single-item buffer if it does not contain a valid value already.
 If a new value is set, the node broadcasts it to all successors.
 
-Waits for the completion of the ``input`` in the Flow Graph meaning all tasks created by each node and
+Waits for the completion of the ``input`` in the Flow Graph, meaning all tasks created by each node and
 related to ``input`` are executed, and no related objects remain in any buffer within the graph.
 
 **Returns**: ``true`` for the first time after construction or a call to ``clear()``.
@@ -193,7 +193,7 @@ related to ``input`` are executed, and no related objects remain in any buffer w
 
 **Effects**: Adds ``input`` to the set of items managed by the node and tries forwarding it to a successor.
 
-Waits for the completion of the ``input`` in the Flow Graph meaning all tasks created by each node and
+Waits for the completion of the ``input`` in the Flow Graph, meaning all tasks created by each node and
 related to ``input`` are executed, and no related objects remain in any buffer within the graph.
 
 **Returns**: ``true``.
@@ -206,7 +206,7 @@ related to ``input`` are executed, and no related objects remain in any buffer w
 **Effects**: Adds ``input`` to the set of items managed by the node and tries forwarding the least recently added item
 to a successor.
 
-Waits for the completion of the ``input`` in the Flow Graph meaning all tasks created by each node and
+Waits for the completion of the ``input`` in the Flow Graph, meaning all tasks created by each node and
 related to ``input`` are executed, and no related objects remain in any buffer within the graph.
 
 **Returns**: ``true``.
@@ -219,7 +219,7 @@ related to ``input`` are executed, and no related objects remain in any buffer w
 **Effects**: Adds ``input`` to the ``priority_queue_node`` and attempts to forward the item with the highest
 priority among all items added to the node but not yet forwarded to the successors.
 
-Waits for the completion of the ``input`` in the Flow Graph meaning all tasks created by each node and
+Waits for the completion of the ``input`` in the Flow Graph, meaning all tasks created by each node and
 related to ``input`` are executed, and no related objects remain in any buffer within the graph.
 
 **Returns**: ``true``.
@@ -231,7 +231,7 @@ related to ``input`` are executed, and no related objects remain in any buffer w
 
 **Effects**: Adds ``input`` to the ``sequencer_node`` and tries forwarding the next item in sequence to a successor.
 
-Waits for the completion of the ``input`` in the Flow Graph meaning all tasks created by each node and
+Waits for the completion of the ``input`` in the Flow Graph, meaning all tasks created by each node and
 related to ``input`` are executed, and no related objects remain in any buffer within the graph.
 
 **Returns**: ``true``.
@@ -243,7 +243,7 @@ related to ``input`` are executed, and no related objects remain in any buffer w
 
 **Effects**: If the broadcast count is below the threshold, broadcasts ``input`` to all successors.
 
-Waits for the completion of the ``input`` in the Flow Graph meaning all tasks created by each node and
+Waits for the completion of the ``input`` in the Flow Graph, meaning all tasks created by each node and
 related to ``input`` are executed, and no related objects remain in any buffer within the graph.
 
 **Returns**: ``true`` if ``input`` is broadcasted; ``false`` otherwise.
@@ -255,7 +255,7 @@ related to ``input`` are executed, and no related objects remain in any buffer w
 
 **Effects**: Broadcasts ``input`` to all successors.
 
-Waits for the completion of the ``input`` in the Flow Graph meaning all tasks created by each node and
+Waits for the completion of the ``input`` in the Flow Graph, meaning all tasks created by each node and
 related to ``input`` are executed, and no related objects remain in any buffer within the graph.
 
 **Returns**: ``true`` even if the node cannot successfully forward the message to any of its successors.
@@ -268,7 +268,7 @@ related to ``input`` are executed, and no related objects remain in any buffer w
 **Effects**: Broadcasts each element in the incoming tuple to the nodes connected to the ``split_node`` output ports.
 The element at index ``i`` of ``input`` is broadcasted through the output port number ``i``.
 
-Waits for the completion of the ``input`` in the Flow Graph meaning all tasks created by each node and
+Waits for the completion of the ``input`` in the Flow Graph, meaning all tasks created by each node and
 related to ``input`` are executed, and no related objects remain in any buffer within the graph.
 
 **Returns**: ``true``.
