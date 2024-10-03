@@ -237,7 +237,7 @@ public:
 
 private:
     void internal_swap(concurrent_queue& src) {
-        if (!allocator_traits_type::queue_allocator_traits::propagate_on_container)
+        if (!queue_allocator_traits::propagate_on_container_swap::value)
             __TBB_ASSERT(my_allocator == src.my_allocator, "Swapping with unequal allocators is not allowed");
         using std::swap;
         swap(my_queue_representation, src.my_queue_representation);
