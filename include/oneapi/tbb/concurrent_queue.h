@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2023 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -237,6 +237,8 @@ public:
 
 private:
     void internal_swap(concurrent_queue& src) {
+        if (!allocator_traits_type::queue_allocator_traits::propagate_on_container)
+            __TBB_ASSERT(my_allocator == src.my_allocator, "Swapping with unequal allocators is not allowed");
         using std::swap;
         swap(my_queue_representation, src.my_queue_representation);
     }
