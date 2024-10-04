@@ -173,4 +173,33 @@ make_edge(my_join_node, my_final_node);
 my_first_node.try_put(10);
 
 
+/// chapter 5...
+
+template< typename ... InputTypes, typename... OutputTypes>
+class composite_node <std::tuple<InputTypes...>, std::tuple<OutputTypes...> > :
+public graph_node {
+  public:
+    typedef std::tuple< receiver<InputTypes>&...> input_ports_type;
+    typedef std::tuple< sender<OutputTypes>&...> output_ports_type;
+
+    composite_node ( graph &g );
+    virtual ~composite_node();
+
+    void set_external_ports(input_ports_type&& input_ports_tuple,
+                            output_ports_type&& output_ports_tuple);
+    input_ports_type& input_ports();
+    output_ports_type& output_ports();
+};
+
+
+;
+;
+
+tbb::flow::composite_node<std::tuple<BigObjectPtr, 
+                          BigObjectPtr>,
+                          std::tuple<BigObjectPtr>>;
+
+
+;;;
+
 
