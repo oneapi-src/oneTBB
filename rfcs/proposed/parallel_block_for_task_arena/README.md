@@ -4,7 +4,7 @@
 
 In oneTBB, there has never been an API that allows users to block worker threads within the arena.
 This design choice was made to preserve the composability of the application.<br>
-Since oneTBB is a dynamic runtime based on task stealing, threads will migrate from one arena to
+Since oneTBB is a dynamic runtime based on task stealing, threads migrate from one arena to
 another while they have tasks to execute.<br>
 Before PR#1352, workers moved to the thread pool to sleep once there were no arenas with active
 demand. However, PR#1352 introduced a busy-wait block time that blocks a thread for an
@@ -27,7 +27,7 @@ allowing worker threads to be released from the arena,
 essentially overriding the default block-time.<br>
 
 This problem can be considered from another angle. Essentially, if the user can indicate where
-parallel computation ends, they can also indicate where they start.
+parallel computation ends, they can also indicate where it starts.
 
 <img src="parallel_block_introduction.png" width=800>
 
@@ -37,20 +37,20 @@ executing arena.
 
 ## Proposal
 
-Let's consider the guarantees that an API for explicit parallel blocks can provides:
-* Start of parallel block:
+Let's consider the guarantees that an API for explicit parallel blocks can provide:
+* Start of a parallel block:
   * Indicates the point from which the scheduler can use a hint and stick threads to the arena.
   * Serve as a warm-up hint to the scheduler, making some worker threads immediately available
-    at the start of the real computatin.
+    at the start of the real computation.
 * "Parallel block" itself:
   * Scheduler can implement different busy-wait policies to retain threads in the arena.
-* End of parallel block:
+* End of a parallel block:
   * Indicates the point from which the scheduler can drop a hint
     and unstick threads from the arena.
   * Indicates that worker threads should ignore
     the default block time (introduced by PR#1352) and leave.
 
-Start of parallel block:<br>
+Start of a parallel block:<br>
 The warm-up hint should have similar guarantees as `task_arena::enqueue` from a signal standpoint.
 Users should expect the scheduler will do its best to make some threads available in the arena.
 
@@ -59,7 +59,7 @@ The guarantee for retaining threads is a hint to the scheduler;
 thus, no real guarantee is provided. The scheduler can ignore the hint and
 move threads to another arena or to sleep if conditions are met.
 
-End of parallel block:<br>
+End of a parallel block:<br>
 It can indicate that worker threads should ignore the default block time but
 if work was submitted immediately after the end of the parallel block,
 the default block time will be restored.
