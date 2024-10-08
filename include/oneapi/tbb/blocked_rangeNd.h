@@ -138,11 +138,6 @@ class blocked_rangeNd : public blocked_rangeNd_impl<Value, N> {
     using base::base;
 };
 
-template <typename Arg>
-auto helper_function(Arg arg) {
-    return blocked_range{arg};
-}
-
 template <typename Value, typename... Values>
 blocked_rangeNd(std::initializer_list<Value>, std::initializer_list<Values>... )
 -> blocked_rangeNd<std::common_type_t<Value, Values...>, sizeof...(Values) + 1>;
