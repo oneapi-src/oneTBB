@@ -203,3 +203,12 @@ tbb::flow::composite_node<std::tuple<BigObjectPtr,
 ;;;
 
 
+
+
+
+bool T::try_put(const Output &v);
+void T::reserve_wait();
+void T::release_wait();
+
+
+;;
