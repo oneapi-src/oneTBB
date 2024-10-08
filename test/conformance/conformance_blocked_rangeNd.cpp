@@ -283,6 +283,8 @@ TEST_CASE("blocked_rangeNd deduction guides") {
     std::vector<const unsigned long*> v;
     using iterator = typename decltype(v)::iterator;
 
+    oneapi::tbb::blocked_range<int> br(0, 100);
+
     oneapi::tbb::blocked_rangeNd r1({v.begin(), v.end()});
     static_assert(std::is_same<decltype(r1),
         oneapi::tbb::blocked_rangeNd<iterator, 1>>::value);
@@ -295,10 +297,18 @@ TEST_CASE("blocked_rangeNd deduction guides") {
     static_assert(std::is_same<decltype(r3),
         oneapi::tbb::blocked_rangeNd<int, 4>>::value);
 
-    oneapi::tbb::blocked_rangeNd r4(r1);
-    static_assert(std::is_same<decltype(r4), decltype(r1)>::value);
+    oneapi::tbb::blocked_rangeNd r4(br);
+    static_assert(std::is_same<decltype(r4),
+        oneapi::tbb::blocked_rangeNd<int, 1>>::value);
 
-    oneapi::tbb::blocked_rangeNd r5(std::move(r2));
-    static_assert(std::is_same<decltype(r5), decltype(r2)>::value);
+    oneapi::tbb::blocked_rangeNd r5(br, br, br);
+    static_assert(std::is_same<decltype(r5),
+        oneapi::tbb::blocked_rangeNd<int, 3>>::value);
+
+    oneapi::tbb::blocked_rangeNd rc(r1);
+    static_assert(std::is_same<decltype(rc), decltype(r1)>::value);
+
+    oneapi::tbb::blocked_rangeNd rm(std::move(r2));
+    static_assert(std::is_same<decltype(rm), decltype(r2)>::value);
 }
 #endif // __TBB_CPP17_DEDUCTION_GUIDES_PRESENT

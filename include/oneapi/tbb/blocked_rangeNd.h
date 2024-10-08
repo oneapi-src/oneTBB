@@ -142,6 +142,10 @@ template <typename... Values>
 blocked_rangeNd(std::initializer_list<Values>...)
 -> blocked_rangeNd<std::common_type_t<Values...>, sizeof...(Values)>;
 
+template <typename... Values>
+blocked_rangeNd(blocked_range<Values>...)
+-> blocked_rangeNd<std::common_type_t<Values...>, sizeof...(Values)>;
+
 } // namespace d1
 } // namespace detail
 
