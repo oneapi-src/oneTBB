@@ -55,65 +55,67 @@ for (int i = 0; i < N; ++i) {
 
 
 try_to_get_a_next_task:
-    t_next = try to get a critical task
-             else try to pop from end of thread's local deque
-
-if t_next is not valid
+  t_next = try to get a critical task
+    else try to pop from end of thread’s local deque
+  if t_next is not valid
     do
-        do
-            t_next = try to get critical task
-                     else try to get from thread's affinity mailbox
-                     else try to get from arena's resumed tasks
-                     else try to get from arena's fifo tasks
-                     else try to steal task from random vitcim thread in same arena
-        while t_next is not valid and the thread should stay in this arena
+      do 
+        t_next = try to get critical task
+          else try to get from thread’s affinity mailbox
+          else try to get from arena’s resumed tasks
+          else try to get from arena’s fifo tasks
+          else try to steal task from random vitcim thread in same arena
+      while t_next is not valid and the thread should stay in this arena
     while thread must stay in this arena
-end if
+  end if
 
-return t next
+  return t_next
+
+
 
 
 ;;;;;;;;;;
 
 
 dispatcher:
-    if is master
-        t_next = starting task
-    else
-        t_next = try_to_get_a_next_task()
+  if is master 
+    t_next = starting task
+  else
+    t_next = try_to_get_a_next_task()
+  end if 
+
+  while t_next is valid
+
+    do // innermost execute and bypass loop
+      t = t_next
+      if t’s task group context has been canceled
+        t_next = t->cancel()
+      else
+        t_next = t->execute()
+      end if
+      t_crit = try to get critical task
+      if t_crit is valid
+        spawn t_next
+        t_next = t_crit
+      end if
+    while t_next is a valid task // end bypass loop
+
+    if I’m a master and work is done
+      break
+    else if I’m a worker, arena allotment has changed and I should leave
+      break
     end if
+ 
+    t_next = try_to_get_next_task()
 
-    while t_next is valid
+  end while // couldn’t find valid t_next
 
-        do // innermost execute and bypass loop
-            t = t_next
-            if t's task group context has been canceled
-                t_next = t->cancel()
-            else
-                t_next = t->execute()
-            end if
-            t_crit = try to get critical task
-            if t_crit is valid
-                spawn t_next
-                t_next = t_crit
-            end if
-        while t_next is a valid task // end bypass loop
+  if I’m a worker thread 
+    return myself to the global thread pool
+  else I’m a master thread
+    return
+  end if
 
-        if I'm a master and work is done
-            break
-        else if I'm a worker, arena allotment has changed and I should leave
-            break
-        end if
-
-        t_next = try_to_get_next_task()
-
-    end while // couldn't find valid t_next
-
-    if I'm a worker thread
-        return myself to the global thread pool
-    else I'm a master thread
-        return
-    end if
 
 
 
@@ -122,7 +124,6 @@ dispatcher:
 
 
 ;;;;;;;;;;;;;;
-
 
 
 void serial_f(int N, v_type* v) {
@@ -150,5 +151,3 @@ void pfor_unseq_f(int N, v_type* v) {
                 [](v_type& e) { e = f(e); });
         }, tbb::static_partitioner());
 }
-
-
