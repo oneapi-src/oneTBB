@@ -8,7 +8,7 @@ It is helpful for new users of parallel programming and experienced developers t
 
 It is recommended for you to have a basic knowledge of C++ programming and some experience with parallel programming concepts. 
 
-|full_name| is a runtime-based parallel programming model for C++ code that uses threads.
+|full_name| is a runtime-based parallel programming model for C++ code that uses tasks.
 The template-based runtime library can help you harness the latent performance of multi-core processors.
 
 oneTBB enables you to simplify parallel programming by breaking computation into parallel running tasks. Within a single process, 
