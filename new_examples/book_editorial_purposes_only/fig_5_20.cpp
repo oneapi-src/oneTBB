@@ -27,8 +27,8 @@ SPDX-License-Identifier: MIT
 #include <algorithm>
 #include <random>
 #include <atomic>
-#include <tbb/tick_count.h>
-#include <tbb/parallel_for.h>
+
+#include <tbb/tbb.h>
 
 int main(int argc, char** argv) {
 

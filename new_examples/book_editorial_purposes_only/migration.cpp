@@ -19,3 +19,10 @@
 // and provide consist code coloring for the book
 
 
+#include "../oneapi/tbb/parallel_for.h"
+
+
+
+
+namespace oneapi {
+    namespace tbb = ::tbb;
