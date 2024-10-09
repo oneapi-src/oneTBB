@@ -12,7 +12,7 @@ It is recommended for you to have a basic knowledge of C++ programming and some 
 The template-based runtime library can help you harness the latent performance of multi-core processors.
 
 oneTBB enables you to simplify parallel programming by breaking computation into parallel running tasks. Within a single process, 
-parallelism is carried out through threads, an operating system mechanism that allows the same or different sets of instructions 
+parallelism is carried out by mapping tasks to threads. Threads are an operating system mechanism that allows the same or different sets of instructions 
 to be executed simultaneously. Using threads can make your program work faster and more efficiently.
 
 Here you can see one of the possible executions of tasks by threads.
