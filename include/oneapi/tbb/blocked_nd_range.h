@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef __TBB_blocked_rangeNd_H
-#define __TBB_blocked_rangeNd_H
+#ifndef __TBB_blocked_nd_range_H
+#define __TBB_blocked_nd_range_H
 
 #include <algorithm>    // std::any_of
 #include <array>
@@ -34,25 +34,25 @@ namespace detail {
 namespace d1 {
 
 /*
-    The blocked_rangeNd_impl uses make_index_sequence<N> to automatically generate a ctor with
+    The blocked_nd_range_impl uses make_index_sequence<N> to automatically generate a ctor with
     exactly N arguments of the type tbb::blocked_range<Value>. Such ctor provides an opportunity
     to use braced-init-list parameters to initialize each dimension.
     Use of parameters, whose representation is a braced-init-list, but they're not
     std::initializer_list or a reference to one, produces a non-deduced context
     within template argument deduction.
 
-    NOTE: blocked_rangeNd must be exactly a templated alias to the blocked_rangeNd_impl
+    NOTE: blocked_nd_range must be exactly a templated alias to the blocked_nd_range_impl
     (and not e.g. a derived class), otherwise it would need to declare its own ctor
     facing the same problem that the impl class solves.
 */
 
 template<typename Value, unsigned int N, typename = detail::make_index_sequence<N>>
     __TBB_requires(blocked_range_value<Value>)
-class blocked_rangeNd_impl;
+class blocked_nd_range_impl;
 
 template<typename Value, unsigned int N, std::size_t... Is>
     __TBB_requires(blocked_range_value<Value>)
-class blocked_rangeNd_impl<Value, N, detail::index_sequence<Is...>> {
+class blocked_nd_range_impl<Value, N, detail::index_sequence<Is...>> {
 public:
     //! Type of a value.
     using value_type = Value;
@@ -63,12 +63,12 @@ public:
     //! Type for the size of a range.
     using size_type = typename dim_range_type::size_type;
 
-    blocked_rangeNd_impl() = delete;
+    blocked_nd_range_impl() = delete;
 
     //! Constructs N-dimensional range over N half-open intervals each represented as tbb::blocked_range<Value>.
-    blocked_rangeNd_impl(const indexed_t<dim_range_type, Is>&... args) : my_dims{ {args...} } {}
+    blocked_nd_range_impl(const indexed_t<dim_range_type, Is>&... args) : my_dims{ {args...} } {}
 
-    blocked_rangeNd_impl(const value_type (&size)[N], size_type grainsize = 1) :
+    blocked_nd_range_impl(const value_type (&size)[N], size_type grainsize = 1) :
         my_dims { dim_range_type(0, size[Is], grainsize)... } {}
 
     //! Dimensionality of a range.
@@ -98,22 +98,22 @@ public:
         });
     }
 
-    blocked_rangeNd_impl(blocked_rangeNd_impl& r, proportional_split proportion) : my_dims(r.my_dims) {
+    blocked_nd_range_impl(blocked_nd_range_impl& r, proportional_split proportion) : my_dims(r.my_dims) {
         do_split(r, proportion);
     }
 
-    blocked_rangeNd_impl(blocked_rangeNd_impl& r, split proportion) : my_dims(r.my_dims) {
+    blocked_nd_range_impl(blocked_nd_range_impl& r, split proportion) : my_dims(r.my_dims) {
         do_split(r, proportion);
     }
 
 private:
-    static_assert(N != 0, "zero dimensional blocked_rangeNd can't be constructed");
+    static_assert(N != 0, "zero dimensional blocked_nd_range can't be constructed");
 
     //! Ranges in each dimension.
     std::array<dim_range_type, N> my_dims;
 
     template<typename split_type>
-    void do_split(blocked_rangeNd_impl& r, split_type proportion) {
+    void do_split(blocked_nd_range_impl& r, split_type proportion) {
         static_assert((std::is_same<split_type, split>::value || std::is_same<split_type, proportional_split>::value),
                       "type of split object is incorrect");
         __TBB_ASSERT(r.is_divisible(), "can't split not divisible range");
@@ -134,14 +134,14 @@ private:
 };
 
 template<typename Value, unsigned int N>
-using blocked_rangeNd = blocked_rangeNd_impl<Value, N>;
+using blocked_nd_range = blocked_nd_range_impl<Value, N>;
 
 } // namespace d1
 } // namespace detail
 
 inline namespace v1 {
-using detail::d1::blocked_rangeNd;
+using detail::d1::blocked_nd_range;
 } // namespace v1
 } // namespace tbb
 
-#endif /* __TBB_blocked_rangeNd_H */
+#endif /* __TBB_blocked_nd_range_H */

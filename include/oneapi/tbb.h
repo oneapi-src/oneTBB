@@ -29,7 +29,7 @@
 #include "oneapi/tbb/blocked_range2d.h"
 #include "oneapi/tbb/blocked_range3d.h"
 #if TBB_PREVIEW_BLOCKED_RANGE_ND
-#include "tbb/blocked_rangeNd.h"
+#include "oneapi/tbb/blocked_nd_range.h"
 #endif
 #include "oneapi/tbb/cache_aligned_allocator.h"
 #include "oneapi/tbb/combinable.h"

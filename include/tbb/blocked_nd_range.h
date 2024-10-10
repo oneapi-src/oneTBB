@@ -14,4 +14,4 @@
     limitations under the License.
 */
 
-#include "../oneapi/tbb/blocked_rangeNd.h"
+#include "../oneapi/tbb/blocked_nd_range.h"
