@@ -25,7 +25,7 @@
 #include "tbb/blocked_range2d.h"
 #include "tbb/blocked_range3d.h"
 #define TBB_PREVIEW_BLOCKED_RANGE_ND 1
-#include "tbb/blocked_rangeNd.h"
+#include "tbb/blocked_nd_range.h"
 
 //! \file test_blocked_range.cpp
 //! \brief Test for [algorithms.blocked_range] specification
@@ -120,12 +120,12 @@ template <typename... Types>
 void test_blocked_range3d_col_invalid_constraint() {}
 
 template <typename T>
-concept well_formed_blocked_range_Nd_instantiation_basic = requires {
-    typename tbb::blocked_rangeNd<T, 1>;
+concept well_formed_blocked_nd_range_instantiation_basic = requires {
+    typename tbb::blocked_nd_range<T, 1>;
 };
 
 template <typename... Types>
-concept well_formed_blocked_range_Nd_instantiation = ( ... && well_formed_blocked_range_Nd_instantiation_basic<Types> );
+concept well_formed_blocked_nd_range_instantiation = ( ... && well_formed_blocked_nd_range_instantiation_basic<Types> );
 
 //! \brief \ref error_guessing
 TEST_CASE("constraints for blocked_range value") {
@@ -180,13 +180,13 @@ TEST_CASE("constraints for blocked_range3d value") {
 }
 
 //! \brief \ref error_guessing
-TEST_CASE("constraints for blocked_rangeNd value") {
+TEST_CASE("constraints for blocked_nd_range value") {
     using namespace test_concepts::blocked_range_value;
     using const_iterator = typename std::vector<int>::const_iterator;
 
-    static_assert(well_formed_blocked_range_Nd_instantiation<Correct, char, int, std::size_t, const_iterator>);
+    static_assert(well_formed_blocked_nd_range_instantiation<Correct, char, int, std::size_t, const_iterator>);
 
-    static_assert(!well_formed_blocked_range_Nd_instantiation<NonCopyable, NonCopyAssignable, NonDestructible,
+    static_assert(!well_formed_blocked_nd_range_instantiation<NonCopyable, NonCopyAssignable, NonDestructible,
                                                               NoOperatorLess, OperatorLessNonConst, WrongReturnOperatorLess,
                                                               NoOperatorMinus, OperatorMinusNonConst, WrongReturnOperatorMinus,
                                                               NoOperatorPlus, OperatorPlusNonConst, WrongReturnOperatorPlus>);

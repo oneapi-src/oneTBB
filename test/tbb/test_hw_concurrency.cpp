@@ -48,7 +48,7 @@
 #include "tbb/blocked_range2d.h"
 #include "tbb/blocked_range3d.h"
 #define TBB_PREVIEW_BLOCKED_RANGE_ND 1
-#include "tbb/blocked_rangeNd.h"
+#include "tbb/blocked_nd_range.h"
 
 // Declaration of global objects are needed to check that
 // it does not initialize the task scheduler, and in particular
@@ -87,7 +87,7 @@ tbb::tick_count test_tc;
 tbb::blocked_range<std::size_t> br(0, 1);
 tbb::blocked_range2d<std::size_t> br2d(0, 1, 0, 1);
 tbb::blocked_range3d<std::size_t> br3d(0, 1, 0, 1, 0, 1);
-tbb::blocked_rangeNd<std::size_t, 2> brNd({0, 1}, {0, 1});
+tbb::blocked_nd_range<std::size_t, 2> brNd({0, 1}, {0, 1});
 
 //! \brief \ref error_guessing
 TEST_CASE("Check absence of scheduler initialization") {

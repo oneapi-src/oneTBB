@@ -19,10 +19,10 @@
 #include "common/utils_assert.h"
 #include "common/utils_concurrency_limit.h"
 
-//! \file conformance_blocked_rangeNd.cpp
+//! \file conformance_blocked_nd_range.cpp
 //! \brief Test for [preview] functionality
 
-#include "oneapi/tbb/blocked_rangeNd.h"
+#include "oneapi/tbb/blocked_nd_range.h"
 #include "oneapi/tbb/parallel_for.h"
 #include "oneapi/tbb/global_control.h"
 
@@ -159,10 +159,10 @@ int MakeInt(int i) { return i; }
 
 template<unsigned int DimAmount>
 void SerialTest() {
-    static_assert((oneapi::tbb::blocked_rangeNd<int, DimAmount>::dim_count() == oneapi::tbb::blocked_rangeNd<AbstractValueType, DimAmount>::dim_count()),
+    static_assert((oneapi::tbb::blocked_nd_range<int, DimAmount>::dim_count() == oneapi::tbb::blocked_nd_range<AbstractValueType, DimAmount>::dim_count()),
                          "different amount of dimensions");
 
-    using range_t = oneapi::tbb::blocked_rangeNd<AbstractValueType, DimAmount>;
+    using range_t = oneapi::tbb::blocked_nd_range<AbstractValueType, DimAmount>;
     using utils_t = range_utils<range_t, DimAmount>;
 
     // Generate empty range
@@ -189,7 +189,7 @@ template<> void SerialTest<0>() {}
 
 template<unsigned int DimAmount>
 void ParallelTest() {
-    using range_t = oneapi::tbb::blocked_rangeNd<int, DimAmount>;
+    using range_t = oneapi::tbb::blocked_nd_range<int, DimAmount>;
     using utils_t = range_utils<range_t, DimAmount>;
 
     // Max size is                                 1 << 20 - 1 bytes
@@ -209,35 +209,35 @@ void ParallelTest() {
 }
 template<> void ParallelTest<0>() {}
 
-//! Testing blocked_rangeNd construction
+//! Testing blocked_nd_range construction
 //! \brief \ref interface
 TEST_CASE("Construction") {
-    oneapi::tbb::blocked_rangeNd<int, 1>{ { 0,13,3 } };
+    oneapi::tbb::blocked_nd_range<int, 1>{ { 0,13,3 } };
 
-    oneapi::tbb::blocked_rangeNd<int, 1>{ oneapi::tbb::blocked_range<int>{ 0,13,3 } };
+    oneapi::tbb::blocked_nd_range<int, 1>{ oneapi::tbb::blocked_range<int>{ 0,13,3 } };
 
-    oneapi::tbb::blocked_rangeNd<int, 2>(oneapi::tbb::blocked_range<int>(-8923, 8884, 13), oneapi::tbb::blocked_range<int>(-8923, 5, 13));
+    oneapi::tbb::blocked_nd_range<int, 2>(oneapi::tbb::blocked_range<int>(-8923, 8884, 13), oneapi::tbb::blocked_range<int>(-8923, 5, 13));
 
-    oneapi::tbb::blocked_rangeNd<int, 2>({ -8923, 8884, 13 }, { -8923, 8884, 13 });
+    oneapi::tbb::blocked_nd_range<int, 2>({ -8923, 8884, 13 }, { -8923, 8884, 13 });
 
     oneapi::tbb::blocked_range<int> r1(0, 13);
 
     oneapi::tbb::blocked_range<int> r2(-12, 23);
 
-    oneapi::tbb::blocked_rangeNd<int, 2>({ { -8923, 8884, 13 }, r1});
+    oneapi::tbb::blocked_nd_range<int, 2>({ { -8923, 8884, 13 }, r1});
 
-    oneapi::tbb::blocked_rangeNd<int, 2>({ r2, r1 });
+    oneapi::tbb::blocked_nd_range<int, 2>({ r2, r1 });
 
-    oneapi::tbb::blocked_rangeNd<int, 2>(r1, r2);
+    oneapi::tbb::blocked_nd_range<int, 2>(r1, r2);
 
     int sizes[] = {174, 39, 2481, 93};
-    oneapi::tbb::blocked_rangeNd<int, 4> rNd_1(sizes, /*grainsize*/7);
+    oneapi::tbb::blocked_nd_range<int, 4> rNd_1(sizes, /*grainsize*/7);
 
-    oneapi::tbb::blocked_rangeNd<int, 4> rNd_2({174, 39, 2481, 93}, /*grainsize*/11);
+    oneapi::tbb::blocked_nd_range<int, 4> rNd_2({174, 39, 2481, 93}, /*grainsize*/11);
 
     for (unsigned i = 0; i < rNd_1.dim_count(); ++i) {
-        oneapi::tbb::blocked_rangeNd<int, 4>::dim_range_type dim1 = rNd_1.dim(i);
-        oneapi::tbb::blocked_rangeNd<int, 4>::dim_range_type dim2 = rNd_2.dim(i);
+        oneapi::tbb::blocked_nd_range<int, 4>::dim_range_type dim1 = rNd_1.dim(i);
+        oneapi::tbb::blocked_nd_range<int, 4>::dim_range_type dim2 = rNd_2.dim(i);
         REQUIRE(dim1.begin()==0);
         REQUIRE(dim2.begin()==0);
         unsigned int szi = sizes[i]; // to compare with unsigned integrals without warnings
@@ -247,7 +247,7 @@ TEST_CASE("Construction") {
         REQUIRE(dim2.grainsize()==11);
     }
 
-    oneapi::tbb::blocked_rangeNd<AbstractValueType, 4>({ MakeAbstractValue(-3), MakeAbstractValue(13), 8 },
+    oneapi::tbb::blocked_nd_range<AbstractValueType, 4>({ MakeAbstractValue(-3), MakeAbstractValue(13), 8 },
                                                { MakeAbstractValue(-53), MakeAbstractValue(23), 2 },
                                                { MakeAbstractValue(-23), MakeAbstractValue(33), 1 },
                                                { MakeAbstractValue(-13), MakeAbstractValue(43), 7 });
@@ -255,14 +255,14 @@ TEST_CASE("Construction") {
 
 static const std::size_t N = 4;
 
-//! Testing blocked_rangeNd interface
+//! Testing blocked_nd_range interface
 //! \brief \ref interface \ref requirement
 TEST_CASE("Serial test") {
     SerialTest<N>();
 }
 
 #if !EMSCRIPTEN
-//! Testing blocked_rangeNd interface with parallel_for
+//! Testing blocked_nd_range interface with parallel_for
 //! \brief \ref requirement
 TEST_CASE("Parallel test") {
     for ( auto concurrency_level : utils::concurrency_range() ) {
@@ -272,13 +272,13 @@ TEST_CASE("Parallel test") {
 }
 #endif
 
-//! Testing blocked_rangeNd with proportional splitting
+//! Testing blocked_nd_range with proportional splitting
 //! \brief \ref interface \ref requirement
-TEST_CASE("blocked_rangeNd proportional splitting") {
-    oneapi::tbb::blocked_rangeNd<int, 2> original{{0, 100}, {0, 100}};
-    oneapi::tbb::blocked_rangeNd<int, 2> first(original);
+TEST_CASE("blocked_nd_range proportional splitting") {
+    oneapi::tbb::blocked_nd_range<int, 2> original{{0, 100}, {0, 100}};
+    oneapi::tbb::blocked_nd_range<int, 2> first(original);
     oneapi::tbb::proportional_split ps(3, 1);
-    oneapi::tbb::blocked_rangeNd<int, 2> second(first, ps);
+    oneapi::tbb::blocked_nd_range<int, 2> second(first, ps);
 
     int expected_first_end = static_cast<int>(
         original.dim(0).begin() + ps.left() * (original.dim(0).end() - original.dim(0).begin()) / (ps.left() + ps.right())
