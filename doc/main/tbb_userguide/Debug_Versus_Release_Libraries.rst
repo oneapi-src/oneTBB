@@ -45,7 +45,7 @@ That symbol defaults to 1 in the following conditions:
 -  When ``TBB_USE_DEBUG=1``.
 -  On the Microsoft Windows\* operating system, when ``_DEBUG=1``.
 
-.. note :: Intel Inspector 2024.2 is the final version. No further feature improvements or security fixes will be available after this final release. 
+.. note:: Intel Inspector 2024.2 is the final version. No further feature improvements or security fixes will be available after this final release. 
            For more information, see the `Intel Inspector transition notice <https://www.intel.com/content/www/us/en/developer/articles/technical/inspector-deprecation.html>`_.
 
 The :ref:`reference` section explains the default values in more detail.
