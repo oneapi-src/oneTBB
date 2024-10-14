@@ -120,7 +120,7 @@ int main(int argc, char *argv[]) {
             else {
                 oneapi::tbb::global_control c(oneapi::tbb::global_control::max_allowed_parallelism,
                                               p);
-                mu.clear();
+                utility::measurements mu;
                 for (int iter = 0; iter < numberOfIterations; ++iter) {
                     mu.start();
                     for (int i = 0; i < numberOfFrames; ++i) {

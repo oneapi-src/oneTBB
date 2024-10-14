@@ -379,23 +379,22 @@ public:
     double computeRelError() {
         auto averageTimePerFrame =
             std::accumulate(_secPerFrame.begin(), _secPerFrame.end(), 0.0) / _secPerFrame.size();
-        std::vector<double> diff(_secPerFrame.size());
-        std::transform(_secPerFrame.begin(),
-                       _secPerFrame.end(),
-                       diff.begin(),
-                       [averageTimePerFrame](double x) {
-                           return (x - averageTimePerFrame);
+        double sumOfSquareDiff = 0.0;
+        std::for_each(_secPerFrame.begin(),
+                      _secPerFrame.end(),
+                       [averageTimePerFrame, &sumOfSquareDiff](double x) {
+                           double diff = (x - averageTimePerFrame);
+                           sumOfSquareDiff += diff * diff;
                        });
-        double sumOfSquareDiff = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
         double stdDev = std::sqrt(sumOfSquareDiff / _secPerFrame.size());
         double relError = 100 * (stdDev / averageTimePerFrame);
         return relError;
     }
 
 private:
-    std::vector<double> _secPerFrame;
-    std::chrono::steady_clock::time_point _startTime;
-    std::chrono::steady_clock::time_point _endTime;
+    using time_point = std::chrono::steady_clock::time_point;
+    time_point _startTime;
+    std::vector< std::pair<time_point, time_point> > _time_intervals;
 };
 
 namespace internal {
