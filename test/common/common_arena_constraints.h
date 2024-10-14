@@ -560,16 +560,19 @@ constraints_container generate_constraints_variety() {
 #endif /*__HYBRID_CPUS_TESTING*/
         }
 
+        int max_threads_per_core = static_cast<int>(system_info::get_maximal_threads_per_core());
         // Some constraints may cause unexpected behavior, which would be fixed later.
         if (get_processors_group_count() > 1) {
-            for(auto it = results.begin(); it != results.end(); ++it) {
-                if (it->max_threads_per_core != tbb::task_arena::automatic
+            for(auto it = results.begin(); it != results.end();) {
+                if (it->max_threads_per_core != max_threads_per_core
                    && (it->numa_id == tbb::task_arena::automatic || tbb::info::numa_nodes().size() == 1)
 #if __HYBRID_CPUS_TESTING
                    && (it->core_type == tbb::task_arena::automatic || tbb::info::core_types().size() == 1)
 #endif /*__HYBRID_CPUS_TESTING*/
                 ) {
                     it = results.erase(it);
+                } else {
+                    ++it;
                 }
             }
         }
