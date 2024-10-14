@@ -17,5 +17,6 @@ if (BUILD_TESTING)
   add_subdirectory(intro)
   add_subdirectory(migration)
   add_subdirectory(performance_tuning)
+  add_subdirectory(tasks)
 endif (BUILD_TESTING)
 
