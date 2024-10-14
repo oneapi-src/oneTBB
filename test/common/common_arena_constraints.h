@@ -560,7 +560,7 @@ constraints_container generate_constraints_variety() {
 #endif /*__HYBRID_CPUS_TESTING*/
         }
 
-        int max_threads_per_core = static_cast<int>(system_info::get_maximal_threads_per_core());
+        int max_threads_per_core = system_info::get_available_max_threads_values().back();
         // Some constraints may cause unexpected behavior, which would be fixed later.
         if (get_processors_group_count() > 1) {
             for(auto it = results.begin(); it != results.end();) {
