@@ -19,6 +19,7 @@
 #include <tbb/tbb.h>
 
 const int block_size = 512;
+using BlockIndex = std::pair<size_t, size_t>;
 
 void serialFwdSub(std::vector<double>& x, 
                   const std::vector<double>& a, 
@@ -51,6 +52,53 @@ void serialFwdSubTiled(std::vector<double>& x,
   }
 }
 
+#if TBB_VERSION_MAJOR > 2020
+class FwdSubFunctor {
+public:
+  FwdSubFunctor(tbb::task_group& tg, 
+                int N, int num_blocks, 
+                const std::pair<size_t, size_t>& bi, 
+                std::vector<double>& x, 
+                const std::vector<double>& a, 
+                std::vector<double>& b,
+                std::vector<std::atomic<char>>& ref_count) : 
+                my_tg(tg), my_N(N), my_num_blocks(num_blocks), 
+                my_index(new BlockIndex{bi}), 
+                my_x(x), my_a(a), my_b(b), my_ref_count(ref_count) {}
+
+  void operator()() const {
+    auto [r, c] = *my_index;
+    computeBlock(my_N, r, c, my_x, my_a, my_b);
+    // add successor to right if ready
+    bool recycle_as_c1 = false;
+    if (c + 1 <= r && --my_ref_count[r*my_num_blocks + c + 1] == 0) {
+      recycle_as_c1 = true;
+    }
+    // add succesor below if ready
+    if (r + 1 < (size_t)my_num_blocks && --my_ref_count[(r+1)*my_num_blocks + c] == 0) {
+      if (recycle_as_c1) {
+        my_tg.run(FwdSubFunctor{my_tg, my_N, my_num_blocks, BlockIndex(r+1, c), my_x, my_a, my_b, my_ref_count});
+      } else {
+        *my_index = BlockIndex{r+1,c};
+        my_tg.run(*this);
+      }
+    }
+    if (recycle_as_c1) {
+      *my_index = BlockIndex{r,c+1};
+      my_tg.run(*this);
+    }
+  }
+
+private:
+  tbb::task_group& my_tg;
+  const std::shared_ptr<BlockIndex> my_index;
+  const int my_N, my_num_blocks;
+  std::vector<double>& my_x;
+  const std::vector<double>& my_a;
+  std::vector<double>& my_b;
+  std::vector<std::atomic<char>>& my_ref_count;
+};
+
 void parallelFwdSub(std::vector<double>& x, 
                     const std::vector<double>& a, 
                     std::vector<double>& b) {
@@ -68,41 +116,90 @@ void parallelFwdSub(std::vector<double>& x,
     ref_count[r*num_blocks + r] = 1;
   }
 
-  using BlockIndex = std::pair<size_t, size_t>;
   BlockIndex top_left(0,0);
 
-#if TBB_VERSION_MAJOR > 2020
-  tbb::parallel_for_each( &top_left, &top_left+1, 
-    [&](const BlockIndex& bi, tbb::feeder<BlockIndex>& f) {
-      auto [r, c] = bi;
-      computeBlock(N, r, c, x, a, b);
-      // add successor to right if ready
-      if (c + 1 <= r && --ref_count[r*num_blocks + c + 1] == 0) {
-        f.add(BlockIndex(r, c + 1));
-      }
-      // add succesor below if ready
-      if (r + 1 < (size_t)num_blocks && --ref_count[(r+1)*num_blocks + c] == 0) {
-        f.add(BlockIndex(r+1, c));
-      }
-    }
-  );
-#else
-  tbb::parallel_do( &top_left, &top_left+1, 
-    [&](const BlockIndex& bi, tbb::parallel_do_feeder<BlockIndex>& f) {
-      auto [r, c] = bi;
-      computeBlock(N, r, c, x, a, b);
-      // add successor to right if ready
-      if (c + 1 <= r && --ref_count[r*num_blocks + c + 1] == 0) {
-        f.add(BlockIndex(r, c + 1));
-      }
-      // add succesor below if ready
-      if (r + 1 < (size_t)num_blocks && --ref_count[(r+1)*num_blocks + c] == 0) {
-        f.add(BlockIndex(r+1, c));
-      }
-    }
-  );
-#endif
+  tbb::task_group tg;
+  tg.run(FwdSubFunctor{tg, N, num_blocks, top_left, x, a, b, ref_count});
+  tg.wait();
 }
+#else
+using RootTask = tbb::empty_task;
+
+class FwdSubTask : public tbb::task {
+public:
+  FwdSubTask(RootTask& root, 
+             int N, int num_blocks, 
+             const std::pair<size_t, size_t>& bi, 
+             std::vector<double>& x, 
+             const std::vector<double>& a, 
+             std::vector<double>& b,
+             std::vector<std::atomic<char>>& ref_count) : 
+             my_root(root), my_N(N), my_num_blocks(num_blocks), my_index(bi), 
+             my_x(x), my_a(a), my_b(b), my_ref_count(ref_count) {}
+
+  tbb::task* execute() override {
+      auto [r, c] = my_index;
+      computeBlock(my_N, r, c, my_x, my_a, my_b);
+      // add successor to right if ready
+      bool recycle_as_c1 = false;
+      if (c + 1 <= r && --my_ref_count[r*my_num_blocks + c + 1] == 0) {
+        recycle_as_c1 = true;
+      }
+      // add succesor below if ready
+      if (r + 1 < (size_t)my_num_blocks && --my_ref_count[(r+1)*my_num_blocks + c] == 0) {
+        if (recycle_as_c1) {
+          FwdSubTask& child = *new(allocate_additional_child_of(my_root))
+              FwdSubTask(my_root, my_N, my_num_blocks, {r+1, c}, 
+                         my_x, my_a, my_b, my_ref_count);
+          tbb::task::spawn(child);
+        } else {
+          my_index = {r+1, c};
+          recycle_to_reexecute();
+        }
+      }
+      if (recycle_as_c1) {
+        my_index = {r, c+1};
+        recycle_to_reexecute();
+      }
+      return nullptr;
+  }
+
+private:
+  RootTask& my_root;
+  BlockIndex my_index;
+  const int my_N, my_num_blocks;
+  std::vector<double>& my_x;
+  const std::vector<double>& my_a;
+  std::vector<double>& my_b;
+  std::vector<std::atomic<char>>& my_ref_count;
+};
+
+void parallelFwdSub(std::vector<double>& x, 
+                    const std::vector<double>& a, 
+                    std::vector<double>& b) {
+  const int N = x.size();
+  const int num_blocks = N / block_size;
+
+  // create reference counts
+  std::vector<std::atomic<char>> ref_count(num_blocks*num_blocks);
+  ref_count[0] = 0;
+  for (int r = 1; r < num_blocks; ++r) {
+    ref_count[r*num_blocks] = 1;
+    for (int c = 1; c < r; ++c) {
+      ref_count[r*num_blocks + c] = 2;
+    }
+    ref_count[r*num_blocks + r] = 1;
+  }
+
+  BlockIndex top_left(0,0);
+  RootTask& root = *new(tbb::task::allocate_root()) RootTask{};
+  root.set_ref_count(2);
+  FwdSubTask& top_left_task = 
+      *new(root.allocate_child()) FwdSubTask(root, N, num_blocks, top_left, x, a, b, ref_count);
+  tbb::task::spawn(top_left_task);
+  root.wait_for_all();
+}
+#endif
 
 #include <iostream>
 

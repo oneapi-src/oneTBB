@@ -19,6 +19,7 @@
 #include <tbb/tbb.h>
 
 const int block_size = 512;
+using BlockIndex = std::pair<size_t, size_t>;
 
 void serialFwdSub(std::vector<double>& x, 
                   const std::vector<double>& a, 
@@ -51,6 +52,101 @@ void serialFwdSubTiled(std::vector<double>& x,
   }
 }
 
+void fwdSubTGBody(tbb::task_group& tg,
+                int N, int num_blocks, 
+                const std::pair<size_t, size_t> bi, 
+                std::vector<double>& x, 
+                const std::vector<double>& a, 
+                std::vector<double>& b,
+                std::vector<std::atomic<char>>& ref_count) {
+  auto [r, c] = bi;
+  computeBlock(N, r, c, x, a, b);
+  // add successor to right if ready
+  if (c + 1 <= r && --ref_count[r*num_blocks + c + 1] == 0) {
+    tg.run([&, N, num_blocks, r, c]() { 
+      fwdSubTGBody(tg, N, num_blocks, BlockIndex(r, c+1), x, a, b, ref_count);
+    });
+  }
+  // add succesor below if ready
+  if (r + 1 < (size_t)num_blocks && --ref_count[(r+1)*num_blocks + c] == 0) {
+    tg.run([&, N, num_blocks, r, c]() { 
+      fwdSubTGBody(tg, N, num_blocks, BlockIndex(r+1, c), x, a, b, ref_count);
+    });
+  }
+}
+
+void parallelFwdSubTaskGroup(std::vector<double>& x, 
+                             const std::vector<double>& a, 
+                             std::vector<double>& b) {
+  const int N = x.size();
+  const int num_blocks = N / block_size;
+
+  // create reference counts
+  std::vector<std::atomic<char>> ref_count(num_blocks*num_blocks);
+  ref_count[0] = 0;
+  for (int r = 1; r < num_blocks; ++r) {
+    ref_count[r*num_blocks] = 1;
+    for (int c = 1; c < r; ++c) {
+      ref_count[r*num_blocks + c] = 2;
+    }
+    ref_count[r*num_blocks + r] = 1;
+  }
+
+  BlockIndex top_left(0,0);
+
+  tbb::task_group tg;
+  tg.run([&]() {
+    fwdSubTGBody(tg, N, num_blocks, top_left, x, a, b, ref_count);
+  });
+  tg.wait();
+}
+
+#if TBB_VERSION_MAJOR <= 2020
+using RootTask = tbb::empty_task;
+
+class FwdSubTask : public tbb::task {
+public:
+  FwdSubTask(RootTask& root, 
+             int N, int num_blocks, 
+             const std::pair<size_t, size_t>& bi, 
+             std::vector<double>& x, 
+             const std::vector<double>& a, 
+             std::vector<double>& b,
+             std::vector<std::atomic<char>>& ref_count) : 
+             my_root(root), my_N(N), my_num_blocks(num_blocks), my_index(bi), 
+             my_x(x), my_a(a), my_b(b), my_ref_count(ref_count) {}
+
+  tbb::task* execute() override {
+      auto [r, c] = my_index;
+      computeBlock(my_N, r, c, my_x, my_a, my_b);
+      // add successor to right if ready
+      if (c + 1 <= r && --my_ref_count[r*my_num_blocks + c + 1] == 0) {
+        FwdSubTask& child = *new(allocate_additional_child_of(my_root))
+            FwdSubTask(my_root, my_N, my_num_blocks, {r, c+1}, 
+                       my_x, my_a, my_b, my_ref_count);
+        tbb::task::spawn(child);
+      }
+      // add succesor below if ready
+      if (r + 1 < (size_t)my_num_blocks && --my_ref_count[(r+1)*my_num_blocks + c] == 0) {
+        FwdSubTask& child = *new(allocate_additional_child_of(my_root))
+            FwdSubTask(my_root, my_N, my_num_blocks, {r+1, c}, 
+                       my_x, my_a, my_b, my_ref_count);
+        tbb::task::spawn(child);
+      }
+      return nullptr;
+  }
+
+private:
+  RootTask& my_root;
+  BlockIndex my_index;
+  const int my_N, my_num_blocks;
+  std::vector<double>& my_x;
+  const std::vector<double>& my_a;
+  std::vector<double>& my_b;
+  std::vector<std::atomic<char>>& my_ref_count;
+};
+#endif
+
 void parallelFwdSub(std::vector<double>& x, 
                     const std::vector<double>& a, 
                     std::vector<double>& b) {
@@ -68,7 +164,6 @@ void parallelFwdSub(std::vector<double>& x,
     ref_count[r*num_blocks + r] = 1;
   }
 
-  using BlockIndex = std::pair<size_t, size_t>;
   BlockIndex top_left(0,0);
 
 #if TBB_VERSION_MAJOR > 2020
@@ -87,20 +182,12 @@ void parallelFwdSub(std::vector<double>& x,
     }
   );
 #else
-  tbb::parallel_do( &top_left, &top_left+1, 
-    [&](const BlockIndex& bi, tbb::parallel_do_feeder<BlockIndex>& f) {
-      auto [r, c] = bi;
-      computeBlock(N, r, c, x, a, b);
-      // add successor to right if ready
-      if (c + 1 <= r && --ref_count[r*num_blocks + c + 1] == 0) {
-        f.add(BlockIndex(r, c + 1));
-      }
-      // add succesor below if ready
-      if (r + 1 < (size_t)num_blocks && --ref_count[(r+1)*num_blocks + c] == 0) {
-        f.add(BlockIndex(r+1, c));
-      }
-    }
-  );
+  RootTask& root = *new(tbb::task::allocate_root()) RootTask{};
+  root.set_ref_count(2);
+  FwdSubTask& top_left_task = 
+      *new(root.allocate_child()) FwdSubTask(root, N, num_blocks, top_left, x, a, b, ref_count);
+  tbb::task::spawn(top_left_task);
+  root.wait_for_all();
 #endif
 }
 
@@ -118,12 +205,15 @@ int main() {
   std::vector<double> b_serial(N), x_serial(N);
   std::vector<double> b_serial_tiled(N), x_serial_tiled(N);
   std::vector<double> b_tbb(N), x_tbb(N);
+  std::vector<double> b_tbb_task_group(N), x_tbb_task_group(N);
 
   auto x_gold = initForwardSubstitution(x_serial,a,b_serial);
   initForwardSubstitution(x_serial_tiled,a,b_serial_tiled);
   initForwardSubstitution(x_tbb,a,b_tbb);
+  initForwardSubstitution(x_tbb_task_group,a,b_tbb_task_group);
 
-  double serial_time = 0.0, serial_tiled_time = 0.0, tbb_time = 0.0;
+  double serial_time = 0.0, serial_tiled_time = 0.0, 
+         tbb_time = 0.0, tbb_task_group_time;
   {
     tbb::tick_count t0 = tbb::tick_count::now();
     serialFwdSub(x_serial,a,b_serial);
@@ -140,6 +230,11 @@ int main() {
     parallelFwdSub(x_tbb,a,b_tbb);
     tbb_time = (tbb::tick_count::now() - t0).seconds();
   }
+  {
+    tbb::tick_count t0 = tbb::tick_count::now();
+    parallelFwdSubTaskGroup(x_tbb_task_group,a,b_tbb_task_group);
+    tbb_task_group_time = (tbb::tick_count::now() - t0).seconds();
+  }
   for (int i = 0; i < N; ++i) {
     if (x_serial[i] > 1.1*x_gold[i] || x_serial[i] < 0.9*x_gold[i]) {
         std::cerr << "serial did not validate at " << i << " " << x_serial[i] << " != " << x_gold[i] << std::endl;
@@ -150,11 +245,16 @@ int main() {
     if (x_tbb[i] > 1.1*x_gold[i] || x_tbb[i] < 0.9*x_gold[i]) {
         std::cerr << "parallel did not validate at " << i << " " << x_tbb[i] << " != " << x_gold[i] << std::endl;
     }
+    if (x_tbb_task_group[i] > 1.1*x_gold[i] || x_tbb_task_group[i] < 0.9*x_gold[i]) {
+        std::cerr << "parallel did not validate at " << i << " " << x_tbb_task_group[i] << " != " << x_gold[i] << std::endl;
+    }
   }
   std::cout << "serial_time == " << serial_time << " seconds" << std::endl;
   std::cout << "serial_tiled_time == " << serial_tiled_time << " seconds" << std::endl;
   std::cout << "tbb_time    == " << tbb_time << " seconds" << std::endl;
+  std::cout << "tbb_task_group_time    == " << tbb_task_group_time << " seconds" << std::endl;
   std::cout << "speedup (serial_tiled_time/tbb_time) == " << serial_tiled_time/tbb_time << std::endl;
+  std::cout << "speedup (serial_tiled_time/tbb_task_group_time) == " << serial_tiled_time/tbb_task_group_time << std::endl;
   return 0;
 }
 
