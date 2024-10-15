@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
     oneapi::tbb::tick_count mainStartTime = oneapi::tbb::tick_count::now();
     RunOptions options = ParseCommandLine(argc, argv);
     SeismicVideo video(u, options.numberOfFrames, options.threads.last, options.parallel);
-    utility::measurements mu;
+    double rel_error;
 
     // video layer init
     if (video.init_window(u.UniverseWidth, u.UniverseHeight)) {
@@ -120,7 +120,7 @@ int main(int argc, char *argv[]) {
             else {
                 oneapi::tbb::global_control c(oneapi::tbb::global_control::max_allowed_parallelism,
                                               p);
-                utility::measurements mu;
+                utility::measurements mu(numberOfIterations);
                 for (int iter = 0; iter < numberOfIterations; ++iter) {
                     mu.start();
                     for (int i = 0; i < numberOfFrames; ++i) {
@@ -128,6 +128,7 @@ int main(int argc, char *argv[]) {
                     }
                     mu.stop();
                 }
+                rel_error = mu.computeRelError();
             }
 
             if (!options.silent) {
@@ -147,7 +148,6 @@ int main(int argc, char *argv[]) {
         }
     }
     video.terminate();
-    double rel_error = mu.computeRelError();
     utility::report_elapsed_time((oneapi::tbb::tick_count::now() - mainStartTime).seconds());
     utility::report_relative_error(rel_error);
     return 0;
