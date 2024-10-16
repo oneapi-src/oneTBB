@@ -20,7 +20,7 @@
 #include "common/utils_concurrency_limit.h"
 
 //! \file conformance_blocked_nd_range.cpp
-//! \brief Test for [preview] functionality
+//! \brief Test for [algorithms.blocked_nd_range] specification
 
 #include "oneapi/tbb/blocked_nd_range.h"
 #include "oneapi/tbb/parallel_for.h"

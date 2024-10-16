@@ -28,7 +28,7 @@
 #include "tbb/blocked_nd_range.h"
 
 //! \file test_blocked_range.cpp
-//! \brief Test for [algorithms.blocked_range] specification
+//! \brief Test for [algorithms.blocked_range algorithms.blocked_range2d algorithms.blocked_range3d algorithms.blocked_nd_range] specification
 
 #include <utility> //for std::pair
 #include <functional>
