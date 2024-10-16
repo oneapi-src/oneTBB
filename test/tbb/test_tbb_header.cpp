@@ -172,7 +172,7 @@ static void TestExceptionClassesExports () {
 // These names are only tested in "preview" configuration
 // When a feature becomes fully supported, its names should be moved to the main test
 static void TestPreviewNames() {
-    TestTypeDefinitionPresence2( blocked_rangeNd<int,4> );
+    TestTypeDefinitionPresence2( blocked_nd_range<int,4> );
     TestTypeDefinitionPresence2( concurrent_lru_cache<int, int> );
     TestTypeDefinitionPresence( isolated_task_group );
 }
