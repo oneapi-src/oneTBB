@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2022 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -280,14 +280,21 @@ public:
         if (table == my_embedded_table && end_index > embedded_table_size) {
             if (start_index <= embedded_table_size) {
                 try_call([&] {
-                    table = self()->allocate_long_table(my_embedded_table, start_index);
-                    // It is possible that the table was extended by the thread that allocated first_block.
-                    // In this case it is necessary to re-read the current table.
-
-                    if (table) {
-                        my_segment_table.store(table, std::memory_order_release);
-                    } else {
-                        table = my_segment_table.load(std::memory_order_acquire);
+                    segment_table_type new_table =
+                        self()->allocate_long_table(my_embedded_table, start_index);
+                    // It is possible that the table was extended by the thread that allocated first
+                    // block. In this case, the below CAS fails and re-reads the new table pointer.
+                    if (my_segment_table.compare_exchange_strong(
+                            table, new_table,
+                            /*memory order in case of a success*/std::memory_order_release,
+                            /*memory order in case of a failure*/std::memory_order_acquire))
+                    {
+                        // CAS was successful, update the local table pointer with now actual
+                        table = new_table;
+                    } else if (new_table) {
+                        // Other thread was the first to replace the segment table. Current thread's
+                        // table is not needed anymore, so destroying it.
+                        self()->deallocate_long_table(new_table);
                     }
                 }).on_exception([&] {
                     my_segment_table_allocation_failed.store(true, std::memory_order_relaxed);

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2022 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -565,6 +565,14 @@ private:
         return new_segment_table;
     }
 
+    void deallocate_long_table(segment_table_type table) {
+        auto& alloc = base_type::get_allocator();
+        for (size_type seg_idx = 0; seg_idx < this->pointers_per_long_table; ++seg_idx) {
+            segment_table_allocator_traits::destroy(alloc, &table[seg_idx]);
+        }
+        segment_table_allocator_traits::deallocate(alloc, table, this->pointers_per_long_table);
+    }
+
     // create_segment function is required by the segment_table base class
     segment_type create_segment( segment_table_type table, segment_index_type seg_index, size_type index ) {
         size_type first_block = this->my_first_block.load(std::memory_order_relaxed);
@@ -593,7 +601,7 @@ private:
 
             segment_type disabled_segment = nullptr;
             if (table[0].compare_exchange_strong(disabled_segment, new_segment)) {
-                this->extend_table_if_necessary(table, 0, first_block_size);
+                this->extend_table_if_necessary(table, /*start_index*/0, /*end_index*/first_block_size);
                 for (size_type i = 1; i < first_block; ++i) {
                     table[i].store(new_segment, std::memory_order_release);
                 }
@@ -826,8 +834,8 @@ private:
 
     template <typename... Args>
     iterator internal_grow( size_type start_idx, size_type end_idx, const Args&... args ) {
-        this->assign_first_block_if_necessary(this->segment_index_of(end_idx - 1) + 1);
         size_type seg_index = this->segment_index_of(end_idx - 1);
+        this->assign_first_block_if_necessary(seg_index + 1);
         segment_table_type table = this->get_table();
         this->extend_table_if_necessary(table, start_idx, end_idx);
 
