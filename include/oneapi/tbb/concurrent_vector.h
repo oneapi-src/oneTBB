@@ -565,14 +565,6 @@ private:
         return new_segment_table;
     }
 
-    void deallocate_long_table(segment_table_type table) {
-        auto& alloc = base_type::get_allocator();
-        for (size_type seg_idx = 0; seg_idx < this->pointers_per_long_table; ++seg_idx) {
-            segment_table_allocator_traits::destroy(alloc, &table[seg_idx]);
-        }
-        segment_table_allocator_traits::deallocate(alloc, table, this->pointers_per_long_table);
-    }
-
     // create_segment function is required by the segment_table base class
     segment_type create_segment( segment_table_type table, segment_index_type seg_index, size_type index ) {
         size_type first_block = this->my_first_block.load(std::memory_order_relaxed);

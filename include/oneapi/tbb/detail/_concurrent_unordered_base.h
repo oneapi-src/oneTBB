@@ -890,10 +890,6 @@ private:
             // TableType is a pointer
             return nullptr;
         }
-        // deallocate_long_table is required by the segment_table base class, but unused for unordered containers
-        void deallocate_long_table( const typename base_type::atomic_segment* ) {
-            __TBB_ASSERT(false, "This method should never been called");
-        }
 
         // destroy_elements is required by the segment_table base class, but unused for unordered containers
         // this function call but do nothing
