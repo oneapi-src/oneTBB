@@ -693,22 +693,22 @@ TEST_CASE("swap with not always equal allocators"){
 // or fail with the assertion in debug mode.
 //! \brief \ref regression
 TEST_CASE("Testing vector in a highly concurrent environment") {
-    std::uniform_int_distribution<unsigned> uniform_dist(1, 32); // grow by from 1 to 32 randomly
+    std::uniform_int_distribution<> uniform_dist(1, 32); // grow by from 1 to 32 randomly
     std::mt19937_64 gen(/*seed*/1); // Constructing with seed to have reproducible results
-    constexpr unsigned num_repeats = 10000, num_inserts = 256;
+    constexpr int num_repeats = 10000, num_inserts = 256;
     std::vector<int> grow_by_vals(num_inserts);
 
-    for (std::size_t i = 0; i < num_repeats; ++i) {
-        unsigned expected_size = 0;
+    for (int i = 0; i < num_repeats; ++i) {
+        int expected_size = 0;
         std::generate(grow_by_vals.begin(), grow_by_vals.end(),
                       [&gen, &uniform_dist, &expected_size]() {
-                          const unsigned random_value = uniform_dist(gen);
+                          const int random_value = uniform_dist(gen);
                           expected_size += random_value;
                           return random_value;
                       });
 
         tbb::concurrent_vector<double> test_vec;
-        tbb::parallel_for<unsigned>(0, num_inserts, [&] (unsigned j) {
+        tbb::parallel_for(0, num_inserts, [&] (int j) {
             test_vec.grow_by(grow_by_vals[j]);
         });
 
