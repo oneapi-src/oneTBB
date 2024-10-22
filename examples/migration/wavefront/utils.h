@@ -19,13 +19,20 @@
 
 #include <vector>
 #include <chrono>
+#include <string>
 
-inline std::vector<double> initialize_matrix(std::size_t size) {
-    std::vector<double> matrix(size);
-    for (int i = 0; i < size; ++i) {
-        matrix[i] = i % 300 + 1000.0;
+#include "common/utility/fast_random.hpp"
+
+inline std::string generate_random_string(std::size_t length) {
+    const char charset[] = "abcdefghijklmnopqrstuvwxyz";
+    utility::FastRandom rand(41);
+
+    std::string result;
+    result.reserve(length);
+    for (std::size_t i = 0; i < length; ++i) {
+        result += charset[rand.get() % (sizeof(charset) - 1)];
     }
-    return matrix;
+    return result;
 }
 
 inline void spin_wait_for_at_least(std::chrono::steady_clock::duration dur) {
