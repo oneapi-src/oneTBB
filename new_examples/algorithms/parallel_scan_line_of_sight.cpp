@@ -19,7 +19,8 @@
 #include <vector>
 #include <tbb/tbb.h>
 
-void serialLineOfSight(const std::vector<double>& altitude, std::vector<bool>& is_visible, double dx) {
+void serialLineOfSight(const std::vector<double>& altitude, 
+                       std::vector<bool>& is_visible, double dx) {
   const int N = altitude.size();
 
   double max_angle = std::atan2(dx, altitude[0] - altitude[1]);

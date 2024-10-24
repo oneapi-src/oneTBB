@@ -14,16 +14,18 @@
     limitations under the License.
 */
 
-#include <algorithm>
-#include <execution>
-
+#include <tbb/concurrent_queue.h>
 #include <iostream>
-#include <vector>
 
-int main() { 
-  std::vector<std::string> v = { " Hello ", " Parallel STL! " };
-  std::for_each(std::execution::unseq, v.begin(), v.end(), 
-    [](std::string& s) { std::cout << s << std::endl; });
+int main() {
+  tbb::concurrent_queue<int> queue;
+  for( int i=0; i<10; ++i )
+    queue.push(i);
+  for( tbb::concurrent_queue<int>::const_iterator
+       i(queue.unsafe_begin()); 
+       i!=queue.unsafe_end();
+       ++i )
+    std::cout << *i << " ";
+  std::cout << std::endl;
   return 0;
 }
-

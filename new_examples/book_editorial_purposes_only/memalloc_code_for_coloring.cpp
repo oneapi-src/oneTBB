@@ -14,16 +14,23 @@
     limitations under the License.
 */
 
-#include <algorithm>
-#include <execution>
+// this pseudo-code was used in the book "Today's TBB" (2015)
+// it serves no other purpose other than to be here to verify compilation,
+// and provide consist code coloring for the book
 
-#include <iostream>
-#include <vector>
 
-int main() { 
-  std::vector<std::string> v = { " Hello ", " Parallel STL! " };
-  std::for_each(std::execution::unseq, v.begin(), v.end(), 
-    [](std::string& s) { std::cout << s << std::endl; });
-  return 0;
-}
+struct atom_bin {
+ alignas(std::hardware_destructive_interference_size) 
+   std::atomic<int> count;
+};
+std::vector<atom_bin, tbb::cache_aligned_allocator<atom_bin>>
+  hist_p(num_bins);
+
+
+
+
+#define TBB_PREVIEW_MEMORY_POOL 1
+#include <tbb/memory_pool.h>
+
+
 

@@ -14,16 +14,15 @@
     limitations under the License.
 */
 
-#include <algorithm>
-#include <execution>
+// this pseudo-code was used in the book "Today's TBB" (2015)
+// it serves no other purpose other than to be here to verify compilation,
+// and provide consist code coloring for the book
 
-#include <iostream>
-#include <vector>
 
-int main() { 
-  std::vector<std::string> v = { " Hello ", " Parallel STL! " };
-  std::for_each(std::execution::unseq, v.begin(), v.end(), 
-    [](std::string& s) { std::cout << s << std::endl; });
-  return 0;
-}
+#include "../oneapi/tbb/parallel_for.h"
 
+
+
+
+namespace oneapi {
+    namespace tbb = ::tbb;

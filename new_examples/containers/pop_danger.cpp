@@ -14,16 +14,27 @@
     limitations under the License.
 */
 
-#include <algorithm>
-#include <execution>
-
 #include <iostream>
-#include <vector>
+#include <queue>
 
-int main() { 
-  std::vector<std::string> v = { " Hello ", " Parallel STL! " };
-  std::for_each(std::execution::unseq, v.begin(), v.end(), 
-    [](std::string& s) { std::cout << s << std::endl; });
+int main() {
+  int sum (0);
+  int item;
+
+  std::priority_queue<int> myPQ;
+ 
+  for(int i=0; i<10001; i+=1) {
+    myPQ.push(i);
+  }
+ 
+  while( !myPQ.empty() ) {
+    sum += myPQ.top();
+    myPQ.pop();
+  }
+
+  // prints "total: 50005000" (for 0,10001,1)
+  std::cout << "total: "
+	    << sum << '\n';
+
   return 0;
 }
-

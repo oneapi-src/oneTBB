@@ -6,8 +6,14 @@ foreach(tpp global_control_and_implicit_arena.cpp
             global_control_and_implicit_conflict.cpp 
             global_control_and_explicit_conflict.cpp 
             priorities_and_conflict.cpp 
+            building_work.cpp
+            matrix_transpose.cpp
+            oblivious_transpose.cpp
+            oblivious_transpose_simple_partitioner.cpp
+            parallel_for_addition.cpp
+            timing_partitioners.cpp
             blocked_ranges_trivial.cpp)
-  string(REPLACE ".cpp" "" texe ${tpp})
+	string(REPLACE ".cpp" "" texe ${tpp})
   add_executable(${texe} ${tpp})
   target_include_directories(${texe} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../common>

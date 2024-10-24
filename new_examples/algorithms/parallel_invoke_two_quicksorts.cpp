@@ -123,7 +123,7 @@ void serialQuicksort(Iterator b, Iterator e) {
   }
   std::iter_swap(b, i);
 
-  // recursive call
+  // recursive calls
   serialQuicksort(b, i);
   serialQuicksort(i+1, e);
 }
