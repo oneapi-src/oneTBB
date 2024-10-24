@@ -20,5 +20,6 @@ if (BUILD_TESTING)
   add_subdirectory(migration)
   add_subdirectory(performance_tuning)
   add_subdirectory(synchronization)
+  add_subdirectory(tasks)
 endif (BUILD_TESTING)
 
