@@ -699,20 +699,30 @@ TEST_CASE("Testing vector in a highly concurrent environment") {
     std::vector<int> grow_by_vals(num_inserts);
 
     for (int i = 0; i < num_repeats; ++i) {
-        int expected_size = 0;
+        int expected_size = 0, expected_sum = 0;
         std::generate(grow_by_vals.begin(), grow_by_vals.end(),
-                      [&gen, &uniform_dist, &expected_size]() {
+                      [&gen, &uniform_dist, &expected_size, &expected_sum]() {
                           const int random_value = uniform_dist(gen);
                           expected_size += random_value;
+                          expected_sum += random_value * random_value;
                           return random_value;
                       });
 
-        tbb::concurrent_vector<double> test_vec;
+        tbb::concurrent_vector<int> test_vec;
         tbb::parallel_for(0, num_inserts, [&] (int j) {
-            test_vec.grow_by(grow_by_vals[j]);
+            tbb::concurrent_vector<int>::iterator start_it = test_vec.grow_by(grow_by_vals[j]);
+            tbb::concurrent_vector<int>::iterator end_it = start_it + grow_by_vals[j];
+            do {
+                *start_it = grow_by_vals[j];
+            } while (++start_it != end_it);
         });
 
         REQUIRE(test_vec.size() == expected_size);
+        int actual_sum = 0;
+        for (int j = 0; j < expected_size; ++j) {
+            actual_sum += test_vec[j];
+        }
+        REQUIRE(expected_sum == actual_sum);
     }
 }
 

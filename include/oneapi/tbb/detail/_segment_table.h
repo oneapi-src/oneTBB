@@ -279,10 +279,14 @@ public:
     }
 
     void extend_table_if_necessary(segment_table_type& table, size_type start_index, size_type end_index) {
-        // extend_segment_table if an active table is an embedded table
-        // and the requested index is not in the embedded table
+        // Extend segment table if an active table is an embedded one and the requested index is
+        // outside it
         if (table == my_embedded_table && end_index > embedded_table_size) {
             if (start_index <= embedded_table_size) {
+                // More than one thread can get here: the one that has assigned the first block and
+                // is in the process of allocating it now, and the one that saw the first block has
+                // been assigned already, but not yet allocated. This latter thread decides not to
+                // wait for the first one and extend the table itself.
                 try_call([&] {
                     segment_table_type new_table =
                         self()->allocate_long_table(my_embedded_table, start_index);
