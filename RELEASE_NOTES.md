@@ -18,10 +18,10 @@
 This document contains changes of oneTBB compared to the last release.
 
 ## Table of Contents <!-- omit in toc -->
-- [:tada: Preview Features](#tada-preview-features)
-- [:rotating\_light: Known Limitations](#rotating_light-known-limitations)
-- [:hammer: Issues Fixed](#hammer-issues-fixed)
-- [:octocat: Open-Source Contributions Integrated](#octocat-open-source-contributions-integrated)
+- [Preview Features](#preview-features)
+- [Known Limitations](#known-limitations)
+- [Issues Fixed](#issues-fixed)
+- [Open-Source Contributions Integrated](#open-source-contributions-integrated)
 
 ## :tada: Preview Features
 - Extended the Flow Graph receiving nodes with a new ``try_put_and_wait`` API that submits a message to the graph and waits for its completion.
