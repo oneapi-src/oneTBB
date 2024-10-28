@@ -377,10 +377,7 @@ public:
     }
     double computeRelError() {
         // Accumulate the total duration in microseconds using std::accumulate with a lambda function
-        if (0 == _time_intervals.size()) {
-            std::cout << "No time samples collected \n";
-            return 0;
-        }
+        assert(0 != _time_intervals.size());
         auto total_duration = std::accumulate(
             _time_intervals.begin(),
             _time_intervals.end(),
@@ -391,12 +388,12 @@ public:
                                    interval.second - interval.first)
                                    .count();
             });
-        long long averageTimePerFrame = total_duration / _time_intervals.size();
-        long long sumOfSquareDiff = 0;
+        unsigned long long averageTimePerFrame = total_duration / _time_intervals.size();
+        unsigned long long sumOfSquareDiff = 0;
         std::for_each(_time_intervals.begin(),
                       _time_intervals.end(),
                       [&](const std::pair<time_point, time_point>& interval) {
-                          long long duration =
+                          unsigned long long duration =
                               std::chrono::duration_cast<std::chrono::microseconds>(
                                   interval.second - interval.first)
                                   .count();
