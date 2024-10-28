@@ -361,9 +361,8 @@ public:
 // utility class to aid relative error measurement of samples
 class measurements {
 public:
-    measurements() {
-        clear();
-    }
+    measurements() = default;
+
     measurements(int iterations) {
         _time_intervals.reserve(iterations);
     }
