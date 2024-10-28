@@ -99,6 +99,7 @@ int main(int argc, char *argv[]) {
             std::cout << "Substituting 1000 for unlimited frames because not running interactively"
                       << "\n";
         }
+        // TODO : Extend utility::cli_argument_pack()  toallow specifying the default value.
         if (options.numberofIterations == 0) {
             options.numberofIterations = 10;
             std::cout << "Setting the number of iterations = 10 default"

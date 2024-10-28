@@ -366,15 +366,12 @@ public:
     }
     measurements(int iterations) {
         _time_intervals.reserve(iterations);
-        clear();
     }
-    void clear() {
-        _time_intervals.clear();
-    }
-    void start() {
+
+    inline void start() {
         _startTime = std::chrono::steady_clock::now();
     }
-    void stop() {
+    inline void stop() {
         auto _endTime = std::chrono::steady_clock::now();
         // store the end time and start time
         _time_intervals.push_back(std::make_pair(_startTime, _endTime));
@@ -388,21 +385,25 @@ public:
         auto total_duration = std::accumulate(
             _time_intervals.begin(),
             _time_intervals.end(),
-            0,  // Start with 0 count
+            0, // Start with 0 count
             [](long long total, const std::pair<time_point, time_point>& interval) {
                 // Compute the difference and add it to the total
-                return total + std::chrono::duration_cast<std::chrono::microseconds>(interval.second - interval.first).count();
-            }
-        );
+                return total + std::chrono::duration_cast<std::chrono::microseconds>(
+                                   interval.second - interval.first)
+                                   .count();
+            });
         long long averageTimePerFrame = total_duration / _time_intervals.size();
         long long sumOfSquareDiff = 0;
         std::for_each(_time_intervals.begin(),
                       _time_intervals.end(),
-                       [&](const std::pair<time_point, time_point>& interval) {
-                           long long duration = std::chrono::duration_cast<std::chrono::microseconds>(interval.second - interval.first).count();
-                           long long diff = duration - averageTimePerFrame;
-                           sumOfSquareDiff += diff * diff;
-                       });
+                      [&](const std::pair<time_point, time_point>& interval) {
+                          long long duration =
+                              std::chrono::duration_cast<std::chrono::microseconds>(
+                                  interval.second - interval.first)
+                                  .count();
+                          long long diff = duration - averageTimePerFrame;
+                          sumOfSquareDiff += diff * diff;
+                      });
         double stdDev = std::sqrt(sumOfSquareDiff / _time_intervals.size());
         double relError = 100 * (stdDev / averageTimePerFrame);
         return relError;
@@ -411,7 +412,7 @@ public:
 private:
     using time_point = std::chrono::steady_clock::time_point;
     time_point _startTime;
-    std::vector< std::pair<time_point, time_point> > _time_intervals;
+    std::vector<std::pair<time_point, time_point>> _time_intervals;
 };
 
 namespace internal {
