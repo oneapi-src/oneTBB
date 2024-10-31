@@ -35,7 +35,7 @@ struct RunOptions {
     //!                  threads.second - initialization value for scheduler
     utility::thread_number_range threads;
     int numberOfFrames;
-    int numberofIterations;
+    int numberOfIterations;
     bool silent;
     bool parallel;
     RunOptions(utility::thread_number_range threads_,
@@ -45,7 +45,7 @@ struct RunOptions {
                bool parallel_)
             : threads(threads_),
               numberOfFrames(number_of_frames_),
-              numberofIterations(number_of_iterations_),
+              numberOfIterations(number_of_iterations_),
               silent(silent_),
               parallel(parallel_) {}
 };
@@ -69,12 +69,12 @@ RunOptions ParseCommandLine(int argc, char *argv[]) {
             .positional_arg(numberOfFrames,
                             "n-of-frames",
                             "number of frames the example processes internally (0 means unlimited)")
-            .positional_arg(numberofIterations,
+            .positional_arg(numberOfIterations,
                             "n-of-iterations",
                             "number of iterations the example runs internally")
             .arg(silent, "silent", "no output except elapsed time")
             .arg(serial, "serial", "in GUI mode start with serial version of algorithm"));
-    return RunOptions(threads, numberOfFrames, numberofIterations, silent, !serial);
+    return RunOptions(threads, numberOfFrames, numberOfIterations, silent, !serial);
 }
 
 int main(int argc, char *argv[]) {
@@ -100,8 +100,8 @@ int main(int argc, char *argv[]) {
                       << "\n";
         }
         // TODO : Extend utility::cli_argument_pack() to allow specifying the default value.
-        if (options.numberofIterations <= 0) {
-            options.numberofIterations = 10;
+        if (options.numberOfIterations <= 0) {
+            options.numberOfIterations = 10;
             std::cout << "Setting the number of iterations = 10 default"
                       << "\n";
         }
