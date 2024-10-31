@@ -363,7 +363,7 @@ class measurements {
 public:
     measurements() = default;
 
-    measurements(int iterations) {
+    measurements(unsigned iterations) {
         _time_intervals.reserve(iterations);
     }
 

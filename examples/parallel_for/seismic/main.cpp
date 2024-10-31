@@ -56,7 +56,7 @@ RunOptions ParseCommandLine(int argc, char *argv[]) {
         utility::get_default_num_threads, 0, utility::get_default_num_threads());
 
     int numberOfFrames = 0;
-    int numberofIterations = 0;
+    int numberOfIterations = 0;
     bool silent = false;
     bool serial = false;
 
@@ -100,7 +100,7 @@ int main(int argc, char *argv[]) {
                       << "\n";
         }
         // TODO : Extend utility::cli_argument_pack() to allow specifying the default value.
-        if (options.numberofIterations == 0) {
+        if (options.numberofIterations <= 0) {
             options.numberofIterations = 10;
             std::cout << "Setting the number of iterations = 10 default"
                       << "\n";
@@ -110,7 +110,8 @@ int main(int argc, char *argv[]) {
             oneapi::tbb::tick_count xwayParallelismStartTime = oneapi::tbb::tick_count::now();
             u.InitializeUniverse(video);
             int numberOfFrames = options.numberOfFrames;
-            int numberOfIterations = options.numberofIterations;
+            assert(options.numberOfIterations > 0 && "Number of iterations cannot be <= 0");
+            unsigned numberOfIterations = unsigned(options.numberOfIterations);
 
             if (p == 0) {
                 //run a serial version
