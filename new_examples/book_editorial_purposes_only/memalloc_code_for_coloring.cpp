@@ -14,17 +14,23 @@
     limitations under the License.
 */
 
-#include <tbb/tbb.h>
-#include <vector>
-#include <iostream>
+// this pseudo-code was used in the book "Today's TBB" (2015)
+// it serves no other purpose other than to be here to verify compilation,
+// and provide consist code coloring for the book
 
-int main(){
-  std::vector<int> data(1000);
-  try{
-    tbb::parallel_for(0, 2000, [&] (int i) {data.at(i)++;});
-  }
-  catch(const std::out_of_range& ex) {
-    std::cout << "Out_of_range: " << ex.what() << std::endl;
-  }
-  return 0;
-}
+
+struct atom_bin {
+ alignas(std::hardware_destructive_interference_size) 
+   std::atomic<int> count;
+};
+std::vector<atom_bin, tbb::cache_aligned_allocator<atom_bin>>
+  hist_p(num_bins);
+
+
+
+
+#define TBB_PREVIEW_MEMORY_POOL 1
+#include <tbb/memory_pool.h>
+
+
+

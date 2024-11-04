@@ -14,15 +14,15 @@
     limitations under the License.
 */
 
-#include <oneapi/dpl/algorithm>
-#include <oneapi/dpl/execution>
+#include <algorithm>
+#include <execution>
 
 #include <iostream>
 #include <vector>
 
 int main() { 
   std::vector<std::string> v = { " Hello ", " Parallel STL! " };
-  std::for_each(dpl::execution::par, v.begin(), v.end(), 
+  std::for_each(std::execution::unseq, v.begin(), v.end(), 
     [](std::string& s) { std::cout << s << std::endl; });
   return 0;
 }

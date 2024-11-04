@@ -14,17 +14,15 @@
     limitations under the License.
 */
 
-#include <tbb/tbb.h>
-#include <vector>
-#include <iostream>
+// this pseudo-code was used in the book "Today's TBB" (2015)
+// it serves no other purpose other than to be here to verify compilation,
+// and provide consist code coloring for the book
 
-int main(){
-  std::vector<int> data(1000);
-  try{
-    tbb::parallel_for(0, 2000, [&] (int i) {data.at(i)++;});
-  }
-  catch(const std::out_of_range& ex) {
-    std::cout << "Out_of_range: " << ex.what() << std::endl;
-  }
-  return 0;
-}
+
+#include "../oneapi/tbb/parallel_for.h"
+
+
+
+
+namespace oneapi {
+    namespace tbb = ::tbb;

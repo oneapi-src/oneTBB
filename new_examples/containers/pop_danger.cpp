@@ -14,17 +14,27 @@
     limitations under the License.
 */
 
-#include <tbb/tbb.h>
-#include <vector>
 #include <iostream>
+#include <queue>
 
-int main(){
-  std::vector<int> data(1000);
-  try{
-    tbb::parallel_for(0, 2000, [&] (int i) {data.at(i)++;});
+int main() {
+  int sum (0);
+  int item;
+
+  std::priority_queue<int> myPQ;
+ 
+  for(int i=0; i<10001; i+=1) {
+    myPQ.push(i);
   }
-  catch(const std::out_of_range& ex) {
-    std::cout << "Out_of_range: " << ex.what() << std::endl;
+ 
+  while( !myPQ.empty() ) {
+    sum += myPQ.top();
+    myPQ.pop();
   }
+
+  // prints "total: 50005000" (for 0,10001,1)
+  std::cout << "total: "
+	    << sum << '\n';
+
   return 0;
 }

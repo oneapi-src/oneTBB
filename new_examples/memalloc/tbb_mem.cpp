@@ -14,17 +14,25 @@
     limitations under the License.
 */
 
+#include <stdio.h>
 #include <tbb/tbb.h>
-#include <vector>
-#include <iostream>
+#include <tbb/scalable_allocator.h>
 
-int main(){
-  std::vector<int> data(1000);
-  try{
-    tbb::parallel_for(0, 2000, [&] (int i) {data.at(i)++;});
-  }
-  catch(const std::out_of_range& ex) {
-    std::cout << "Out_of_range: " << ex.what() << std::endl;
-  }
+#include <stdio.h>
+#include "tbb/tbb.h"
+
+using namespace tbb;
+
+const int N = 1000000;
+
+// don't forget ulimit –s unlimited on Linux, or STACK:10000000 on Windows
+// otherwise this will fail to run
+
+int main() {
+  double *a[N];
+
+  parallel_for( 0, N-1, [&](int i) { a[i] = new double; } );
+  parallel_for( 0, N-1, [&](int i) { delete a[i];       } );
+
   return 0;
 }
