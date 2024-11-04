@@ -23,7 +23,7 @@ int main(){
   try{
     tbb::parallel_for(0, 2000, [&] (int i) {data.at(i)++;});
   }
-  catch(std::out_of_range& ex) {
+  catch(const std::out_of_range& ex) {
     std::cout << "Out_of_range: " << ex.what() << std::endl;
   }
   return 0;
