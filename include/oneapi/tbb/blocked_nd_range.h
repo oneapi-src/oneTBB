@@ -68,7 +68,15 @@ public:
     //! Constructs N-dimensional range over N half-open intervals each represented as tbb::blocked_range<Value>.
     blocked_nd_range_impl(const indexed_t<dim_range_type, Is>&... args) : my_dims{ {args...} } {}
 
+#if __clang__ && __TBB_CLANG_VERSION < 140000
+    // On clang prior to version 14.0.0, passing a single braced init list to the constructor of blocked_nd_range<T, 1>
+    // matches better on the C array constructor and generates compile-time error because of unexpected size
+    // Adding constraints for this constructor to force the compiler to drop it from overload resolution if the size is unexpected
+    template <unsigned int M, typename = typename std::enable_if<M == N>::type>
+    blocked_nd_range_impl(const value_type (&size)[M], size_type grainsize = 1) :
+#else
     blocked_nd_range_impl(const value_type (&size)[N], size_type grainsize = 1) :
+#endif
         my_dims { dim_range_type(0, size[Is], grainsize)... } {}
 
     //! Dimensionality of a range.
