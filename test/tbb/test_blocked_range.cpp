@@ -24,7 +24,6 @@
 #include "tbb/blocked_range.h"
 #include "tbb/blocked_range2d.h"
 #include "tbb/blocked_range3d.h"
-#define TBB_PREVIEW_BLOCKED_RANGE_ND 1
 #include "tbb/blocked_nd_range.h"
 
 //! \file test_blocked_range.cpp
