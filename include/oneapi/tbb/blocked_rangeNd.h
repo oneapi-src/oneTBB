@@ -50,11 +50,9 @@ namespace d1 {
 */
 
 template<typename Value, unsigned int N, typename = detail::make_index_sequence<N>>
-    __TBB_requires(blocked_range_value<Value>)
 class blocked_rangeNd_impl;
 
 template<typename Value, unsigned int N, std::size_t... Is>
-    __TBB_requires(blocked_range_value<Value>)
 class blocked_rangeNd_impl<Value, N, detail::index_sequence<Is...>> {
 public:
     //! Type of a value.
@@ -133,7 +131,12 @@ private:
 };
 
 template<typename Value, unsigned int N>
-using blocked_rangeNd = blocked_rangeNd_impl<Value, N>;
+         __TBB_requires(blocked_range_value<Value>)
+class blocked_rangeNd : public blocked_rangeNd_impl<Value, N> {
+    using base = blocked_rangeNd_impl<Value, N>;
+    // Making constructors of base class visible
+    using base::base;
+};
 
 } // namespace d1
 } // namespace detail
