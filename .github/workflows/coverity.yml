@@ -34,6 +34,8 @@ env:
 jobs:
   coverity_linux:
     name: Coverity Linux
+    permissions:
+      contents: write
     runs-on: [intel-ubuntu-22.04]
     steps:
       - uses: actions/checkout@v3
