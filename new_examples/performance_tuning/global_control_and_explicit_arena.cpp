@@ -65,7 +65,6 @@ void clearParticipation() {
 }
 
 void dumpParticipation(int p) {
-  int end = next_tid;
   int sum = tid_participation[0];
   std::cout << "[" << tid_participation[0];
   for (int i = 1; i < p; ++i) {
