@@ -28,7 +28,7 @@ on:
 permissions: write-all
 
 env:
-  BUILD_CONCURRENCY: 2
+  BUILD_CONCURRENCY: 4
   COVERITY_PROJECT: oneapi-src%2FoneTBB
 
 jobs:
@@ -39,10 +39,9 @@ jobs:
       - uses: actions/checkout@v3
       - name: Download Linux 64 Coverity Tool
         run: |
-          curl -L https://scan.coverity.com/download/cxx/linux64 > ${GITHUB_WORKSPACE}/cov-linux64-tool.tar.gz \
-            --data "token=${{secrets.COVERITY_TOKEN}}&project=${env: COVERITY_PROJECT}"
+          curl https://scan.coverity.com/download/cxx/linux64 --output ${GITHUB_WORKSPACE}/cov-linux64-tool.tar.gz \
+            --data "token=${{secrets.COVERITY_TOKEN}}&project=${{env.COVERITY_PROJECT}}"
           ls -l ${GITHUB_WORKSPACE}
-          pwd
           mkdir cov-linux64-tool
           tar -xzf cov-linux64-tool.tar.gz --strip 1 -C cov-linux64-tool
       - name: Build with cov-build
@@ -51,9 +50,9 @@ jobs:
           mkdir build && cd build
           cmake -DCMAKE_CXX_STANDARD=20 -DCMAKE_BUILD_TYPE=relwithdebinfo \
             -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DTBB_CPF=ON ..
-          cov-build --dir cov-int make VERBOSE=1 -j${BUILD_CONCURRENCY}
+          cov-build --dir cov-int make VERBOSE=1 -j${{env.BUILD_CONCURRENCY}}
       - name: Archive Coverity build results
-        run: tar -czvf cov-int.tgz cov-int
+        run: tar -czvf cov-int.tgz build/cov-int
       - name: Submit Coverity results for analysis
         run: |
           echo GITHUB_SHA_SHORT=${GITHUB_SHA::8} >> $GITHUB_ENV
@@ -63,4 +62,4 @@ jobs:
             --form file=@cov-int.tgz \
             --form version="${{ inputs.version }}" \
             --form description="oneTBB-master-${{ env.GITHUB_SHA_SHORT }}" \
-              "https://scan.coverity.com/builds?project=${env: COVERITY_PROJECT}"
+              "https://scan.coverity.com/builds?project=${{env.COVERITY_PROJECT}}"
