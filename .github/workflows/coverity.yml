@@ -25,7 +25,7 @@ on:
       - synchronize
       - reopened
 
-permissions: write-all
+permissions: read-all
 
 env:
   BUILD_CONCURRENCY: 4
@@ -34,9 +34,9 @@ env:
 jobs:
   coverity_linux:
     name: Coverity Linux
-    runs-on: [intel-ubuntu-22.04]
+    runs-on: [ubuntu-latest]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Download Linux 64 Coverity Tool
         run: |
           curl https://scan.coverity.com/download/cxx/linux64 --output ${GITHUB_WORKSPACE}/cov-linux64-tool.tar.gz \
@@ -63,3 +63,10 @@ jobs:
             --form version="${{ inputs.version }}" \
             --form description="oneTBB-master-${{ env.GITHUB_SHA_SHORT }}" \
               "https://scan.coverity.com/builds?project=${{env.COVERITY_PROJECT}}"
+      - if: always()
+        name: Save artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.job }}
+          path: coverity-int.tgz
+          retention-days: 2
