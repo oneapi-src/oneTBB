@@ -61,7 +61,7 @@ jobs:
             --form email="${{ secrets.COVERITY_EMAIL }}" \
             --form file=@cov-int.tgz \
             --form version="${{ inputs.version }}" \
-            --form description="oneTBB-master-${{ env.GITHUB_SHA_SHORT }}" \
+            --form description="oneTBB-master-${{ env.GITHUB_SHA }}" \
               "https://scan.coverity.com/builds?project=${{env.COVERITY_PROJECT}}"
       - if: always()
         name: Save artifacts
