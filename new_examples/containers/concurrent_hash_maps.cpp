@@ -72,7 +72,7 @@ int main() {
   // Display the occurrences using a simple walk
   // (note: concurrent_hash_map does not offer const_iterator)
   // see a problem with this code???
-  // read "Iterating thorough these structures is asking for trouble"
+  // read "Iterating through these structures is asking for trouble"
   // coming up in a few pages
   for( StringTable::iterator i=table.begin();
        i!=table.end(); 
