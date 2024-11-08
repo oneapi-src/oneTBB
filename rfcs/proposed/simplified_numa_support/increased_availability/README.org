@@ -6,13 +6,13 @@
 Specifically, its section about "Increased availability of NUMA support".
 
 * Introduction
-oneTBB has a soft dependency on several variants of ~tbbbind~, which are loaded by
-the library as part of its initialization stage. In turn, each ~tbbbind~ has
-a hard dependency, i.e., relies on load-time linking, on a concrete version of the
-HWLOC library [1, 2]. The soft dependency of oneTBB on ~tbbbind~ allows the
+oneTBB has a soft dependency on several variants of ~tbbbind~, which are loaded
+by the library as part of its initialization stage. In turn, each ~tbbbind~ has
+a hard dependency, i.e., relies on load-time linking, on a concrete version of
+the HWLOC library [1, 2]. The soft dependency of oneTBB on ~tbbbind~ allows the
 library to continue its execution even if the system loader is unable to resolve
-the hard dependency on HWLOC for ~tbbbind~. In this case, the NUMA support API does
-nothing. An error is also not reported and the code that uses NUMA support
+the hard dependency on HWLOC for ~tbbbind~. In this case, the NUMA support API
+does nothing. An error is also not reported and the code that uses NUMA support
 facilities may continue running expecting it to work. Such behavior is not
 readily noticable by the users of oneTBB and this represents the main problem
 with the current behavior.
@@ -20,8 +20,8 @@ with the current behavior.
 Having a dependency on a shared HWLOC library has a number of advantages:
 1. Code reuse with all of the positive consequences out of this. That's the
    primary purpose of shared libraries.
-2. Sharing HWLOC context between its clients. This avoids performing
-   the same operations repeatedly with identical results.
+2. Sharing HWLOC context between its clients. This avoids performing the same
+   operations repeatedly with identical results.
 3. A drop-in replacement. Users are able to use their own version of HWLOC
    without recompilation of oneTBB.
 
@@ -47,9 +47,9 @@ distributed together with oneTBB.
 
 * Proposal
 Introduce:
-1. New version of ~tbbbind~ shared library with the name ~tbbbind_static~ that is
-   statically-linked with HWLOC library and distributed along side with the other
-   ~tbbbind~ versions.
+1. New version of ~tbbbind~ shared library with the name ~tbbbind_static~ that
+   is statically-linked with HWLOC library and distributed along side with the
+   other ~tbbbind~ versions.
 2. Loading of the new ~tbbbind_static~ as the last attempt, i.e., a fallback
    path, to resolve the dependency on functionality provided by ~tbbbind~ layer.
 3. Printing what ~tbbbind~ version is used when ~TBB_VERSION=1~ environment
