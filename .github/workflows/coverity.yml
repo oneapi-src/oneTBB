@@ -25,7 +25,7 @@ on:
       - synchronize
       - reopened
 
-permissions: read-all
+permissions: write-all
 
 env:
   BUILD_CONCURRENCY: 2
@@ -34,8 +34,6 @@ env:
 jobs:
   coverity_linux:
     name: Coverity Linux
-    permissions:
-      contents: write
     runs-on: [intel-ubuntu-22.04]
     steps:
       - uses: actions/checkout@v3
