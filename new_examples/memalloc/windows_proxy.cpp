@@ -1,4 +1,4 @@
-#include "oneapi/tbb/tbbmalloc_proxy.h"
+#include "tbb/tbbmalloc_proxy.h"
 #include <stdio.h>
 
 int main () {
