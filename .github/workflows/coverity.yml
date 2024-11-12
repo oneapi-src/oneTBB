@@ -55,7 +55,6 @@ jobs:
         run: tar -czvf cov-int.tgz build/cov-int
       - name: Submit Coverity results for analysis
         run: |
-          echo GITHUB_SHA_SHORT=${GITHUB_SHA::8} >> $GITHUB_ENV
           curl \
             --form token="${{ secrets.COVERITY_TOKEN }}" \
             --form email="${{ secrets.COVERITY_EMAIL }}" \
@@ -63,10 +62,4 @@ jobs:
             --form version="${{ inputs.version }}" \
             --form description="oneTBB-master-${{ env.GITHUB_SHA }}" \
               "https://scan.coverity.com/builds?project=${{env.COVERITY_PROJECT}}"
-      - if: always()
-        name: Save artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ github.job }}
-          path: cov-int.tgz
-          retention-days: 2
+
