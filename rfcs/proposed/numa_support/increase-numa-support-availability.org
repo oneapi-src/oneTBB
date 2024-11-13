@@ -80,7 +80,7 @@ sets the environment so that the necessary variant of ~tbbbind~ library can be
 found and loaded.
 
 ** Disadvantages
-1. There will be one more ~tbbbind~ variation binary to ship in oneTBB
+1. There will be one more variation of a ~tbbbind~ binary to ship in oneTBB
    distribution packages.
 2. Still silent by default behavior in case user failed to setup environment
    with their own version of HWLOC library correctly. Although, specifying
