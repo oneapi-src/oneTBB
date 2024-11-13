@@ -1,4 +1,4 @@
-# Simplified NUMA support in oneTBB
+# NUMA support
 
 ## Introduction
 
@@ -8,15 +8,15 @@ While oneTBB has core support that enables developers to tune for Non-Uniform Me
 Access (NUMA) systems, we believe this support can be simplified and improved to provide 
 an improved user experience.  
 
-This early proposal recommends addressing four areas for improvement:
+This RFC acts as an umbrella for sub-proposals that address four areas for improvement:
 
 1. improved reliability of HWLOC-dependent topology and pinning support in,
 2. addition of a NUMA-aware allocation,
 3. simplified approaches to associate task distribution with data placement and 
 4. where possible, improved out-of-the-box performance for high-level oneTBB features.
 
-We expect that this draft proposal may be broken into smaller proposals based on feedback 
-and prioritization of the suggested features.
+We expect that this draft proposal will spawn sub-proposals that will progress
+independently based on feedback and prioritization of the suggested features.
 
 The features for NUMA tuning already available in the oneTBB 1.3 specification include:
 
@@ -25,10 +25,11 @@ The features for NUMA tuning already available in the oneTBB 1.3 specification i
   - `int default_concurrency(numa_node_id id = oneapi::tbb::task_arena::automatic)`
 - `tbb::task_arena::constraints` in **[scheduler.task_arena]**
 
-Below is the example that demonstrates the use of these APIs to pin threads to different 
-arenas to each of the NUMA nodes available on a system, submit work across those `task_arena` 
-objects and into associated `task_group`` objects, and then wait for work again using both 
-the `task_arena` and `task_group` objects.
+Below is the example based on existing oneTBB documentation that demonstrates the use 
+of these APIs to pin threads to different arenas to each of the NUMA nodes available 
+on a system, submit work across those `task_arena` objects and into associated 
+`task_group`` objects, and then wait for work again using both the `task_arena` 
+and `task_group` objects.
 
     #include "oneapi/tbb/task_group.h"
     #include "oneapi/tbb/task_arena.h"
@@ -42,7 +43,7 @@ the `task_arena` and `task_group` objects.
 
         // Initialize the arenas and place memory
         for (int i = 0; i < numa_nodes.size(); i++) {
-            arenas[i].initialize(oneapi::tbb::task_arena::constraints(numa_nodes[i]));
+            arenas[i].initialize(oneapi::tbb::task_arena::constraints(numa_nodes[i]),0);
             arenas[i].execute([i] {
               // allocate/place memory on NUMA node i
             });
@@ -79,7 +80,7 @@ tradeoffs involved in this tuning often rely on application-specific knowledge.
 In particular, NUMA tuning typically involves:
 
 1. Understanding the overall application problem and its use of algorithms and data containers
-2. Placement of data container objects onto memory resources
+2. Placement/allocation of data container objects onto memory resources
 3. Distribution of tasks to hardware resources that optimize for data placement
 
 As shown in the previous example, the oneTBB 1.3 specification only provides low-level
@@ -155,7 +156,7 @@ to decrease that likelihood of such failures. The oneTBB specification will rema
 
 ### NUMA-aware allocation
 
-We will define allocators of other features that simplify the process of allocating or places data onto
+We will define allocators or other features that simplify the process of allocating or placing data onto
 specific NUMA nodes.
 
 ### Simplified approaches to associate task distribution with data placement
