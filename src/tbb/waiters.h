@@ -58,7 +58,12 @@ public:
         __TBB_ASSERT(t == nullptr, nullptr);
 
         if (is_worker_should_leave(slot)) {
-            if (!governor::hybrid_cpu()) {
+            if (!governor::hybrid_cpu()
+#if __TBB_PREVIEW_PARALLEL_BLOCK
+                 && !my_arena.my_thread_leave.should_leave()
+#endif
+               )
+            {
                 static constexpr std::chrono::microseconds worker_wait_leave_duration(1000);
                 static_assert(worker_wait_leave_duration > std::chrono::steady_clock::duration(1), "Clock resolution is not enough for measured interval.");
 
@@ -70,7 +75,12 @@ public:
                         return true;
                     }
 
-                    if (my_arena.my_threading_control->is_any_other_client_active()) {
+                    if (my_arena.my_threading_control->is_any_other_client_active()
+#if __TBB_PREVIEW_PARALLEL_BLOCK
+                        || my_arena.my_thread_leave.should_leave()
+#endif
+                       )
+                    {
                         break;
                     }
                     d0::yield();

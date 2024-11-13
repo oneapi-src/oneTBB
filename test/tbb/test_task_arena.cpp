@@ -2068,3 +2068,41 @@ TEST_CASE("worker threads occupy slots in correct range") {
 
     while (counter < 42) { utils::yield(); }
 }
+
+#if TBB_PREVIEW_PARALLEL_BLOCK
+
+//! \brief \ref interface \ref requirement
+TEST_CASE("Check that leave faster with workers_leave::fast") {
+    std::vector<std::size_t> start_times_for_delayed_leave;
+    std::vector<std::size_t> start_times_for_fast_leave;
+
+    std::vector<std::chrono::steady_clock::time_point> start_times(utils::get_platform_max_threads());
+    utils::SpinBarrier barrier(utils::get_platform_max_threads());
+    auto measure_start_time = [&] {
+        start_times[tbb::this_task_arena::current_thread_index()] = std::chrono::steady_clock::now();
+        barrier.wait();
+    };
+
+    auto get_longest_start = [&] (std::chrono::steady_clock::time_point start_time) {
+        std::size_t longest_time = 0;
+        for (auto& time : start_times) {
+            longest_time = std::max(longest_time, std::chrono::duration_cast<std::chrono::microseconds>(time - start_time).count());
+        }
+        return longest_time;
+    };
+
+    // Measure delayed leave
+    {
+        tbb::task_arena a(utils::get_platform_max_threads(), 1, tbb::task_arena::priority::normal, tbb::task_arena::workers_leave::delayed);
+
+        for (int i = 0; i < 1000; ++i) {
+            a.execute([] {
+                auto start_time = std::chono::steady_clock::now();
+                tbb::parallel_for(0, utils::get_platform_max_threads(), measure_start_time, tbb::static_partitioner{});
+            });
+            start_times_for_delayed_leave.push_back(get_longest_start(start_time));
+        }
+    }
+}
+
+#endif
