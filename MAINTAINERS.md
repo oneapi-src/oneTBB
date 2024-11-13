@@ -25,6 +25,31 @@ oneTBB project defines three main roles:
  * [Code Owner](#code-Owner)
  * [Maintainer](#maintainer)
 
+[permissions]: https://docs.github.com/en/organizations/managing-user-access-to-your-organizations-repositories/managing-repository-roles/repository-roles-for-an-organization#permissions-for-each-role
+
+|                            | <span style="color:Green">Contributor</span> | <span style="color:orange">Code Owner</span> | <span style="color:magenta">Maintainer</span> |
+| :------------------------- | :---------: | :--------: | :--------: |
+| <span style="color:grey">_Responsibilities_</span>         |             |            |            |
+| Follow the Code of Conduct      |      ✓      |     ✓      |     ✓     |
+| Follow Contribution Guidelines  |      ✓      |     ✓      |     ✓     |
+| Enforce Contribution Guidelines |      ✗      |     ✓      |     ✓     |
+| Co-own component or aspect of the library,<br>  including contributing: bug fixes, implementing features,<br> and performance optimizations      |     ✗      |     ✓      |     ✓     |
+| Co-own on technical direction of component or<br> aspect of the library |     ✗      |     ✗      |     ✓     |
+| Co-own on the project as a whole,<br> including determining strategy and policy for the project |     ✗      |     ✗      |     ✓     |
+| <span style="color:grey">_Privileges_</span>         |             |            |            |
+| Permission granted |      [Read][permissions]      |     [Write][permissions]      |     [Maintain][permissions]     |
+| Eligible to become |      <span style="color:orange">Code Owner</span>      |     <span style="color:magenta">Maintainer</span>      |     ✗     |
+| Can recommend <span style="color:Green">Contributors</span><br> to become <span style="color:orange">Code Owner</span>      |      ✗      |     ✓      |     ✓     |
+| Can participate in promotions of<br> <span style="color:orange">Code Owners</span> and  <span style="color:magenta">Maintainers</span>    |      ✗      |     ✓      |     ✓     |
+| Can suggest Milestones during planning      |      ✓      |     ✓      |     ✓     |
+| Can choose Milestones for specific component  |      ✗      |     ✓      |     ✓     |
+| Paticipate in project's Milestones planning     |      ✗      |     ✗      |     ✓     |
+| Can propose new RFC or<br> participate in review of existing RFC |      ✓      |     ✓      |     ✓     |
+| Can request rework of RFCs<br> in represented area of responsibility |      ✗      |     ✓      |     ✓     |
+| Can request rework of RFCs<br> in any part of the project |      ✗      |     ✗      |     ✓     |
+| Can manage release process of the project |      ✗      |     ✗      |     ✓     |
+| Can represent the project in public as a <span style="color:magenta">Maintainer</span> |      ✗      |     ✗      |     ✓     |
+
 These roles are merit based. Refer to the corresponding section for specific
 requirements and the nomination process.
 
@@ -40,13 +65,6 @@ Anyone can become a Contributor by bringing value in one of the following ways:
 and performance optimizations.
   * Contribute design proposals.
 
-Responsibilities:
-  * Follow the [Code of Conduct](CODE_OF_CONDUCT.md).
-  * Follow the project [contributing guidelines](CONTRIBUTING.md).
-
-Privileges:
-  * Eligible to become Code Owner.
-
 ## Code Owner
 
 A Code Owner has responsibility for a specific project component or a functional
@@ -56,29 +74,12 @@ reviewing all changes to corresponding areas of responsibility and indicating
 whether those changes are ready to be merged. Code Owners have a track record of
 contribution and review in the project.
 
-Responsibilities:
-  * Follow the [Code of Conduct](CODE_OF_CONDUCT.md).
-  * Follow and enforce the project [contributing guidelines](CONTRIBUTING.md).
-  * Co-own with other code owners a specific component or aspect of the library,
-    including contributing bug fixes, implementing features, and performance
-    optimizations.
-  * Review pull requests in corresponding areas of responsibility.
-  * Monitor testing results and flag issues in corresponding areas of
-    responsibility.
-  * Support and guide Contributors.
-
 Requirements:
   * Track record of accepted code contributions to a specific project component.
   * Track record of contributions to the code review process.
   * Demonstrated in-depth knowledge of the architecture of a specific project
     component.
   * Commits to being responsible for that specific area.
-
-Privileges:
-  * PR approval counts towards approval requirements for a specific component.
-  * Can promote fully approved Pull Requests to the `master` branch.
-  * Can recommend Contributors to become Code Owners.
-  * Eligible to become a Maintainer.
 
 The process of becoming a Code Owner is:
 1. A Contributor is nominated by opening a PR modifying the MAINTAINERS.md file
@@ -91,27 +92,14 @@ Maintainers are the most established contributors who are responsible for the
 project technical direction and participate in making decisions about the
 strategy and priorities of the project.
 
-Responsibilities:
-  * Follow the [Code of Conduct](CODE_OF_CONDUCT.md).
-  * Follow and enforce the project [contributing guidelines](CONTRIBUTING.md)
-  * Co-own with other component Maintainers on the technical direction of a specific component.
-  * Co-own with other Maintainers on the project as a whole, including determining strategy and policy for the project.
-  * Suppport and guide Contributors and Code Owners.
-
 Requirements:
-  * Experience as a Code Owner for at least 12 months.
+  * Experience as a Code Owner.
   * Track record of major project contributions to a specific project component.
   * Demonstrated deep knowledge of a specific project component.
   * Demonstrated broad knowledge of the project across multiple areas.
   * Commits to using priviledges responsibly for the good of the project.
   * Is able to exercise judgment for the good of the project, independent of
     their employer, friends, or team.
-
-Privileges:
-  * Can represent the project in public as a Maintainer.
-  * Can promote Pull Requests to release branches and override mandatory
-  checks when necessary.
-  * Can recommend Code Owners to become Maintainers.
 
 Process of becoming a maintainer:
 1. A Maintainer may nominate a current code owner to become a new Maintainer by 
@@ -124,14 +112,14 @@ opening a PR against MAINTAINERS.md file.
 
 | Name                  | Github ID             | Affiliation       | Role       |
 | --------------------- | --------------------- | ----------------- | ---------- |
-| Konstantin Boyarinov  | @kboyarinov           | Intel Corporation | ? |
-| Aleksei Fedotov       | @aleksei-fedotov      | Intel Corporation | ? |
-| Ilya Isaev            | @isaevil              | Intel Corporation | ? |
-| Sarath Nandu R        | @sarathnandu          | Intel Corporation | ? |
-| Dmitri Mokhov         | @dnmokhov             | Intel Corporation | ? |
-| Michael Voss          | @vossmjp              | Intel Corporation | ? |
-| Alexey Kukanov        | @akukanov             | Intel Corporation | ? |
-| Pavel Kumbrasev       | @pavelkumbrasev       | Intel Corporation | ? |
+| Konstantin Boyarinov  | @kboyarinov           | Intel Corporation | Code Owner |
+| Aleksei Fedotov       | @aleksei-fedotov      | Intel Corporation | Code Owner |
+| Ilya Isaev            | @isaevil              | Intel Corporation | Code Owner |
+| Sarath Nandu R        | @sarathnandu          | Intel Corporation | Code Owner |
+| Dmitri Mokhov         | @dnmokhov             | Intel Corporation | Code Owner |
+| Michael Voss          | @vossmjp              | Intel Corporation | Maintainer |
+| Alexey Kukanov        | @akukanov             | Intel Corporation | Code Owner |
+| Pavel Kumbrasev       | @pavelkumbrasev       | Intel Corporation | Code Owner |
 
 ## oneTBB TBBMALLOC (API, Architecture, Tests)
 
