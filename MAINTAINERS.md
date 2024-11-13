@@ -27,28 +27,28 @@ oneTBB project defines three main roles:
 
 [permissions]: https://docs.github.com/en/organizations/managing-user-access-to-your-organizations-repositories/managing-repository-roles/repository-roles-for-an-organization#permissions-for-each-role
 
-|                            | <span style="color:Green">Contributor</span> | <span style="color:orange">Code Owner</span> | <span style="color:magenta">Maintainer</span> |
-| :------------------------- | :---------: | :--------: | :--------: |
-| <span style="color:grey">_Responsibilities_</span>         |             |            |            |
-| Follow the Code of Conduct      |      ✓      |     ✓      |     ✓     |
-| Follow Contribution Guidelines  |      ✓      |     ✓      |     ✓     |
-| Enforce Contribution Guidelines |      ✗      |     ✓      |     ✓     |
-| Co-own component or aspect of the library,<br>  including contributing: bug fixes, implementing features,<br> and performance optimizations      |     ✗      |     ✓      |     ✓     |
-| Co-own on technical direction of component or<br> aspect of the library |     ✗      |     ✗      |     ✓     |
-| Co-own on the project as a whole,<br> including determining strategy and policy for the project |     ✗      |     ✗      |     ✓     |
-| <span style="color:grey">_Privileges_</span>         |             |            |            |
-| Permission granted |      [Read][permissions]      |     [Write][permissions]      |     [Maintain][permissions]     |
-| Eligible to become |      <span style="color:orange">Code Owner</span>      |     <span style="color:magenta">Maintainer</span>      |     ✗     |
-| Can recommend <span style="color:Green">Contributors</span><br> to become <span style="color:orange">Code Owner</span>      |      ✗      |     ✓      |     ✓     |
-| Can participate in promotions of<br> <span style="color:orange">Code Owners</span> and  <span style="color:magenta">Maintainers</span>    |      ✗      |     ✓      |     ✓     |
-| Can suggest Milestones during planning      |      ✓      |     ✓      |     ✓     |
-| Can choose Milestones for specific component  |      ✗      |     ✓      |     ✓     |
-| Paticipate in project's Milestones planning     |      ✗      |     ✗      |     ✓     |
-| Can propose new RFC or<br> participate in review of existing RFC |      ✓      |     ✓      |     ✓     |
-| Can request rework of RFCs<br> in represented area of responsibility |      ✗      |     ✓      |     ✓     |
-| Can request rework of RFCs<br> in any part of the project |      ✗      |     ✗      |     ✓     |
-| Can manage release process of the project |      ✗      |     ✗      |     ✓     |
-| Can represent the project in public as a <span style="color:magenta">Maintainer</span> |      ✗      |     ✗      |     ✓     |
+|                                                                                                                                             |       Contributor       |       Code Owner        |       Maintainer        |
+| :------------------------------------------------------------------------------------------------------------------------------------------ | :---------------------: | :---------------------: | :---------------------: |
+| _Responsibilities_                                                                                                                          |                         |                         |                         |
+| Follow the Code of Conduct                                                                                                                  |            ✓            |            ✓           |            ✓            |
+| Follow Contribution Guidelines                                                                                                              |            ✓            |            ✓           |            ✓            |
+| Enforce Contribution Guidelines                                                                                                             |            ✗            |            ✓           |            ✓            |
+| Co-own component or aspect of the library,<br>  including contributing: bug fixes, implementing features,<br> and performance optimizations |            ✗            |            ✓           |            ✓            |
+| Co-own on technical direction of component or<br> aspect of the library                                                                     |            ✗            |            ✗           |            ✓            |
+| Co-own on the project as a whole,<br> including determining strategy and policy for the project                                             |            ✗            |            ✗           |            ✓            |
+| _Privileges_                                                                                                                                |                         |                         |                         |
+| Permission granted                                                                                                                          |   [Read][permissions]   |   [Write][permissions]  | [Maintain][permissions] |
+| Eligible to become                                                                                                                          |       Code Owner        |       Maintainer        |            ✗            |
+| Can recommend <span style="color:Green">Contributors<br> to become Code Owner                                                               |            ✗            |            ✓           |            ✓            |
+| Can participate in promotions of<br> Code Owners and  Maintainers                                                                           |            ✗            |            ✓           |            ✓            |
+| Can suggest Milestones during planning                                                                                                      |            ✓            |            ✓           |            ✓            |
+| Can choose Milestones for specific component                                                                                                |            ✗            |            ✓           |            ✓            |
+| Paticipate in project's Milestones planning                                                                                                 |            ✗            |            ✗           |            ✓            |
+| Can propose new RFC or<br> participate in review of existing RFC                                                                            |            ✓            |            ✓           |            ✓            |
+| Can request rework of RFCs<br> in represented area of responsibility                                                                        |            ✗            |            ✓           |            ✓            |
+| Can request rework of RFCs<br> in any part of the project                                                                                   |            ✗            |            ✗           |            ✓            |
+| Can manage release process of the project                                                                                                   |            ✗            |            ✗           |            ✓            |
+| Can represent the project in public as a Maintainer                                                                                         |            ✗            |            ✗           |            ✓            |
 
 These roles are merit based. Refer to the corresponding section for specific
 requirements and the nomination process.
