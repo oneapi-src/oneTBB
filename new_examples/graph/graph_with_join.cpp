@@ -55,7 +55,7 @@ void graphJoin() {
   make_edge(my_other_node, tbb::flow::input_port<1>(my_join_node));
   make_edge(my_join_node, my_final_node);
 
-  // step 4: send messages
+  // step 4: send messages that eagerly start graph execution
   my_node.try_put(1);
   my_other_node.try_put(2);
   // step 5: wait for the graph to complete

@@ -40,7 +40,7 @@ void graphTwoNodes() {
   // step 3: add edges
   tbb::flow::make_edge(my_first_node, my_second_node);
 
-  // step 4: send messages
+  // step 4: send message that eagerly starts graph execution
   my_first_node.try_put(10);
 
   // step 5: wait for graph to complete
