@@ -7,7 +7,8 @@ foreach(tpp parallel_invoke_recursive_quicksort.cpp parallel_invoke_two_quicksor
             parallel_scan_running_sum.cpp parallel_scan_line_of_sight.cpp
             parallel_for_each_primes.cpp parallel_for_each_fwd_substition.cpp
             parallel_pipeline_case.cpp parallel_sort.cpp
-            3Dstereo_parallel_pipeline.cpp 3Dstereo_serial_no_pipeline.cpp)
+            3Dstereo_parallel_pipeline.cpp 3Dstereo_serial_no_pipeline.cpp
+	    serial_running_sum.cpp)
   string(REPLACE ".cpp" "" texe ${tpp})
   add_executable(${texe} ${tpp})
   target_include_directories(${texe} PUBLIC
