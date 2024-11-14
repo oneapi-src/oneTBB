@@ -62,4 +62,10 @@ jobs:
             --form version="${{ inputs.version }}" \
             --form description="oneTBB-master-${{ env.GITHUB_SHA }}" \
               "https://scan.coverity.com/builds?project=${{env.COVERITY_PROJECT}}"
-
+      - if: always()
+        name: Save artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.job }}
+          path: cov-int.tgz
+          retention-days: 2
