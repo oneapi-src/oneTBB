@@ -16,6 +16,7 @@
 
 #include <iostream>
 #include <memory>
+#include <vector>
 #include <tbb/tbb.h>
 
 struct config_t { 
@@ -23,16 +24,17 @@ struct config_t {
   int predecessor; 
 };  
 
-config_t configuration[] = { { 0, 3 }, 
-                           { 1, 4 }, 
-                           { 2, 5 }, 
-                           { 3, -1 }, 
-                           { 4, -1 }, 
-                           { 5, 3 }, 
-                           { 6, 4 }, 
-                           { 7, 1 } };
+// each element defines a node and what other node it must wait for
+std::vector<config_t> configuration =   { { 0, 3 }, 
+                                          { 1, 4 }, 
+                                          { 2, 5 }, 
+                                          { 3, -1 }, 
+                                          { 4, -1 }, 
+                                          { 5, 3 }, 
+                                          { 6, 4 }, 
+                                          { 7, 1 } };
 
-int num_nodes = sizeof(configuration) / sizeof(config_t);
+const int num_nodes = configuration.size();
 
 int main() {
   tbb::flow::graph g;
@@ -57,14 +59,18 @@ int main() {
                           return m;
                         }
                        });
-    // connect the new node to its future
+    // connect the new node to its "future"
     tbb::flow::make_edge(*work_nodes[c.id], future_nodes[c.id]); 
 
     // start the node or link it to predecessor's promise
     if (c.predecessor != -1) {
+       // must connect to predecessor's "future"
+       // if the future is already written to this will start the node
+       // otherwise it will be started when the future is written
        std::printf("new %d with %d -> %d\n", c.id, c.predecessor, c.id);
        tbb::flow::make_edge(future_nodes[c.predecessor], *work_nodes[c.id]);
     } else {
+       // does not need to wait and can be started immediately
        std::printf("starting %d from main\n", c.id);
        work_nodes[c.id]->try_put(tbb::flow::continue_msg{});
     }
