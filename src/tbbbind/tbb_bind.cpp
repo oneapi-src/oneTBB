@@ -62,9 +62,7 @@ class system_topology {
     hwloc_cpuset_t   process_cpu_affinity_mask{nullptr};
     hwloc_nodeset_t  process_node_affinity_mask{nullptr};
     std::size_t number_of_processors_groups{1};
-#if __TBBBIND_HWLOC_WINDOWS_API_AVAILABLE
     std::vector<hwloc_cpuset_t> processor_groups_affinity_masks_list{};
-#endif
 
     // NUMA API related topology members
     std::vector<hwloc_cpuset_t> numa_affinity_masks_list{};
@@ -83,7 +81,7 @@ class system_topology {
 
     // Binding threads that locate in another Windows Processor groups
     // is allowed only if machine topology contains several Windows Processors groups
-    // and process affinity mask wasn't limited manually (affinity mask cannot violates
+    // and process affinity mask wasn't limited manually (affinity mask cannot violate
     // processors group boundaries).
     bool intergroup_binding_allowed(std::size_t groups_num) { return groups_num > 1; }
 
@@ -241,6 +239,7 @@ private:
 
 #if __TBBBIND_HWLOC_WINDOWS_API_AVAILABLE
     void processor_groups_topology_parsing() {
+        __TBB_ASSERT(number_of_processors_groups > 1, nullptr);
         processor_groups_affinity_masks_list.resize(number_of_processors_groups);
         for (unsigned group = 0; group < number_of_processors_groups; ++group) {
             processor_groups_affinity_masks_list[group] = hwloc_bitmap_alloc();
@@ -314,11 +313,10 @@ public:
             for (auto& core_type_mask : core_types_affinity_masks_list) {
                 hwloc_bitmap_free(core_type_mask);
             }
-#if __TBBBIND_HWLOC_WINDOWS_API_AVAILABLE
+
             for (auto& processor_group : processor_groups_affinity_masks_list) {
                 hwloc_bitmap_free(processor_group);
             }
-#endif
 
             hwloc_bitmap_free(process_node_affinity_mask);
             hwloc_bitmap_free(process_cpu_affinity_mask);
@@ -397,10 +395,13 @@ public:
     }
     
     void fit_to_processor_group(affinity_mask result_mask, affinity_mask constraints_mask, std::size_t hint) {
+        __TBB_ASSERT(number_of_processors_groups > 1, nullptr);
         hwloc_bitmap_zero(result_mask);
-        auto constraints_mask_weight = hwloc_bitmap_weight(constraints_mask);
+        int constraints_mask_weight = hwloc_bitmap_weight(constraints_mask);
+        // Map slot number to a number within constraints mask if
+        // max concurrency is greater than weight of the mask.
         hint %= constraints_mask_weight;
-        unsigned total_weight = 0;
+        std::size_t total_weight = 0;
         for (auto& processor_group : processor_groups_affinity_masks_list) {
             if (hwloc_bitmap_intersects(constraints_mask, processor_group)) {
                 hwloc_bitmap_and(result_mask, processor_group, constraints_mask);
