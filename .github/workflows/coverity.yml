@@ -47,20 +47,21 @@ jobs:
       - name: Build with cov-build
         run: |
           export PATH="${PWD}/cov-linux64-tool/bin:${PATH}"
-          mkdir build && cd build
+#          mkdir build && cd build
           cmake -DCMAKE_CXX_STANDARD=20 -DCMAKE_BUILD_TYPE=relwithdebinfo \
-            -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DTBB_CPF=ON -DTBB_TEST=OFF ..
+            -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DTBB_CPF=ON -DTBB_TEST=OFF .
           cov-build --dir cov-int make VERBOSE=1 -j${{env.BUILD_CONCURRENCY}}
       - name: Archive Coverity build results
-        run: tar -czvf cov-int.tgz build/cov-int
+#        run: tar -czvf cov-int.tgz build/cov-int
+        run: tar -czvf cov-int.tgz cov-int
       - name: Submit Coverity results for analysis
         run: |
           curl \
             --form token="${{ secrets.COVERITY_TOKEN }}" \
             --form email="${{ secrets.COVERITY_EMAIL }}" \
             --form file=@cov-int.tgz \
-            --form version="${{ inputs.version }}" \
-            --form description="oneTBB-master-${{ env.GITHUB_SHA }}" \
+            --form version="2022.x" \
+            --form description="${GITHUB_SHA}" \
               "https://scan.coverity.com/builds?project=${{env.COVERITY_PROJECT}}"
       - if: always()
         name: Save artifacts
