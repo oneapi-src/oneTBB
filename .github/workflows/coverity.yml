@@ -53,8 +53,8 @@ jobs:
           cov-build --dir cov-int make VERBOSE=1 -j${{env.BUILD_CONCURRENCY}}
       - name: Archive Coverity build results
         run: |
-        cd build
-        tar -czvf cov-int.tgz cov-int
+          cd build
+          tar -czvf cov-int.tgz cov-int
       - name: Submit Coverity results for analysis
         run: |
           cd build
