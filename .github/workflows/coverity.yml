@@ -47,13 +47,17 @@ jobs:
       - name: Build with cov-build
         run: |
           export PATH="${PWD}/cov-linux64-tool/bin:${PATH}"
+          mkdir build && cd build
           cmake -DCMAKE_CXX_STANDARD=20 -DCMAKE_BUILD_TYPE=relwithdebinfo \
-            -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DTBB_CPF=ON -DTBB_TEST=OFF .
+            -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DTBB_CPF=ON -DTBB_TEST=OFF ..
           cov-build --dir cov-int make VERBOSE=1 -j${{env.BUILD_CONCURRENCY}}
       - name: Archive Coverity build results
-        run: tar -czvf cov-int.tgz cov-int
+        run: |
+        cd build
+        tar -czvf cov-int.tgz cov-int
       - name: Submit Coverity results for analysis
         run: |
+          cd build
           curl \
             --form token="${{ secrets.COVERITY_TOKEN }}" \
             --form email="${{ secrets.COVERITY_EMAIL }}" \
