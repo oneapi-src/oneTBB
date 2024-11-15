@@ -49,7 +49,7 @@ jobs:
           export PATH="${PWD}/cov-linux64-tool/bin:${PATH}"
           mkdir build && cd build
           cmake -DCMAKE_CXX_STANDARD=20 -DCMAKE_BUILD_TYPE=relwithdebinfo \
-            -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DTBB_CPF=ON -DTBB_TEST=OFF ..
+            -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DTBB_CPF=ON ..
           cov-build --dir cov-int make VERBOSE=1 -j${{env.BUILD_CONCURRENCY}}
       - name: Archive Coverity build results
         run: |
@@ -70,5 +70,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ github.job }}
-          path: cov-int.tgz
+          path: build/cov-int.tgz
           retention-days: 2
