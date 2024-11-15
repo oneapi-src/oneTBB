@@ -57,9 +57,9 @@ void small_nodes_lightweight() {
   tbb::flow::function_node< int, int > add( g, tbb::flow::unlimited, 
                      [](const int &v) { return v+1; } );
   tbb::flow::function_node< int, int, tbb::flow::lightweight >  multiply( g, tbb::flow::unlimited, 
-                          [](const int &v) { return v*2; } );
+                          [](const int &v) noexcept { return v*2; } );
   tbb::flow::function_node< int, int, tbb::flow::lightweight >  cube( g, tbb::flow::unlimited, 
-                      [](const int &v) { return v*v*v; } );
+                      [](const int &v) noexcept { return v*v*v; } );
 
   tbb::flow::make_edge(add, multiply);
   tbb::flow::make_edge(multiply, cube);
@@ -73,7 +73,7 @@ void small_nodes_combined_lightweight() {
   tbb::flow::graph g;
 
   tbb::flow::function_node< int, int, tbb::flow::lightweight > combined_node( g, tbb::flow::unlimited, 
-                     [](const int &v) { 
+                     [](const int &v) noexcept { 
                         auto v2 = (v+1)*2;
                         return v2*v2*v2;
                      });
