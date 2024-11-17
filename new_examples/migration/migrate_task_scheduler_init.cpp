@@ -32,6 +32,7 @@ void setThreadsAndSlots() {
   });
 }
 #else
+#warning Using tbb::task_scheduler_init instead of tbb::global_control
 const int N = tbb::task_scheduler_init::default_num_threads();
 
 void setThreadsAndSlots() {

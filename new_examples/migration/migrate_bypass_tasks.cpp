@@ -114,6 +114,7 @@ void parallelFwdSubTaskGroup(std::vector<double>& x,
 }
 
 #if TBB_VERSION_MAJOR <= 2020
+#warning Using tbb::task directly
 using RootTask = tbb::empty_task;
 
 class FwdSubTask : public tbb::task {

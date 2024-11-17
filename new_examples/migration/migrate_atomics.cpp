@@ -56,6 +56,7 @@ int main(int argc, char** argv) {
   #if TBB_VERSION_MAJOR > 2020
   std::vector<std::atomic<int>> hist_p(num_bins);
   #else
+  #warning Using tbb::atomic instead of std::atomic
   std::vector<tbb::atomic<int>> hist_p(num_bins);
   #endif
 
