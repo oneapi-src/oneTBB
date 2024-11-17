@@ -106,3 +106,49 @@ int main(int argc, char** argv) {
   
   return 0;
 }
+
+
+/***
+
+ There are many reasons these can vary... these are just sample runs (November 11, 2024).
+
+
+ WSL / Ubuntu sample output:
+
+tbb::mutex sizeof = 1
+tbb::null_mutex sizeof = 1
+tbb::rw_mutex  sizeof = 8
+tbb::null_rw_mutex sizeof = 1
+tbb::queuing_mutex sizeof = 8
+tbb::queuing_rw_mutex sizeof = 8
+tbb::speculative_spin_mutex sizeof = 1
+tbb::speculative_spin_rw_mutex sizeof = 8
+tbb::spin_mutex sizeof = 1
+tbb::spin_rw_mutex  sizeof = 8
+tbb::spin_rw_mutex  sizeof = 8
+std::mutex sizeof = 40
+std::recursive_mutex sizeof = 40
+std::recursive_timed_mutex sizeof = 40
+std::shared_mutex sizeof = 56
+std::shared_timed_mutex sizeof = 56
+std::timed_mutex sizeof = 40
+
+
+ Win 11 sample output:
+tbb::mutex sizeof = 1
+tbb::null_mutex sizeof = 1
+tbb::rw_mutex  sizeof = 8
+tbb::null_rw_mutex sizeof = 1
+tbb::queuing_mutex sizeof = 8
+tbb::queuing_rw_mutex sizeof = 8
+tbb::speculative_spin_mutex sizeof = 128
+tbb::speculative_spin_rw_mutex sizeof = 128
+tbb::spin_mutex sizeof = 1
+tbb::spin_rw_mutex  sizeof = 8
+tbb::spin_rw_mutex  sizeof = 8
+std::mutex sizeof = 80
+std::recursive_mutex sizeof = 80
+std::recursive_timed_mutex sizeof = 160
+std::timed_mutex sizeof = 160
+
+***/
