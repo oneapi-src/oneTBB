@@ -3,8 +3,7 @@ set(CMAKE_CXX_LINKER_FLAGS "-tbb")
 
 foreach(tpp cpp_exceptions.cpp
             exception_catch1.cpp
-            exception_catch2.cpp
-            exception_catch3.cpp)
+            exception_catch2.cpp)
   string(REPLACE ".cpp" "" texe ${tpp})
   add_executable(${texe} ${tpp})
   target_include_directories(${texe} PUBLIC

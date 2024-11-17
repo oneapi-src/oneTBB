@@ -14,24 +14,40 @@
     limitations under the License.
 */
 
+#include <tbb/tbb.h>
 #include <vector>
 #include <iostream>
-using namespace std;
 
-int main(){
-  try{
-    try{
-      throw 5;
+class div_ex
+{
+  public:
+    int it;
+    explicit div_ex(int it_): it{it_}{}
+    const char* what() const throw(){
+      return "Division by 0!";
     }
-    catch (int& n){
-      cout << "Re-throwing value: " << n << endl;
-      throw;
+    const char* name() const throw(){
+      return typeid(*this).name();
     }
+};
+
+int main(int argc, char** argv) {
+  int n = 1000;
+
+  std::vector<float> data(n, 1.0);
+  data[n/2]=0.0;
+  try {
+    tbb::parallel_for(0, n, [&](int i) {
+      if (data[i]) data[i]=1/data[i];
+      else{
+        throw div_ex{i};
+      }
+    });
   }
-  catch(int& e){
-    cout<< "Value caught: " << e << endl;
+  catch(div_ex& ex) {
+    std::cout << "Exception name: " << ex.name() << std::endl;
+    std::cout << "Exception: "      << ex.what();
+    std::cout << " at position: "   << ex.it << std::endl;
   }
-  catch (...){
-    cout << "Exception occurred\n";
-  }
+  return 0;
 }
