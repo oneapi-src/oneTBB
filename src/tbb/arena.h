@@ -219,7 +219,7 @@ public:
         } while (!my_state.compare_exchange_strong(prev, desired));
     }
 
-    void register_parallel_block(bool enable_fast_leave) {
+    void unregister_parallel_block(bool enable_fast_leave) {
         __TBB_ASSERT(my_state.load(std::memory_order_relaxed) != 0, "The initial state was not set");
 
         std::uintptr_t prev = my_state.load(std::memory_order_relaxed);
