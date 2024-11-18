@@ -27,4 +27,4 @@ jobs:
     - uses: actions/checkout@v4
     - uses: actions/labeler@v5
       with:
-        configuration-path: .github/issue_labeler.yml
+        configuration-path: .github/labeler.yml
