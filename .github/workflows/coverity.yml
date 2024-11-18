@@ -62,13 +62,6 @@ jobs:
             --form token="${{ secrets.COVERITY_TOKEN }}" \
             --form email="${{ secrets.COVERITY_EMAIL }}" \
             --form file=@cov-int.tgz \
-            --form version="2022.x" \
-            --form description="${GITHUB_SHA}" \
+            --form version="${GITHUB_SHA}" \
+            --form description="" \
               "https://scan.coverity.com/builds?project=${{env.COVERITY_PROJECT}}"
-      - if: always()
-        name: Save artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ github.job }}
-          path: build/cov-int.tgz
-          retention-days: 2
