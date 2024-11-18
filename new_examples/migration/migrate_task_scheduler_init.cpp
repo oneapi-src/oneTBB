@@ -19,7 +19,7 @@
 void doWork(double seconds);
 
 #if TBB_VERSION_MAJOR > 2020
-const int N = 2*tbb::info::default_concurrency();
+const int N = tbb::info::default_concurrency();
 
 void setThreadsAndSlots() {
   tbb::global_control gc(tbb::global_control::max_allowed_parallelism, N);
@@ -84,11 +84,11 @@ void dumpParticipation(int p) {
     sum += tid_participation[i];
     std::cout << ", " << tid_participation[i];
   }
-  for (int i = p; i < 2*N; ++i) 
+  for (int i = p; i < N; ++i) 
     std::cout << ", -";
   std::cout << "]\n" 
             << "sum == " << sum  << "\n"
-            << "expected sum " << 2*10*N << "\n";
+            << "expected sum " << 10*N << "\n";
   clearParticipation();
 }
 
