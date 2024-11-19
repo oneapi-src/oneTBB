@@ -58,12 +58,12 @@ requirements and the nomination process.
 A Contributor invests time and resources to improve oneTBB project.
 Anyone can become a Contributor by bringing value in one of the following ways:
   * Answer questions from community members.
+  * Propose changes to the design.
   * Provide feedback on design proposals.
   * Review and/or test pull requests.
   * Test releases and report bugs.
   * Contribute code, including bug fixes, features implementations,
 and performance optimizations.
-  * Propose changes to the design.
 
 ## Code Owner
 
