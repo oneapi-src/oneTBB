@@ -16,7 +16,7 @@
 
 # Introduction
 
-This document defines roles in oneTBB project.
+This document defines roles in the oneTBB project.
 
 # Roles and responsibilities
 
@@ -35,7 +35,7 @@ oneTBB project defines three main roles:
 | Enforce Contribution Guidelines                                                                                                             |            ✗            |            ✓           |            ✓            |
 | Co-own component or aspect of the library,<br>  including contributing: bug fixes, implementing features,<br> and performance optimizations |            ✗            |            ✓           |            ✓            |
 | Co-own on technical direction of component or<br> aspect of the library                                                                     |            ✗            |            ✗           |            ✓            |
-| Co-own on the project as a whole,<br> including determining strategy and policy for the project                                             |            ✗            |            ✗           |            ✓            |
+| Co-own the project as a whole,<br> including determining strategy and policy for the project                                             |            ✗            |            ✗           |            ✓            |
 | _Privileges_                                                                                                                                |                         |                         |                         |
 | Permission granted                                                                                                                          |   [Read][permissions]   |   [Write][permissions]  | [Maintain][permissions] |
 | Eligible to become                                                                                                                          |       Code Owner        |       Maintainer        |            ✗            |
