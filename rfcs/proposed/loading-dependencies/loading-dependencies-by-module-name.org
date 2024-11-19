@@ -70,6 +70,8 @@ distribution models of oneTBB this RFC proposes to:
 2. Introduce signature verification step to the process of a dependency load.
 3. Introduce the ~TBB_VERIFY_DEPENDENCY_SIGNATURE~ compilation option that would
    enable signature verification process, and set it ~ON~ by default.
+4. Update documentation to include information about new
+   ~TBB_VERIFY_DEPENDENCY_SIGNATURE~ flag.
 
 * References
 1. [[https://support.microsoft.com/en-us/topic/secure-loading-of-libraries-to-prevent-dll-preloading-attacks-d41303ec-0748-9211-f317-2edc819682e1][Microsoft, "Secure loading of libraries to prevent DLL preloading attacks".]]
