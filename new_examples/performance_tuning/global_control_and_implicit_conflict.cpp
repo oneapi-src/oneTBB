@@ -14,20 +14,29 @@
     limitations under the License.
 */
 
-#include <iostream>
 #include <thread>
 #include <tbb/tbb.h>
 
 const int default_P = tbb::info::default_concurrency();
-void doWork(int inc, double seconds);
-void waitUntil(int N);
 
-void arenaGlobalControlImplicitArena(int p, int inc) {
+void waitUntil(int N);
+void noteParticipation(int offset);
+void dumpParticipation(int p);
+
+void doWork(int offset, double seconds) {
+  noteParticipation(offset);
+  tbb::tick_count t0 = tbb::tick_count::now();
+  while ((tbb::tick_count::now() - t0).seconds() < seconds);
+}
+
+void arenaGlobalControlImplicitArena(int p, int offset) {
   tbb::global_control gc(tbb::global_control::max_allowed_parallelism, p);
 
   tbb::parallel_for(0, 
                     10*default_P, 
-                    [=](int) { doWork(inc, 0.01); });
+                    [=](int) { 
+                      doWork(offset, 0.01); 
+                    });
 }
 
 void runTwoThreads(int p0, int p1) {
@@ -43,29 +52,26 @@ void runTwoThreads(int p0, int p1) {
   t1.join();
 }
 
+int main() {
+  runTwoThreads(default_P/2, default_P);
+  dumpParticipation(default_P);
+  return 0;
+}
+
 #include <atomic>
-#include <cstdio>
-#include <vector>
-#include <map>
-#include <set>
+#include <iostream>
 #include <vector>
 
 std::atomic<int> next_tid;
 tbb::enumerable_thread_specific<int> my_tid(-1);
-std::vector<std::atomic<int>> tid_participation(2*default_P);
+std::vector<std::atomic<int>> tid_participation(default_P);
 
-void noteParticipation(int inc) {
+void noteParticipation(int offset) {
   auto& t = my_tid.local();
   if (t == -1) {
     t = next_tid++;
   }
-  tid_participation[t] += inc;
-}
-
-void doWork(int inc, double seconds) {
-  noteParticipation(inc);
-  tbb::tick_count t0 = tbb::tick_count::now();
-  while ((tbb::tick_count::now() - t0).seconds() < seconds);
+  tid_participation[t] += offset;
 }
 
 void clearParticipation() {
@@ -76,10 +82,9 @@ void clearParticipation() {
 }
 
 void dumpParticipation(int p) {
-  int end = next_tid;
   int sum = tid_participation[0];
   std::cout << "[" << tid_participation[0];
-  for (int i = 1; i < 2*default_P + 1; ++i) {
+  for (int i = 1; i < default_P; ++i) {
     sum += tid_participation[i];
     std::cout << ", " << tid_participation[i];
   }
@@ -96,9 +101,4 @@ void waitUntil(int N) {
   while (count_up != N);
 }
 
-int main() {
-  runTwoThreads(default_P/2, default_P);
-  dumpParticipation(default_P);
-  return 0;
-}
 
