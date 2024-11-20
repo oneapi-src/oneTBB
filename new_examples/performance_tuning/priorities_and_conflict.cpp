@@ -14,18 +14,24 @@
     limitations under the License.
 */
 
-#include <iostream>
+
 #include <thread>
 #include <tbb/tbb.h>
 
 void printArrival(tbb::task_arena::priority priority);
-void waitUntil(int N);
+
+using counter_t = std::atomic<int>;
+counter_t counter = 0;
+void waitUntil(int N, counter_t& c) {
+  ++c;
+  while (c != N);
+}
 
 void explicitArenaWithPriority(tbb::task_arena::priority priority) {
   tbb::task_arena a{tbb::info::default_concurrency(), 1, priority};
   a.execute([=]() {
     tbb::parallel_for(0, 
-                      10*tbb::info::default_concurrency(), 
+                      2*tbb::info::default_concurrency(), 
                       [=](int) { printArrival(priority); });
   });
 }
@@ -33,11 +39,11 @@ void explicitArenaWithPriority(tbb::task_arena::priority priority) {
 void runTwoThreads(tbb::task_arena::priority priority0, 
                    tbb::task_arena::priority priority1) {
   std::thread t0([=]() {
-    waitUntil(2);
+    waitUntil(2, counter);
     explicitArenaWithPriority(priority0);
   });
   std::thread t1([=]() {
-    waitUntil(2);
+    waitUntil(2, counter);
     explicitArenaWithPriority(priority1);
   });
   t0.join();
@@ -46,16 +52,31 @@ void runTwoThreads(tbb::task_arena::priority priority0,
 
 #include <cstdio>
 
+int main() {
+  counter = 0;
+  std::printf("\n\n\n\nrunTwoThreads with low (.) and high (|)\n");
+  runTwoThreads(tbb::task_arena::priority::low, tbb::task_arena::priority::high);
+
+  counter = 0;
+  std::printf("\n\n\n\nrunTwoThreads with low (.) and normal (:)\n");
+  runTwoThreads(tbb::task_arena::priority::low, tbb::task_arena::priority::normal);
+
+  counter = 0;
+  std::printf("\n\n\n\nrunTwoThreads with normal (:) and high (|)\n");
+  runTwoThreads(tbb::task_arena::priority::normal, tbb::task_arena::priority::high);
+  return 0;
+}
+
 void printArrival(tbb::task_arena::priority priority) {
   switch (priority) {
     case tbb::task_arena::priority::low:
-      std::printf(" low ");
+      std::printf(".");
       break;
     case tbb::task_arena::priority::normal:
-      std::printf(" normal ");
+      std::printf(":");
       break;
     case tbb::task_arena::priority::high:
-      std::printf(" high ");
+      std::printf("|");
       break;
     default:
       break;
@@ -65,24 +86,5 @@ void printArrival(tbb::task_arena::priority priority) {
   while ((tbb::tick_count::now() - t0).seconds() < 0.01);
 }
 
-std::atomic<int> count_up = 0;
-void waitUntil(int N) {
-  ++count_up;
-  while (count_up != N);
-}
 
-int main() {
-  count_up = 0;
-  std::printf("\n\n\n\nrunTwoThreads(low, high)");
-  runTwoThreads(tbb::task_arena::priority::low, tbb::task_arena::priority::high);
-
-  count_up = 0;
-  std::printf("\n\n\n\nrunTwoThreads(low, normal)");
-  runTwoThreads(tbb::task_arena::priority::low, tbb::task_arena::priority::normal);
-
-  count_up = 0;
-  std::printf("\n\n\n\nrunTwoThreads(normal, high)");
-  runTwoThreads(tbb::task_arena::priority::normal, tbb::task_arena::priority::high);
-  return 0;
-}
 
