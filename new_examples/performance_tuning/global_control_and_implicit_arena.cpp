@@ -14,11 +14,18 @@
     limitations under the License.
 */
 
-#include <iostream>
 #include <tbb/tbb.h>
 
 const int default_P = tbb::info::default_concurrency();
-void doWork(double seconds);
+
+void noteParticipation(); /* record info for participation vector */
+void dumpParticipation(int p); /* display participation vector */
+
+void doWork(double seconds) {
+  noteParticipation();
+  tbb::tick_count t0 = tbb::tick_count::now();
+  while ((tbb::tick_count::now() - t0).seconds() < seconds);
+}
 
 void arenaGlobalControlImplicitArena(int p) {
   tbb::global_control gc(tbb::global_control::max_allowed_parallelism, p);
@@ -27,11 +34,19 @@ void arenaGlobalControlImplicitArena(int p) {
                     [](int) { doWork(0.01); });
 }
 
+
+int main() {
+  arenaGlobalControlImplicitArena(default_P);
+  dumpParticipation(default_P);
+  arenaGlobalControlImplicitArena(default_P/2);
+  dumpParticipation(default_P/2);
+  arenaGlobalControlImplicitArena(2*default_P);
+  dumpParticipation(2*default_P);
+  return 0;
+}
+
 #include <atomic>
-#include <cstdio>
-#include <vector>
-#include <map>
-#include <set>
+#include <iostream>
 #include <vector>
 
 std::atomic<int> next_tid;
@@ -46,12 +61,6 @@ void noteParticipation() {
   ++tid_participation[t];
 }
 
-void doWork(double seconds) {
-  noteParticipation();
-  tbb::tick_count t0 = tbb::tick_count::now();
-  while ((tbb::tick_count::now() - t0).seconds() < seconds);
-}
-
 void clearParticipation() {
   next_tid = 0;
   my_tid.clear();
@@ -60,7 +69,6 @@ void clearParticipation() {
 }
 
 void dumpParticipation(int p) {
-  int end = next_tid;
   int sum = tid_participation[0];
   std::cout << "[" << tid_participation[0];
   for (int i = 1; i < std::min(p, default_P); ++i) {
@@ -71,17 +79,9 @@ void dumpParticipation(int p) {
     std::cout << ", -";
   std::cout << "]\n" 
             << "sum == " << sum  << "\n"
-            << "expected sum " << 10*default_P << "\n";
+            << "expected sum " << 10*default_P << "\n\n";
   clearParticipation();
 }
 
-int main() {
-  arenaGlobalControlImplicitArena(default_P);
-  dumpParticipation(default_P);
-  arenaGlobalControlImplicitArena(default_P/2);
-  dumpParticipation(default_P/2);
-  arenaGlobalControlImplicitArena(2*default_P);
-  dumpParticipation(2*default_P);
-  return 0;
-}
+
 
