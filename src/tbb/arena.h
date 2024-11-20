@@ -185,6 +185,7 @@ class thread_leave_manager {
     static const std::uintptr_t ONE_TIME_FAST_LEAVE = 1 << 1;
     static const std::uintptr_t DELAYED_LEAVE = 1 << 2;
     static const std::uintptr_t PARALLEL_BLOCK = 1 << 3;
+    static const std::uintptr_t PARALLEL_BLOCK_MASK = ~((1LLU << 32) - 1) & ~(0x7);
 
     std::atomic<std::uintptr_t> my_state{0};
 public:
@@ -199,6 +200,8 @@ public:
     void restore_state_if_needed() {
         std::uintptr_t curr = ONE_TIME_FAST_LEAVE;
         if (my_state.load(std::memory_order_relaxed) == curr) {
+            // Potentially can override desicion of the parallel block from future epoch
+            // but it is not a problem because it does not violate the correctness
             my_state.compare_exchange_strong(curr, DELAYED_LEAVE);
         }
     }
@@ -209,7 +212,7 @@ public:
         std::uintptr_t prev = my_state.load(std::memory_order_relaxed);
         std::uintptr_t desired{};
         do {
-            if (prev & PARALLEL_BLOCK) {
+            if (prev & PARALLEL_BLOCK_MASK) {
                 desired = PARALLEL_BLOCK + prev;
             } else if (prev == ONE_TIME_FAST_LEAVE) {
                 desired = PARALLEL_BLOCK | DELAYED_LEAVE;
@@ -225,10 +228,10 @@ public:
         std::uintptr_t prev = my_state.load(std::memory_order_relaxed);
         std::uintptr_t desired{};
         do {
-            if (((prev - PARALLEL_BLOCK) & PARALLEL_BLOCK) != 0) {
-                desired = PARALLEL_BLOCK - prev;
+            if (((prev - PARALLEL_BLOCK) & PARALLEL_BLOCK_MASK) != 0) {
+                desired = prev - PARALLEL_BLOCK;
             } else {
-                desired = enable_fast_leave ? ONE_TIME_FAST_LEAVE : prev - PARALLEL_BLOCK;
+                desired = enable_fast_leave && (prev - PARALLEL_BLOCK == DELAYED_LEAVE) ? ONE_TIME_FAST_LEAVE : prev - PARALLEL_BLOCK;
             }
         } while (!my_state.compare_exchange_strong(prev, desired));
     }
