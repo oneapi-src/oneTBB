@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#include <atomic>
 #include <thread>
 #include <tbb/tbb.h>
 
@@ -49,12 +50,8 @@ void arenaGlobalControlImplicitArena(int p, int offset) {
 }
 
 void runTwoThreads(int p0, int p1) {
-  std::thread t0([=]() {
-    arenaGlobalControlImplicitArena(p0, 1);
-  });
-  std::thread t1([=]() {
-    arenaGlobalControlImplicitArena(p1, 10000);
-  });
+  std::thread t0([=]() { arenaGlobalControlImplicitArena(p0, 1); });
+  std::thread t1([=]() { arenaGlobalControlImplicitArena(p1, 10000); });
   t0.join();
   t1.join();
 }
@@ -65,7 +62,6 @@ int main() {
   return 0;
 }
 
-#include <atomic>
 #include <iostream>
 #include <vector>
 

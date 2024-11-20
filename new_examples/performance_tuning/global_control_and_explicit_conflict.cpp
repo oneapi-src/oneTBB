@@ -14,44 +14,55 @@
     limitations under the License.
 */
 
-#include <iostream>
 #include <thread>
 #include <tbb/tbb.h>
 
 const int default_P = tbb::info::default_concurrency();
-void doWork(int inc, double seconds);
-void waitUntil(int N);
+using counter_t = std::atomic<int>;
+void waitUntil(int N, counter_t& c);
+void noteParticipation(int offset);
+void dumpParticipation();
 
-void arenaGlobalControlExplicitArena(int p, int inc) {
+void doWork(int offset, double seconds) {
+  noteParticipation(offset);
+  tbb::tick_count t0 = tbb::tick_count::now();
+  while ((tbb::tick_count::now() - t0).seconds() < seconds);
+}
+
+counter_t counter1 = 0, counter2 = 0;
+
+void arenaGlobalControlExplicitArena(int p, int offset) {
   tbb::global_control gc(tbb::global_control::max_allowed_parallelism, p);
 
+  // we use waitUntil to force overlap of the gc lifetimes
+  waitUntil(2, counter1);
   tbb::task_arena a{2*tbb::info::default_concurrency()};
 
   a.execute([=]() {
     tbb::parallel_for(0, 
                       10*tbb::info::default_concurrency(), 
-                      [=](int) { doWork(inc, 0.01); });
+                      [=](int) { doWork(offset, 0.01); });
   });
+
+  // we prevent either gc from being destroyed until both are done
+  waitUntil(2, counter2);
 }
 
 void runTwoThreads(int p0, int p1) {
-  std::thread t0([=]() {
-    waitUntil(2);
-    arenaGlobalControlExplicitArena(p0, 1);
-  });
-  std::thread t1([=]() {
-    waitUntil(2);
-    arenaGlobalControlExplicitArena(p1, 10000);
-  });
+  std::thread t0([=]() { arenaGlobalControlExplicitArena(p0, 1); });
+  std::thread t1([=]() { arenaGlobalControlExplicitArena(p1, 10000); });
   t0.join();
   t1.join();
 }
 
+int main() {
+  runTwoThreads(default_P/2, 2*default_P);
+  dumpParticipation();
+  return 0;
+}
+
 #include <atomic>
-#include <cstdio>
-#include <vector>
-#include <map>
-#include <set>
+#include <iostream>
 #include <vector>
 
 std::atomic<int> next_tid;
@@ -66,12 +77,6 @@ void noteParticipation(int inc) {
   tid_participation[t] += inc;
 }
 
-void doWork(int inc, double seconds) {
-  noteParticipation(inc);
-  tbb::tick_count t0 = tbb::tick_count::now();
-  while ((tbb::tick_count::now() - t0).seconds() < seconds);
-}
-
 void clearParticipation() {
   next_tid = 0;
   my_tid.clear();
@@ -79,11 +84,10 @@ void clearParticipation() {
     p = 0;
 }
 
-void dumpParticipation(int p) {
-  int end = next_tid;
+void dumpParticipation() {
   int sum = tid_participation[0];
   std::cout << "[" << tid_participation[0];
-  for (int i = 1; i < 2*default_P; ++i) {
+  for (int i = 1; i < tid_participation.size(); ++i) {
     sum += tid_participation[i];
     std::cout << ", " << tid_participation[i];
   }
@@ -91,18 +95,12 @@ void dumpParticipation(int p) {
             << "sum == " << sum << "\n"
             << "expected sum == " << 10*default_P + 10*default_P*10000 << "\n";
   clearParticipation();
+  counter1 = 0; counter2 = 0;
 }
 
-std::atomic<int> count_up = 0;
-
-void waitUntil(int N) {
-  ++count_up;
-  while (count_up != N);
+void waitUntil(int N, counter_t& c) {
+  ++c;
+  while (c != N);
 }
 
-int main() {
-  runTwoThreads(default_P/2, 2*default_P);
-  dumpParticipation(2*default_P);
-  return 0;
-}
 
