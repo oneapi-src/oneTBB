@@ -75,7 +75,7 @@ void dumpParticipation(int p) {
     std::cout << ", -";
   std::cout << "]\n" 
             << "sum == " << sum  << "\n"
-            << "expected sum " << 10*default_P << "\n";
+            << "expected sum " << 10*default_P << "\n\n";
   clearParticipation();
 }
 
