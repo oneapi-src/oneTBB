@@ -19,7 +19,8 @@
 
 const int default_P = tbb::info::default_concurrency();
 
-void waitUntil(int N);
+using counter_t = std::atomic<int>;
+void waitUntil(int N, counter_t& c);
 void noteParticipation(int offset);
 void dumpParticipation();
 
@@ -29,11 +30,13 @@ void doWork(int offset, double seconds) {
   while ((tbb::tick_count::now() - t0).seconds() < seconds);
 }
 
+counter_t counter1 = 0, counter2 = 0;
+
 void arenaGlobalControlImplicitArena(int p, int offset) {
   tbb::global_control gc(tbb::global_control::max_allowed_parallelism, p);
 
   // we use waitUntil to force overlap of the gc lifetimes
-  waitUntil(2);
+  waitUntil(2, counter1);
 
   tbb::parallel_for(0, 
                     10*default_P, 
@@ -42,7 +45,7 @@ void arenaGlobalControlImplicitArena(int p, int offset) {
                     });
 
   // we prevent either gc from being destroyed until both are done
-  waitUntil(2);
+  waitUntil(2, counter2);
 }
 
 void runTwoThreads(int p0, int p1) {
@@ -96,14 +99,12 @@ void dumpParticipation() {
             << "sum == " << sum << "\n"
             << "expected sum == " << 10*default_P + 10*default_P*10000 << "\n";
   clearParticipation();
+  counter1 = 0; counter2 = 0;
 }
 
-std::atomic<int> count_up = 0;
-
-void waitUntil(int N) {
-  ++count_up;
-  while (count_up != N);
-  count_up = 0;
+void waitUntil(int N, counter_t& c) {
+  ++c;
+  while (c != N);
 }
 
 
