@@ -43,7 +43,7 @@ oneTBB project defines three main roles:
 | Can participate in promotions of<br> Code Owners and  Maintainers                                                                           |            ✗            |            ✗           |            ✓            |
 | Can suggest Milestones during planning                                                                                                      |            ✓            |            ✓           |            ✓            |
 | Can choose Milestones for specific component                                                                                                |            ✗            |            ✓           |            ✓            |
-| Choose project's Milestones during planning                                                                                                 |            ✗            |            ✗           |            ✓            |
+| Make a decision on project's Milestones during planning                                                                                     |            ✗            |            ✗           |            ✓            |
 | Can propose new RFC or<br> participate in review of existing RFC                                                                            |            ✓            |            ✓           |            ✓            |
 | Can request rework of RFCs<br> in represented area of responsibility                                                                        |            ✗            |            ✓           |            ✓            |
 | Can request rework of RFCs<br> in any part of the project                                                                                   |            ✗            |            ✗           |            ✓            |
@@ -113,13 +113,13 @@ opening a PR against MAINTAINERS.md file.
 | Name                  | Github ID             | Affiliation       | Role       |
 | --------------------- | --------------------- | ----------------- | ---------- |
 | Konstantin Boyarinov  | @kboyarinov           | Intel Corporation | Code Owner |
-| Aleksei Fedotov       | @aleksei-fedotov      | Intel Corporation | Code Owner |
 | Ilya Isaev            | @isaevil              | Intel Corporation | Code Owner |
 | Sarath Nandu R        | @sarathnandu          | Intel Corporation | Code Owner |
 | Dmitri Mokhov         | @dnmokhov             | Intel Corporation | Code Owner |
-| Michael Voss          | @vossmjp              | Intel Corporation | Maintainer |
 | Alexey Kukanov        | @akukanov             | Intel Corporation | Code Owner |
-| Pavel Kumbrasev       | @pavelkumbrasev       | Intel Corporation | Code Owner |
+| Aleksei Fedotov       | @aleksei-fedotov      | Intel Corporation | Maintainer |
+| Michael Voss          | @vossmjp              | Intel Corporation | Maintainer |
+| Pavel Kumbrasev       | @pavelkumbrasev       | Intel Corporation | Maintainer |
 
 ## oneTBB TBBMALLOC (API, Architecture, Tests)
 
