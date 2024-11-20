@@ -95,6 +95,11 @@ TBB_EXPORT void __TBB_EXPORTED_FUNC isolate_within_arena(d1::delegate_base& d, s
 TBB_EXPORT void __TBB_EXPORTED_FUNC enqueue(d1::task&, d1::task_arena_base*);
 TBB_EXPORT void __TBB_EXPORTED_FUNC enqueue(d1::task&, d1::task_group_context&, d1::task_arena_base*);
 TBB_EXPORT void __TBB_EXPORTED_FUNC submit(d1::task&, d1::task_group_context&, arena*, std::uintptr_t);
+
+#if __TBB_PREVIEW_PARALLEL_BLOCK
+TBB_EXPORT void __TBB_EXPORTED_FUNC register_parallel_block(d1::task_arena_base&);
+TBB_EXPORT void __TBB_EXPORTED_FUNC unregister_parallel_block(d1::task_arena_base&, bool);
+#endif
 } // namespace r1
 
 namespace d2 {
@@ -472,6 +477,18 @@ public:
     auto execute(F&& f) -> decltype(f()) {
         return execute_impl<decltype(f())>(f);
     }
+
+#if __TBB_PREVIEW_PARALLEL_BLOCK
+    void parallel_block_start() {
+        initialize();
+        r1::register_parallel_block(*this);
+        enqueue([]{});
+    }
+    void parallel_block_end(bool set_one_time_fast_leave = false) {
+        __TBB_ASSERT(my_initialization_state.load(std::memory_order_relaxed) == do_once_state::initialized, nullptr);
+        r1::unregister_parallel_block(*this, set_one_time_fast_leave);
+    }
+#endif
 
 #if __TBB_EXTRA_DEBUG
     //! Returns my_num_reserved_slots

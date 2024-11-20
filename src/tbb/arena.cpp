@@ -529,6 +529,8 @@ struct task_arena_impl {
     static int max_concurrency(const d1::task_arena_base*);
     static void enqueue(d1::task&, d1::task_group_context*, d1::task_arena_base*);
     static d1::slot_id execution_slot(const d1::task_arena_base&);
+    static void register_parallel_block(d1::task_arena_base&);
+    static void unregister_parallel_block(d1::task_arena_base&, bool);
 };
 
 void __TBB_EXPORTED_FUNC initialize(d1::task_arena_base& ta) {
@@ -561,6 +563,14 @@ void __TBB_EXPORTED_FUNC enqueue(d1::task& t, d1::task_group_context& ctx, d1::t
 
 d1::slot_id __TBB_EXPORTED_FUNC execution_slot(const d1::task_arena_base& arena) {
     return task_arena_impl::execution_slot(arena);
+}
+
+void __TBB_EXPORTED_FUNC register_parallel_block(d1::task_arena_base& ta) {
+    task_arena_impl::register_parallel_block(ta);
+}
+
+void __TBB_EXPORTED_FUNC unregister_parallel_block(d1::task_arena_base& ta, bool one_time_fast_leave) {
+    task_arena_impl::unregister_parallel_block(ta, one_time_fast_leave);
 }
 
 void task_arena_impl::initialize(d1::task_arena_base& ta) {
@@ -907,6 +917,16 @@ int task_arena_impl::max_concurrency(const d1::task_arena_base *ta) {
     __TBB_ASSERT(!ta || ta->my_max_concurrency==d1::task_arena_base::automatic, nullptr);
     return int(governor::default_num_threads());
 }
+
+#if __TBB_PREVIEW_PARALLEL_BLOCK
+void task_arena_impl::register_parallel_block(d1::task_arena_base& ta) {
+    ta.my_arena.load(std::memory_order_relaxed)->my_thread_leave.register_parallel_block();
+}
+
+void task_arena_impl::unregister_parallel_block(d1::task_arena_base& ta, bool one_time_fast_leave) {
+    ta.my_arena.load(std::memory_order_relaxed)->my_thread_leave.unregister_parallel_block(one_time_fast_leave);
+}
+#endif
 
 void isolate_within_arena(d1::delegate_base& d, std::intptr_t isolation) {
     // TODO: Decide what to do if the scheduler is not initialized. Is there a use case for it?
