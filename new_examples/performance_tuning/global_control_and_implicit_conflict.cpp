@@ -21,7 +21,7 @@ const int default_P = tbb::info::default_concurrency();
 
 void waitUntil(int N);
 void noteParticipation(int offset);
-void dumpParticipation(int p);
+void dumpParticipation();
 
 void doWork(int offset, double seconds) {
   noteParticipation(offset);
@@ -54,7 +54,7 @@ void runTwoThreads(int p0, int p1) {
 
 int main() {
   runTwoThreads(default_P/2, default_P);
-  dumpParticipation(default_P);
+  dumpParticipation();
   return 0;
 }
 
@@ -64,7 +64,7 @@ int main() {
 
 std::atomic<int> next_tid;
 tbb::enumerable_thread_specific<int> my_tid(-1);
-std::vector<std::atomic<int>> tid_participation(default_P);
+std::vector<std::atomic<int>> tid_participation(default_P+1);
 
 void noteParticipation(int offset) {
   auto& t = my_tid.local();
@@ -81,10 +81,10 @@ void clearParticipation() {
     p = 0;
 }
 
-void dumpParticipation(int p) {
+void dumpParticipation() {
   int sum = tid_participation[0];
   std::cout << "[" << tid_participation[0];
-  for (int i = 1; i < default_P; ++i) {
+  for (int i = 1; i < tid_participation.size(); ++i) {
     sum += tid_participation[i];
     std::cout << ", " << tid_participation[i];
   }
