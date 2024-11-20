@@ -21,6 +21,7 @@
 #include "scheduler_common.h"
 #include "arena.h"
 #include "threading_control.h"
+#include "environment.h"
 
 namespace tbb {
 namespace detail {
@@ -58,7 +59,8 @@ public:
         __TBB_ASSERT(t == nullptr, nullptr);
 
         if (is_worker_should_leave(slot)) {
-            if (!governor::hybrid_cpu()) {
+            static bool extended_active_wait = GetBoolEnvironmentVariable("TBB_EXTENDED_ACTIVE_WAIT");
+            if (extended_active_wait) {
                 static constexpr std::chrono::microseconds worker_wait_leave_duration(1000);
                 static_assert(worker_wait_leave_duration > std::chrono::steady_clock::duration(1), "Clock resolution is not enough for measured interval.");
 
