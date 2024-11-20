@@ -32,20 +32,24 @@ void doWork(int offset, double seconds) {
 void arenaGlobalControlImplicitArena(int p, int offset) {
   tbb::global_control gc(tbb::global_control::max_allowed_parallelism, p);
 
+  // we use waitUntil to force overlap of the gc lifetimes
+  waitUntil(2);
+
   tbb::parallel_for(0, 
                     10*default_P, 
                     [=](int) { 
                       doWork(offset, 0.01); 
                     });
+
+  // we prevent either gc from being destroyed until both are done
+  waitUntil(2);
 }
 
 void runTwoThreads(int p0, int p1) {
   std::thread t0([=]() {
-    waitUntil(2);
     arenaGlobalControlImplicitArena(p0, 1);
   });
   std::thread t1([=]() {
-    waitUntil(2);
     arenaGlobalControlImplicitArena(p1, 10000);
   });
   t0.join();
@@ -99,6 +103,7 @@ std::atomic<int> count_up = 0;
 void waitUntil(int N) {
   ++count_up;
   while (count_up != N);
+  count_up = 0;
 }
 
 
