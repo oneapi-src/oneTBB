@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-#include <iostream>
 #include <tbb/tbb.h>
 
 const int default_P = tbb::info::default_concurrency();
@@ -33,10 +32,7 @@ void arenaGlobalControlExplicitArena(int p) {
 }
 
 #include <atomic>
-#include <cstdio>
-#include <vector>
-#include <map>
-#include <set>
+#include <iostream>
 #include <vector>
 
 std::atomic<int> next_tid;
