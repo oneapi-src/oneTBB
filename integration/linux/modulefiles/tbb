@@ -50,7 +50,7 @@ module-whatis "Dependencies: none"
 proc ModulesHelp { } {
     global modulefilename
     global modulefilever
-    module whatis "${modulefilename}/${modulefilever}"
+    puts "module whatis ${modulefilename}/${modulefilever}"
 }
 
 ##############################################################################
