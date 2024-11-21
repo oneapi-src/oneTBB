@@ -14,23 +14,15 @@
     limitations under the License.
 */
 
-#include "tbb/tbb.h"
 #include <vector>
+#include <tbb/tbb.h>
 
-#define USE_ARENA_TRACE 1
-#if USE_ARENA_TRACE
-#include "arena_trace.h"
-#endif
 
 int N = 1000;
 double w = 0.01;
 double f(double v);
 
 void constrain_for_numa_nodes() {
-#if USE_ARENA_TRACE
-    arena_tracer t{"numa_trace.json"};
-#endif
-
     std::vector<tbb::numa_node_id> numa_nodes = tbb::info::numa_nodes();
     std::vector<tbb::task_arena> arenas(numa_nodes.size());
     std::vector<tbb::task_group> task_groups(numa_nodes.size());
@@ -41,14 +33,18 @@ void constrain_for_numa_nodes() {
         t.add_arena(std::to_string(i), arenas[i]);
         #endif
     }
-    for (int i = 0; i < numa_nodes.size(); i++) {
-        arenas[i].execute([&task_groups, i] {
+    for (int i = 1; i < numa_nodes.size(); i++) {
+        arenas[i].enqueue([&task_groups, i] {
             task_groups[i].run([] {
                 tbb::parallel_for(0, N, [](int j) { f(w); });
             });
         });
     }
-    for (int i = 0; i < numa_nodes.size(); i++) {
+    arenas[0].execute([] {
+        tbb::parallel_for(0, N, [](int j) { f(w); });
+    });
+
+    for (int i = 1; i < numa_nodes.size(); i++) {
         arenas[i].execute([&task_groups, i] {
             task_groups[i].wait();
         });
@@ -56,16 +52,10 @@ void constrain_for_numa_nodes() {
 }
 
 void constrain_for_core_type() {
-
     std::vector<tbb::core_type_id> core_types = tbb::info::core_types();
     tbb::task_arena arena(
       tbb::task_arena::constraints{}.set_core_type(core_types.back())
     );
-
-    #if USE_ARENA_TRACE
-      arena_tracer t{"core_trace.json"};
-      t.add_arena("pcores", arena);
-    #endif
 
     arena.execute([] {
         tbb::parallel_for(0, N, [](int) { f(w); });
@@ -78,11 +68,6 @@ void constrain_for_no_hyperthreading() {
     c.set_core_type(core_types.back());
     c.set_max_threads_per_core(1);
     tbb::task_arena no_ht_arena(c);
-
-    #if USE_ARENA_TRACE
-      arena_tracer t{"no_ht_constraints_trace.json"};
-      t.add_arena("no_ht_arena", no_ht_arena);
-    #endif
 
     no_ht_arena.execute( [] {
         tbb::parallel_for(0, N, [](int) { f(w); });
@@ -97,21 +82,23 @@ void limit_concurrency_for_no_hyperthreading() {
     int no_ht_concurrency = tbb::info::default_concurrency(c);
     tbb::task_arena arena( no_ht_concurrency );
 
-    #if USE_ARENA_TRACE
-      arena_tracer t{"no_ht_concurrency_trace.json"};
-      t.add_arena("no_ht_concurrency", arena);
-    #endif
-
     arena.execute( [] {
         tbb::parallel_for(0, N, [](int) { f(w); });
     });
 }
 
+#include <iostream>
+
 int main() {
+  std::cout << "Running numa node constraint example\n";
   constrain_for_numa_nodes();
+  std::cout << "Running core type constraint example\n";
   constrain_for_core_type();
+  std::cout << "Running one thread per core constraint example\n";
   constrain_for_no_hyperthreading();
+    std::cout << "Running limited concurrency example\n";
   limit_concurrency_for_no_hyperthreading();
+  std::cout << "done\n";
   return 0;
 }
 
