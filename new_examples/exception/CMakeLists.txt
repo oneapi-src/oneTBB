@@ -1,6 +1,3 @@
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -tbb")
-set(CMAKE_CXX_LINKER_FLAGS "-tbb")
-
 foreach(tpp exception_catch1.cpp
             exception_catch2.cpp
             exception_catch3.cpp)

@@ -1,6 +1,3 @@
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -tbb")
-set(CMAKE_CXX_LINKER_FLAGS "-tbb")
-
 foreach(tpp cancel_group_execution1.cpp
             cancel_group_execution2.cpp
             cancel_group_execution3.cpp
