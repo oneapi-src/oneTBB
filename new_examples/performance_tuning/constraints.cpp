@@ -23,32 +23,31 @@ double w = 0.01;
 double f(double v);
 
 void constrain_for_numa_nodes() {
-    std::vector<tbb::numa_node_id> numa_nodes = tbb::info::numa_nodes();
-    std::vector<tbb::task_arena> arenas(numa_nodes.size());
-    std::vector<tbb::task_group> task_groups(numa_nodes.size());
+  std::vector<tbb::numa_node_id> numa_nodes = tbb::info::numa_nodes();
+  std::vector<tbb::task_arena> arenas(numa_nodes.size());
+  std::vector<tbb::task_group> task_groups(numa_nodes.size());
 
-    for (int i = 0; i < numa_nodes.size(); i++) {
-        arenas[i].initialize(tbb::task_arena::constraints(numa_nodes[i]), 0);
-        #if USE_ARENA_TRACE
-        t.add_arena(std::to_string(i), arenas[i]);
-        #endif
-    }
-    for (int i = 1; i < numa_nodes.size(); i++) {
-        arenas[i].enqueue([&task_groups, i] {
-            task_groups[i].run([] {
-                tbb::parallel_for(0, N, [](int j) { f(w); });
-            });
-        });
-    }
-    arenas[0].execute([] {
-        tbb::parallel_for(0, N, [](int j) { f(w); });
-    });
+  // initialize each arena, each constrained to a different NUMA node
+  for (int i = 0; i < numa_nodes.size(); i++)
+    arenas[i].initialize(tbb::task_arena::constraints(numa_nodes[i]), 0);
 
-    for (int i = 1; i < numa_nodes.size(); i++) {
-        arenas[i].execute([&task_groups, i] {
-            task_groups[i].wait();
-        });
-    }
+  // enqueue work to all but the first arena, using the task_group to track work
+  // by using defer, the task_group reference count is incremented immediately
+  for (int i = 1; i < numa_nodes.size(); i++)
+    arenas[i].enqueue(
+      task_groups[i].defer([] { 
+        tbb::parallel_for(0, N, [](int j) { f(w); }); 
+      })
+    );
+
+  // directly execute the work to completion in the remaining arena
+  arenas[0].execute([] {
+    tbb::parallel_for(0, N, [](int j) { f(w); });
+  });
+
+  // join the other arenas to wait on their task_groups
+  for (int i = 1; i < numa_nodes.size(); i++)
+    arenas[i].execute([&task_groups, i] { task_groups[i].wait(); });
 }
 
 void constrain_for_core_type() {
