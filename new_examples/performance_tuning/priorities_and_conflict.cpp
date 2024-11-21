@@ -54,16 +54,17 @@ void runTwoThreads(tbb::task_arena::priority priority0,
 
 int main() {
   counter = 0;
-  std::printf("\n\n\n\nrunTwoThreads with low (.) and high (|)\n");
+  std::printf("\n\nrunTwoThreads with low (.) and high (|)\n");
   runTwoThreads(tbb::task_arena::priority::low, tbb::task_arena::priority::high);
 
   counter = 0;
-  std::printf("\n\n\n\nrunTwoThreads with low (.) and normal (:)\n");
+  std::printf("\n\nrunTwoThreads with low (.) and normal (:)\n");
   runTwoThreads(tbb::task_arena::priority::low, tbb::task_arena::priority::normal);
 
   counter = 0;
-  std::printf("\n\n\n\nrunTwoThreads with normal (:) and high (|)\n");
+  std::printf("\n\nrunTwoThreads with normal (:) and high (|)\n");
   runTwoThreads(tbb::task_arena::priority::normal, tbb::task_arena::priority::high);
+  std::printf("\n");
   return 0;
 }
 
