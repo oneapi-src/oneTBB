@@ -70,7 +70,7 @@ starting its execution. This allows making use of the established search order
 while checking that genuine version of the dependency is used. However, not
 loading the binary because of the failed signature verification might not be
 always desired. Especially, during the development phase or for a software
-distributor that does not have the signature with which to sign the binary.
+distributor who does not have the signature with which to sign the binary.
 Therefore, to preserve backward compatibility of such usage models, it is
 essential to have possibility to disable signature verification.
 
