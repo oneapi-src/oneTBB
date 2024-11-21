@@ -30,9 +30,9 @@ oneTBB project defines three main roles:
 |                                                                                                                                             |       Contributor       |       Code Owner        |       Maintainer        |
 | :------------------------------------------------------------------------------------------------------------------------------------------ | :---------------------: | :---------------------: | :---------------------: |
 | _Responsibilities_                                                                                                                          |                         |                         |                         |
-| Follow the Code of Conduct                                                                                                                  |            ✓            |            ✓           |            ✓            |
-| Follow Contribution Guidelines                                                                                                              |            ✓            |            ✓           |            ✓            |
-| Enforce Contribution Guidelines                                                                                                             |            ✗            |            ✓           |            ✓            |
+| Follow the [Code of Conduct](./CODE_OF_CONDUCT.md)                                                                                          |            ✓            |            ✓           |            ✓            |
+| Follow [Contribution Guidelines](./CONTRIBUTING.md)                                                                                         |            ✓            |            ✓           |            ✓            |
+| Enforce [Contribution Guidelines](./CONTRIBUTING.md)                                                                                        |            ✗            |            ✓           |            ✓            |
 | Co-own component or aspect of the library,<br>  including contributing: bug fixes, implementing features,<br> and performance optimizations |            ✗            |            ✓           |            ✓            |
 | Co-own on technical direction of component or<br> aspect of the library                                                                     |            ✗            |            ✗           |            ✓            |
 | Co-own the project as a whole,<br> including determining strategy and policy for the project                                                |            ✗            |            ✗           |            ✓            |
@@ -81,11 +81,11 @@ contribution and review in the project.
     component.
   * Commit to being responsible for that specific area.
 
-The process of becoming a Code Owner is:
+How to become a Code Owner?
 1. A Contributor is nominated by opening a PR modifying the MAINTAINERS.md file
 including name, Github username, and affiliation.
 2. At least two specific component Maintainers approve the PR.
-3. CODEOWNERS file is updated to represent corresponding areas of responsibility.
+3. [CODEOWNERS](./CODEOWNERS) file is updated to represent corresponding areas of responsibility.
 
 ## Maintainer
 Maintainers are the most established contributors responsible for the 
