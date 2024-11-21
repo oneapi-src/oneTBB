@@ -1,6 +1,3 @@
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Qtbb")
-set(CMAKE_CXX_LINKER_FLAGS "-Qtbb")
-
 foreach(tpp graph_composite_node.cpp
             graph_execute_while_building.cpp
             graph_fwd_substitution.cpp
