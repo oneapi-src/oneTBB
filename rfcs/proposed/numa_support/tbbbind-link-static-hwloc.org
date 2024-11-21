@@ -8,31 +8,40 @@ Specifically, its section about "Increased availability of NUMA support".
 * Introduction
 oneTBB has a soft dependency on several variants of ~tbbbind~, which are loaded
 by the library as part of its initialization stage. In turn, each ~tbbbind~ has
-a hard dependency, i.e., relies on load-time linking, on a concrete version of
-the HWLOC library [1, 2]. The soft dependency of oneTBB on ~tbbbind~ allows the
-library to continue its execution even if the system loader is unable to resolve
-the hard dependency on HWLOC for ~tbbbind~. In this case, the HW topology is not
-discovered and the machine is seen as if all CPU cores were uniform, which is
-the default TBB behavior when NUMA constraints are not used. Thus, the following
-code returns meaningless values as these values are just ignored by oneTBB:
+a hard dependency on a concrete version of the HWLOC library [1, 2]. The soft
+dependency of oneTBB on ~tbbbind~ allows the library to continue its execution
+even if the system loader is unable to resolve the hard dependency on HWLOC for
+~tbbbind~. In this case, the HW topology is not discovered and the machine is
+seen as if all CPU cores were uniform, which is the default TBB behavior when
+NUMA constraints are not used. Thus, the following code returns the values that
+do not reflect the real topology and do not matter:
 
 #+begin_src C++
 std::vector<oneapi::tbb::numa_node_id> numa_nodes = oneapi::tbb::info::numa_nodes();
 std::vector<oneapi::tbb::core_type_id> core_types = oneapi::tbb::info::core_types();
 #+end_src
 
-An error is also not reported and the client code that uses NUMA support
-facilities may continue running expecting it to work as it was intended. Such
-behavior is not readily noticable by developers that use oneTBB and this
-represents the main problem with the current behavior.
+This lack of valid HW topology data due to absence of a third party library is
+the major problem with the current oneTBB behavior. There is no diagnostics for
+the issue, which likely makes it unnoticeable by developers, and the code that
+uses oneTBB NUMA support facilities continues running but does not use NUMA as
+intended.
 
-Having a dependency on a shared HWLOC library has a number of advantages:
-1. Code reuse with all of the positive consequences out of this. That's the
-   primary purpose of shared libraries.
-2. Sharing HWLOC context between its clients. This avoids performing the same
-   operations repeatedly with identical results.
-3. A drop-in replacement. Users are able to use their own version of HWLOC
-   without recompilation of oneTBB.
+Having a dependency on a shared HWLOC library has advantages:
+1. Code reuse with all of the positive consequences out of this, including
+   relying on the same code that has been tested and debugged, allowing the OS
+   to share it among different processes, which consequently improves on cache
+   locality and memory footprint. That's the primary purpose of shared
+   libraries.
+2. A drop-in replacement. Users are able to use their own version of HWLOC
+   without recompilation of oneTBB. This specific version of HWLOC could include
+   a hotfix to support a particular and/or new hardware that a customer has, but
+   whose support is not yet upstreamed to HWLOC project. It is also possible
+   that such support won't be upstreamed at all if that hardware is not going to
+   be available for massive users. It could also be a development version of
+   HWLOC that someone wants to test on their systems first. Of course, they can
+   do it with the static version as well, but that's more cumbersome as it
+   requires recompilation of every dependent component.
 
 The only disadvantage from depending on HWLOC library dynamically is that the
 developers that use oneTBB's NUMA support API need to make sure the library is
@@ -60,7 +69,7 @@ if users see the need.
 
 * Proposal
 1. Introduce new variant of the ~tbbbind~ library with the name ~tbbbind_static~
-   which is statically-linked with HWLOC library and distributed along side with
+   which is linked with a static HWLOC library and distributed along side with
    the other ~tbbbind~ variants.
 2. Add loading of ~tbbbind_static~ as the last attempt to resolve the dependency
    on functionality provided by ~tbbbind~ layer.
@@ -82,10 +91,10 @@ found and loaded.
 ** Disadvantages
 1. There will be one more variation of a ~tbbbind~ binary to ship in oneTBB
    distribution packages.
-2. Still silent by default behavior in case user failed to setup environment
-   with their own version of HWLOC library correctly. Although, specifying
-   ~TBB_VERSION=1~ envar will help identifying an issue with an environment
-   setup pretty quickly.
+2. By default still no diagnostics if users failed to setup environment with
+   their own version of HWLOC library correctly. Although, specifying
+   ~TBB_VERSION=1~ envar will help identifying an issue with setup of
+   environment pretty quickly.
 3. Statically-linked HWLOC does not share its context with those loaded
    dynamically in case of ~tbbbind_static~ library is used.
 
