@@ -41,8 +41,7 @@ static inline double executePfor(int num_trials, int N,
     tbb::parallel_for (
       tbb::blocked_range<int>{0, N, static_cast<size_t>(gs)},
       [tpi](const tbb::blocked_range<int>& r) {
-        int e = r.end();
-        for (int i = r.begin(); i < e; ++i) {
+        for (int i = r.begin(); i < r.end(); ++i) {
           spinWaitForAtLeast(tpi);
         } 
       }, 
@@ -52,8 +51,6 @@ static inline double executePfor(int num_trials, int N,
   tbb::tick_count t1 = tbb::tick_count::now();
   return (t1 - t0).seconds()/num_trials;
 }
-
-#define CONSTRAIN_TO_ECORES 1
 
 int main() {
   tbb::auto_partitioner auto_p;
@@ -66,16 +63,6 @@ int main() {
   const double ten_ns = 0.00000001;
   const double twenty_us = 0.00002;
   double timing[4][19];
-
-  #if CONSTRAIN_TO_ECORES
-  std::vector<tbb::core_type_id> core_types = tbb::info::core_types();
-  tbb::task_arena::constraints c;
-  c.set_core_type(core_types.front());
-  c.set_max_concurrency(tbb::info::default_concurrency(c) - 2);
-  tbb::task_arena ecore_arena(c);
-  std::cout << "Using arena with " << ecore_arena.max_concurrency() << " slots\n";
-  ecore_arena.execute([&]() {
-  #endif
 
   for (double tpi = ten_ns; tpi < twenty_us; tpi *= 10) { 
     std::cout << "Speedups for " << tpi << " seconds per iteration" << std::endl
@@ -102,10 +89,6 @@ int main() {
     }
     std::cout << std::endl;
   }
-
-  #if CONSTRAIN_TO_ECORES
-  });
-  #endif
 
   return 0;
 }

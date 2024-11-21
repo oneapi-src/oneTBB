@@ -23,8 +23,7 @@ template <typename Partitioner>
 void pforWork(int N, const Partitioner& p) {
   tbb::parallel_for( tbb::blocked_range<int>(0, N, 1), 
     [](const tbb::blocked_range<int>& r) {
-      int ie = r.end();
-      for (int i = r.begin(); i < ie; ++i) {
+      for (int i = r.begin(); i < r.end(); ++i) {
         doWork(i);
       }
     }, p
@@ -35,8 +34,7 @@ template <typename Partitioner>
 void pforWork(int N, Partitioner& p) {
   tbb::parallel_for( tbb::blocked_range<int>(0, N, 1), 
     [](const tbb::blocked_range<int>& r) {
-      int ie = r.end();
-      for (int i = r.begin(); i < ie; ++i) {
+      for (int i = r.begin(); i < r.end(); ++i) {
         doWork(i);
       }
     }, p
