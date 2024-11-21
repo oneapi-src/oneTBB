@@ -18,7 +18,7 @@
 
 This document defines roles in the oneTBB project.
 
-# Roles and responsibilities
+# Roles and Responsibilities
 
 oneTBB project defines three main roles:
  * [Contributor](#contributor)
@@ -56,7 +56,7 @@ requirements and the nomination process.
 ## Contributor
 
 A Contributor invests time and resources to improve oneTBB project.
-Anyone can become a Contributor by bringing value in one of the following ways:
+Anyone can become a Contributor by bringing value in any following way:
   * Answer questions from community members.
   * Propose changes to the design.
   * Provide feedback on design proposals.
@@ -68,18 +68,18 @@ and performance optimizations.
 ## Code Owner
 
 A Code Owner has responsibility for a specific project component or a functional
-area. Code Owners are collectively responsible, with other Code Owners,
+area. Code Owners are collectively responsible
 for developing and maintaining their component or functional areas, including
 reviewing all changes to corresponding areas of responsibility and indicating
 whether those changes are ready to be merged. Code Owners have a track record of
 contribution and review in the project.
 
-Requirements:
+**Requirements:**
   * Track record of accepted code contributions to a specific project component.
   * Track record of contributions to the code review process.
-  * Demonstrated in-depth knowledge of the architecture of a specific project
+  * Demonstrate in-depth knowledge of the architecture of a specific project
     component.
-  * Commits to being responsible for that specific area.
+  * Commit to being responsible for that specific area.
 
 The process of becoming a Code Owner is:
 1. A Contributor is nominated by opening a PR modifying the MAINTAINERS.md file
@@ -88,17 +88,17 @@ including name, Github username, and affiliation.
 3. CODEOWNERS file is updated to represent corresponding areas of responsibility.
 
 ## Maintainer
-Maintainers are the most established contributors who are responsible for the 
-project technical direction and participate in making decisions about the
+Maintainers are the most established contributors responsible for the 
+project technical direction. They participate in making decisions about the
 strategy and priorities of the project.
 
-Requirements:
-  * Experience as a Code Owner.
+**Requirements:**
+  * Have experience as a Code Owner.
   * Track record of major project contributions to a specific project component.
-  * Demonstrated deep knowledge of a specific project component.
-  * Demonstrated broad knowledge of the project across multiple areas.
-  * Commits to using privileges responsibly for the good of the project.
-  * Is able to exercise judgment for the good of the project, independent of
+  * Demonstrate deep knowledge of a specific project component.
+  * Demonstrate broad knowledge of the project across multiple areas.
+  * Commit to using privileges responsibly for the good of the project.
+  * Be able to exercise judgment for the good of the project, independent of
     their employer, friends, or team.
 
 Process of becoming a maintainer:
@@ -135,7 +135,7 @@ opening a PR against MAINTAINERS.md file.
 | Alexandra Epanchinzeva | @aepanchi             | Intel Corporation | Code Owner |
 
 
-## oneTBB Release management
+## oneTBB Release Management
 
 | Name               | Github ID             | Affiliation       | Role       |
 | ------------------ | --------------------- | ----------------- | ---------- |
