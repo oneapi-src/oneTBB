@@ -15,7 +15,7 @@
 */
 
 #include <tbb/tbb.h>
-#include <iostream>
+
 
 double serialTranspose(int N, double *a, double *b) {
   tbb::tick_count t0 = tbb::tick_count::now();
@@ -99,71 +99,70 @@ double pforTranspose2d(int N, double *a, double *b, int gs) {
 void setArray(int N, double *a);
 void checkTranspose(int N, double *a);
 
-#define CONSTRAIN_TO_ECORES 1
+#include <iostream>
 
 int main() {
-  int N = 2<<12; // 8192
-  double *a = new double[N*N];
-  double *b = new double[N*N];
-  setArray(N, a);
-  setArray(N, b);
-
-  #if CONSTRAIN_TO_ECORES
-  std::vector<tbb::core_type_id> core_types = tbb::info::core_types();
+  // use the most performance codes
+  // only a single NUMA node
+  // and only 1 thread per core
   tbb::task_arena::constraints c;
-  c.set_core_type(core_types.front());
-  c.set_max_concurrency(tbb::info::default_concurrency(c) - 2);
-  tbb::task_arena ecore_arena(c);
-  std::cout << "Using arena with " << ecore_arena.max_concurrency() << " slots\n";
-  ecore_arena.execute([&]() {
-  #endif
+  c.set_numa_id(tbb::info::numa_nodes()[0]);
+  c.set_core_type(tbb::info::core_types().back());
+  c.set_max_threads_per_core(1);
+  c.set_max_concurrency(std::min(8, tbb::info::default_concurrency(c)));
+  tbb::task_arena a(c);
 
-  serialTranspose(N, a, b);
-  double ts = serialTranspose(N, a, b);
-  checkTranspose(N, b);
-  std::cout << "Serial Time = " << ts << std::endl;
+  std::cout << "Using an arena with " << a.max_concurrency() << " slots\n";
 
-  std::cout << "Parallel Times:" << std::endl
-            << "grainsize, oblivious, 1d auto, 1d simple, 2d auto, 2d simple" << std::endl;
-  for (int gs = 1; gs <= N; gs *= 2) {
+  a.execute([&]() {
+    int N = 2<<12; // 8192
+    double *a = new double[N*N];
+    double *b = new double[N*N];
     setArray(N, a);
     setArray(N, b);
-    serialObliviousTranspose(N, a, b, gs);
-    double to = serialObliviousTranspose(N, a, b, gs);
+
+    serialTranspose(N, a, b);
+    double ts = serialTranspose(N, a, b);
     checkTranspose(N, b);
+    std::cout << "Serial Time = " << ts << std::endl;
 
-    setArray(N, a);
-    setArray(N, b);
-    pforTranspose<tbb::auto_partitioner>(N, a, b, gs);
-    double t1d_auto = pforTranspose<tbb::auto_partitioner>(N, a, b, gs);
+    std::cout << "Parallel Times:" << std::endl
+              << "grainsize, oblivious, 1d auto, 1d simple, 2d auto, 2d simple" << std::endl;
+    for (int gs = 1; gs <= N; gs *= 2) {
+      setArray(N, a);
+      setArray(N, b);
+      serialObliviousTranspose(N, a, b, gs);
+      double to = serialObliviousTranspose(N, a, b, gs);
+      checkTranspose(N, b);
 
-    setArray(N, a);
-    setArray(N, b);
-    pforTranspose<tbb::simple_partitioner>(N, a, b, gs);
-    double t1d_simple = pforTranspose<tbb::simple_partitioner>(N, a, b, gs);
+      setArray(N, a);
+      setArray(N, b);
+      pforTranspose<tbb::auto_partitioner>(N, a, b, gs);
+      double t1d_auto = pforTranspose<tbb::auto_partitioner>(N, a, b, gs);
 
-    setArray(N, a);
-    setArray(N, b);
-    pforTranspose2d<tbb::auto_partitioner>(N, a, b, gs);
-    double t2d_auto = pforTranspose2d<tbb::auto_partitioner>(N, a, b, gs);
+      setArray(N, a);
+      setArray(N, b);
+      pforTranspose<tbb::simple_partitioner>(N, a, b, gs);
+      double t1d_simple = pforTranspose<tbb::simple_partitioner>(N, a, b, gs);
 
-    setArray(N, a);
-    setArray(N, b);
-    pforTranspose2d<tbb::simple_partitioner>(N, a, b, gs);
-    double t2d_simple = pforTranspose2d<tbb::simple_partitioner>(N, a, b, gs);
+      setArray(N, a);
+      setArray(N, b);
+      pforTranspose2d<tbb::auto_partitioner>(N, a, b, gs);
+      double t2d_auto = pforTranspose2d<tbb::auto_partitioner>(N, a, b, gs);
 
-    std::cout << gs 
-              << ", " << to 
-              << ", " << t1d_auto 
-              << ", " << t1d_simple 
-              << ", " << t2d_auto
-              << ", " << t2d_simple << std::endl;
-  }
+      setArray(N, a);
+      setArray(N, b);
+      pforTranspose2d<tbb::simple_partitioner>(N, a, b, gs);
+      double t2d_simple = pforTranspose2d<tbb::simple_partitioner>(N, a, b, gs);
 
-  #if CONSTRAIN_TO_ECORES
+      std::cout << gs 
+                << ", " << to 
+                << ", " << t1d_auto 
+                << ", " << t1d_simple 
+                << ", " << t2d_auto
+                << ", " << t2d_simple << std::endl;
+    }
   });
-  #endif
-
   return 0;
 }
 
