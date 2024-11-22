@@ -16,6 +16,7 @@ foreach(tpp blocked_ranges_trivial.cpp
             parallel_for_partitioners.cpp
             parallel_for_partitioners_timed.cpp
             parallel_for_transpose_partitioners.cpp
+            partitioners_imbalanced_loops.cpp
             priorities_and_conflict.cpp
             task_scheduler_observer.cpp)
   string(REPLACE ".cpp" "" texe ${tpp})

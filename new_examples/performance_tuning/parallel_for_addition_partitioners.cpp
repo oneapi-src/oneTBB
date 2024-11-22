@@ -23,8 +23,7 @@ template <typename Partitioner>
 void parForAdd(double v, int N, double *a, const Partitioner& p) {
   tbb::parallel_for( tbb::blocked_range<int>(0, N, 1), 
     [v, a](const tbb::blocked_range<int>& r) {
-      int ie = r.end();
-      for (int i = r.begin(); i < ie; ++i) {
+      for (int i = r.begin(); i < r.end(); ++i) {
         a[i] += v;
       }
     }, p
@@ -35,8 +34,7 @@ template <typename Partitioner>
 void parForAdd(double v, int N, double *a, Partitioner& p) {
   tbb::parallel_for( tbb::blocked_range<int>(0, N, 1), 
     [v, a](const tbb::blocked_range<int>& r) {
-      int ie = r.end();
-      for (int i = r.begin(); i < ie; ++i) {
+      for (int i = r.begin(); i < r.end(); ++i) {
         a[i] += v;
       }
     }, p
