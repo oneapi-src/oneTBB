@@ -64,8 +64,7 @@ double pforTranspose(int N, double *a, double *b, int gs) {
    tbb::tick_count t0 = tbb::tick_count::now();
    tbb::parallel_for( tbb::blocked_range<int>(0, N, gs),
      [N, a, b](const tbb::blocked_range<int>& r) {
-       int ie = r.end();
-       for (int i = r.begin(); i < ie; ++i) {
+       for (int i = r.begin(); i < r.end(); ++i) {
          for (int j = 0; j < N; ++j) {
            b[j*N+i] = a[i*N+j];
          }
@@ -80,13 +79,11 @@ template<typename P>
 double pforTranspose2d(int N, double *a, double *b, int gs) {
   tbb::tick_count t0 = tbb::tick_count::now();
   tbb::parallel_for( tbb::blocked_range2d<int,int>{
-        0, N, static_cast<size_t>(gs), 0, 
-        N, static_cast<size_t>(gs)},
+                        0, N, static_cast<size_t>(gs), 
+                        0, N, static_cast<size_t>(gs)},
     [N, a, b](const tbb::blocked_range2d<int,int>& r) {
-      int ie = r.rows().end();
-      int je = r.cols().end();
-      for (int i = r.rows().begin(); i < ie; ++i) {
-        for (int j = r.cols().begin(); j < je; ++j) {
+      for (int i = r.rows().begin(); i < r.rows().end(); ++i) {
+        for (int j = r.cols().begin(); j < r.cols().end(); ++j) {
           b[j*N+i] = a[i*N+j];
         }
       }
