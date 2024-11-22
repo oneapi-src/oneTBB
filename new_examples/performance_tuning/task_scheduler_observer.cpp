@@ -15,6 +15,7 @@
 */
 
 #include <iostream>
+#include <sstream>
 #include <thread>
 #include <tbb/tbb.h>
 
