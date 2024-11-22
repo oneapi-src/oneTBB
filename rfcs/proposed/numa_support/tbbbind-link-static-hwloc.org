@@ -63,10 +63,6 @@ statically with one of the ~tbbbind~ libraries that are distributed together
 with oneTBB, yet leaving possibility to specify another version of HWLOC library
 if users see the need.
 
-[1] [[https://www.open-mpi.org/projects/hwloc/][HWLOC project main page]]
-
-[2] [[https://github.com/open-mpi/hwloc][HWLOC project repository on GitHub]]
-
 * Proposal
 1. Introduce new variant of the ~tbbbind~ library with the name ~tbbbind_static~
    which is linked with a static HWLOC library and distributed along side with
@@ -95,8 +91,6 @@ found and loaded.
    their own version of HWLOC library correctly. Although, specifying
    ~TBB_VERSION=1~ envar will help identifying an issue with setup of
    environment pretty quickly.
-3. Statically-linked HWLOC does not share its context with those loaded
-   dynamically in case of ~tbbbind_static~ library is used.
 
 * Alternative handling of inability to parse system topology
 The other behavior in case HWLOC library cannot be found is to be more explicit
@@ -122,3 +116,7 @@ Comparing these alternative approaches to the one proposed.
 ** Disadvantages of Throwing an Exception
 - May break existing code as it does not expect an exception to be thrown.
 - Requires introduction of an additional exception hierarchy.
+
+* References
+1. [[https://www.open-mpi.org/projects/hwloc/][HWLOC project main page]]
+2. [[https://github.com/open-mpi/hwloc][HWLOC project repository on GitHub]]
