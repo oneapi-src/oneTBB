@@ -48,61 +48,62 @@ void resetA(int N, double *a);
 static void warmupTBB();
 
 int main(int argc, char *argv[]) {
-  int M = 10000;
-  int N = 100000;
-
-  std::cout << "P = " << tbb::info::default_concurrency()
-            << std::endl << "N = " << N 
-            << std::endl << "M = " << M << std::endl;
-
-  #define CONSTRAIN_TO_FEWER_CORES 0
-  #if CONSTRAIN_TO_FEWER_CORES
+  // use the most performance codes
+  // only a single NUMA node
+  // and only 1 thread per core
   tbb::task_arena::constraints c;
-  c.set_max_concurrency(tbb::info::default_concurrency() - 2);
-  tbb::task_arena cores_arena(c);
-  std::cout << "Using arena with " << cores_arena.max_concurrency() << " slots\n";
-  cores_arena.execute([&]() {
-  #endif
+  c.set_numa_id(tbb::info::numa_nodes()[0]);
+  c.set_core_type(tbb::info::core_types().back());
+  c.set_max_threads_per_core(1);
+  c.set_max_concurrency(std::min(8, tbb::info::default_concurrency(c)));
+  tbb::task_arena arena(c);
 
-   double *v = new double[M];
-   double *a = new double[N]; 
+  std::cout << "Using an arena with " << arena.max_concurrency() << " slots\n";
 
-   warmupTBB();
-   resetV(M, v);
-   resetA(N, a);
-   tbb::tick_count t0 = tbb::tick_count::now();
-   for (int i = 0; i < M; ++i) {
-     parForAdd(v[i], N, a, tbb::auto_partitioner{});
-   }
-   double auto_time = (tbb::tick_count::now() - t0).seconds();
+  arena.execute([&]() {
+    int M = 10000;
+    int N = 100000;
 
-   warmupTBB();
-   resetA(N, a);
-   tbb::affinity_partitioner aff_p;
-   t0 = tbb::tick_count::now();
-   for (int i = 0; i < M; ++i) {
-     parForAdd(v[i], N, a, aff_p); 
-   }
-   double affinity_time = (tbb::tick_count::now() - t0).seconds();
+    std::cout << "P = " << tbb::info::default_concurrency()
+              << std::endl << "N = " << N 
+              << std::endl << "M = " << M << std::endl;
 
-   warmupTBB();
-   resetA(N, a);
-   t0 = tbb::tick_count::now();
-   for (int i = 0; i < M; ++i) {
-     parForAdd(v[i], N, a, tbb::static_partitioner{});
-  }
-  double static_time = (tbb::tick_count::now() - t0).seconds();
+    double *v = new double[M];
+    double *a = new double[N]; 
 
-  std::cout << "auto_partitioner = " << auto_time << std::endl
-            << "affinity_partitioner = " << affinity_time << std::endl
-            << "static_partitioner = " << static_time << std::endl;
+    warmupTBB();
+    resetV(M, v);
+    resetA(N, a);
+    tbb::tick_count t0 = tbb::tick_count::now();
+    for (int i = 0; i < M; ++i) {
+      parForAdd(v[i], N, a, tbb::auto_partitioner{});
+    }
+    double auto_time = (tbb::tick_count::now() - t0).seconds();
 
-  delete [] v;
-  delete [] a;
+    warmupTBB();
+    resetA(N, a);
+    tbb::affinity_partitioner aff_p;
+    t0 = tbb::tick_count::now();
+    for (int i = 0; i < M; ++i) {
+      parForAdd(v[i], N, a, aff_p); 
+    }
+    double affinity_time = (tbb::tick_count::now() - t0).seconds();
 
-    #if CONSTRAIN_TO_FEWER_CORES
+    warmupTBB();
+    resetA(N, a);
+    t0 = tbb::tick_count::now();
+    for (int i = 0; i < M; ++i) {
+      parForAdd(v[i], N, a, tbb::static_partitioner{});
+    }
+    double static_time = (tbb::tick_count::now() - t0).seconds();
+
+    std::cout << "auto_partitioner = " << auto_time << std::endl
+              << "affinity_partitioner = " << affinity_time << std::endl
+              << "static_partitioner = " << static_time << std::endl;
+
+    delete [] v;
+    delete [] a;
   });
-  #endif
 
   return 0;
 }
