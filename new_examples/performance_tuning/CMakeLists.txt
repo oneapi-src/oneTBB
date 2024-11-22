@@ -13,6 +13,7 @@ foreach(tpp blocked_ranges_trivial.cpp
             global_control_and_implicit_arena.cpp
             global_control_and_implicit_conflict.cpp
             parallel_for_addition_partitioners.cpp
+            parallel_deterministic_reduce_partitioners.cpp
             parallel_for_partitioners.cpp
             parallel_for_partitioners_timed.cpp
             parallel_for_transpose_partitioners.cpp
