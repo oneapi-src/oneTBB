@@ -247,7 +247,7 @@
 #define API_VERSION_BUILD    20230630
 
 #ifndef API_VERSION_NUM
-#define API_VERSION_NUM 3.24.4
+#define API_VERSION_NUM 3.24.6
 #endif /* API_VERSION_NUM */
 
 #define API_VERSION "ITT-API-Version " ITT_TO_STR(API_VERSION_NUM) \
@@ -688,7 +688,7 @@ typedef struct ___itt_global
         h->y_type = y_type; \
         h->extra1 = 0; \
         h->extra2 = NULL; \
-	h->next = NULL; \
+        h->next   = NULL; \
         if (h_tail == NULL) \
             (gptr)->histogram_list = h; \
         else \
@@ -708,7 +708,7 @@ typedef struct ___itt_global
         h->y_type = y_type; \
         h->extra1 = 0; \
         h->extra2 = NULL; \
-	h->next = NULL; \
+        h->next   = NULL; \
         if (h_tail == NULL) \
             (gptr)->histogram_list = h; \
         else \

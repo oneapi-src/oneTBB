@@ -102,9 +102,8 @@ The same ID may not be reused for different instances, unless a previous
 #endif /* ITT_OS_FREEBSD */
 
 #ifndef ITT_OS_OPENBSD
-#  define ITT_OS_OPENBSD 5
+#  define ITT_OS_OPENBSD   5
 #endif /* ITT_OS_OPENBSD */
-
 
 #ifndef ITT_OS
 #  if defined WIN32 || defined _WIN32
@@ -113,7 +112,7 @@ The same ID may not be reused for different instances, unless a previous
 #    define ITT_OS ITT_OS_MAC
 #  elif defined( __FreeBSD__ )
 #    define ITT_OS ITT_OS_FREEBSD
-#  elif defined( __OpenBSD__ )
+#  elif defined( __OpenBSD__)
 #    define ITT_OS ITT_OS_OPENBSD
 #  else
 #    define ITT_OS ITT_OS_LINUX
@@ -318,7 +317,7 @@ extern "C" {
  *     only pauses tracing and analyzing memory access.
  *     It does not pause tracing or analyzing threading APIs.
  *   .
- * Intel(R) VTune(TM) Profiler:
+ * - Intel(R) VTune(TM) Profiler:
  *   - Does continue to record when new threads are started.
  *   .
  * - Other effects:
@@ -347,7 +346,7 @@ typedef enum {
 void ITTAPI __itt_pause_scoped(__itt_collection_scope);
 /** @brief Resume scoped collection */
 void ITTAPI __itt_resume_scoped(__itt_collection_scope);
-  
+
 /** @cond exclude_from_documentation */
 #ifndef INTEL_NO_MACRO_BODY
 #ifndef INTEL_NO_ITTNOTIFY_API

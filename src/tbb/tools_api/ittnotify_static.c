@@ -81,7 +81,7 @@ static const char api_version[] = API_VERSION "\0\n@(#) $Revision$\n";
 
 #if ITT_OS==ITT_OS_WIN
 static const char* ittnotify_lib_name = "libittnotify.dll";
-#elif ITT_OS==ITT_OS_LINUX || ITT_OS==ITT_OS_FREEBSD|| ITT_OS==ITT_OS_OPENBSD
+#elif ITT_OS==ITT_OS_LINUX || ITT_OS==ITT_OS_FREEBSD || ITT_OS==ITT_OS_OPENBSD
 static const char* ittnotify_lib_name = "libittnotify.so";
 #elif ITT_OS==ITT_OS_MAC
 static const char* ittnotify_lib_name = "libittnotify.dylib";
@@ -1014,6 +1014,7 @@ static void ITTAPI ITT_VERSIONIZE(ITT_JOIN(_N_(bind_context_metadata_to_counter)
     }
     if (PTHREAD_SYMBOLS) __itt_mutex_unlock(&_N_(_ittapi_global).mutex);
 }
+
 /* -------------------------------------------------------------------------- */
 
 static void ITTAPI ITT_VERSIONIZE(ITT_JOIN(_N_(pause),_init))(void)
@@ -1582,7 +1583,6 @@ static void __itt_free_allocated_resources(void)
     }
     _N_(_ittapi_global).histogram_list = NULL;
 
-    
     __itt_counter_metadata* current_counter_metadata = _N_(_ittapi_global).counter_metadata_list;
     while (current_counter_metadata != NULL)
     {
