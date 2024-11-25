@@ -1,7 +1,6 @@
 #include "oneapi/tbb/tbb_config.h"
 
 #include "blocked_nd_range_example.h"
-#endif
 
 #include "oneapi/tbb/tbb_stddef.h"
 #include <vector>
