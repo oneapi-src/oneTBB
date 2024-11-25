@@ -54,7 +54,7 @@ class outermost_worker_waiter : public waiter_base {
 public:
     using waiter_base::waiter_base;
 
-    bool continue_execution(arena_slot& slot, d1::task*& t) const {
+    bool continue_execution(arena_slot& slot, d1::task*& t) {
         __TBB_ASSERT(t == nullptr, nullptr);
 
         if (is_worker_should_leave(slot)) {

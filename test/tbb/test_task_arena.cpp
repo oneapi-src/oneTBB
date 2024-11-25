@@ -2071,10 +2071,15 @@ TEST_CASE("worker threads occupy slots in correct range") {
 
 #if TBB_PREVIEW_PARALLEL_BLOCK
 
-template <typename F>
-std::size_t measure_avg_start_time(tbb::task_arena& ta, const F& ) {
+struct dummy_func {
+    void operator()() const {
+    }
+};
+
+template <typename F1 = dummy_func, typename F2 = dummy_func> 
+std::size_t measure_avg_start_time(tbb::task_arena& ta, const F1& start_block = F1{}, const F2& end_block = F2{}) {
     std::size_t num_threads = utils::get_platform_max_threads();
-    std::size_t num_runs = 100;
+    std::size_t num_runs = 1000;
     std::vector<std::size_t> longest_start_times;
     longest_start_times.reserve(num_runs);
 
@@ -2096,63 +2101,101 @@ std::size_t measure_avg_start_time(tbb::task_arena& ta, const F& ) {
     for (std::size_t i = 0; i < num_runs; ++i) {
         ta.execute([&] {
             auto start_time = std::chrono::steady_clock::now();
+            start_block();
             tbb::parallel_for(std::size_t(0), num_threads, measure_start_time, tbb::static_partitioner{});
+            end_block();
             longest_start_times.push_back(get_longest_start(start_time));
         });
-        std::this_thread::sleep_for(std::chrono::microseconds(500));
+        std::this_thread::sleep_for(std::chrono::microseconds(i));
     }
-    return std::accumulate(longest_start_times.begin(), longest_start_times.end(), 0) / num_runs;
+    // return std::accumulate(longest_start_times.begin(), longest_start_times.end(), 0) / num_runs;
+    return utils::median(longest_start_times.begin(), longest_start_times.end());
 }
 
 //! \brief \ref interface \ref requirement
 TEST_CASE("Check that workers leave faster with workers_leave::fast") {
     std::size_t num_threads = utils::get_platform_max_threads();
-    std::size_t successes = 0;
-    std::size_t num_trials = 100;
-    double required_success_rate = 0.8;
-    for (std::size_t i = 0; i < num_trials; ++i) {
-        std::size_t avg_start_time_delayed = 0;
-        {
-            tbb::task_arena ta(num_threads, 1, tbb::task_arena::priority::normal, tbb::task_arena::workers_leave::delayed);
-            avg_start_time_delayed = measure_avg_start_time(ta, []{});
+    std::size_t num_trials = 20;
+    std::vector<std::size_t> avg_start_time_delayed(num_trials);
+    {
+        tbb::task_arena ta(num_threads, 1, tbb::task_arena::priority::normal, tbb::task_arena::workers_leave::delayed);
+        for (std::size_t i = 0; i < num_trials; ++i) {
+            auto avg_start_time = measure_avg_start_time(ta);
+            avg_start_time_delayed[i] = avg_start_time;
         }
-
-        std::size_t avg_start_time_fast = 0;
-        {
-            tbb::task_arena ta(num_threads, 1, tbb::task_arena::priority::normal, tbb::task_arena::workers_leave::fast);
-            avg_start_time_fast = measure_avg_start_time(ta, []{});
-        }
-        successes += avg_start_time_delayed < avg_start_time_fast ? 1 : 0;
     }
-    REQUIRE(successes >= num_trials * required_success_rate);
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    std::vector<std::size_t> avg_start_time_fast(num_trials);
+    {
+        tbb::task_arena ta(num_threads, 1, tbb::task_arena::priority::normal, tbb::task_arena::workers_leave::fast);
+        for (std::size_t i = 0; i < num_trials; ++i) {
+            auto avg_start_time = measure_avg_start_time(ta);
+            avg_start_time_fast[i] = avg_start_time;
+        }
+    }
+    std::sort(avg_start_time_delayed.begin(), avg_start_time_delayed.end());
+    std::sort(avg_start_time_fast.begin(), avg_start_time_fast.end());
+    auto delayed_avg = std::accumulate(avg_start_time_delayed.begin(), avg_start_time_delayed.begin() + num_trials * 0.9, 0) / num_trials;
+    auto fast_avg = std::accumulate(avg_start_time_fast.begin(), avg_start_time_fast.begin() + num_trials * 0.9, 0) / num_trials;
+    REQUIRE(delayed_avg < fast_avg);
 }
 
-TEST_CASE("Check that parallel_block sticks threads to task_arena") {
+TEST_CASE("parallel_block retains workers in task_arena") {
     std::size_t num_threads = utils::get_platform_max_threads();
-    std::size_t successes = 0;
-    std::size_t num_trials = 100;
-    double required_success_rate = 0.8;
-    for (std::size_t i = 0; i < num_trials; ++i) {
-        std::size_t avg_start_time_delayed = 0;
-        {
-            tbb::task_arena ta(num_threads, 1, tbb::task_arena::priority::normal, tbb::task_arena::workers_leave::delayed);
-            avg_start_time_delayed = measure_avg_start_time(ta, []{});
+    std::size_t num_trials = 20;
+    std::vector<std::size_t> avg_start_time_delayed(num_trials);
+    {
+        tbb::task_arena ta(num_threads, 1, tbb::task_arena::priority::normal, tbb::task_arena::workers_leave::fast);
+        for (std::size_t i = 0; i < num_trials; ++i) {
+            ta.start_parallel_block();
+            auto avg_start_time = measure_avg_start_time(ta); 
+            ta.end_parallel_block(true);
+            avg_start_time_delayed[i] = avg_start_time;
         }
-        std::this_thread::sleep_for(std::chrono::microseconds(1000));
-        std::size_t avg_start_time_fast = 0;
-        {
-            tbb::task_arena ta(num_threads, 1, tbb::task_arena::priority::normal, tbb::task_arena::workers_leave::fast);
-            // ta.parallel_block_start();
-            avg_start_time_fast = measure_avg_start_time(ta, []{});
-            // ta.parallel_block_end(true);
-        }
-        std::cout << avg_start_time_delayed << " " << avg_start_time_fast << std::endl;
-        successes += (avg_start_time_delayed < avg_start_time_fast ? 
-            (double)avg_start_time_delayed / avg_start_time_fast >= 0.7 :
-            (double)avg_start_time_fast / avg_start_time_delayed >= 0.7) ? 1 : 0;
     }
-    REQUIRE(successes >= num_trials * required_success_rate);
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    std::vector<std::size_t> avg_start_time_fast(num_trials);
+    {
+        tbb::task_arena ta(num_threads, 1, tbb::task_arena::priority::normal, tbb::task_arena::workers_leave::fast);
+        for (std::size_t i = 0; i < num_trials; ++i) {
+            auto avg_start_time = measure_avg_start_time(ta);
+            avg_start_time_fast[i] = avg_start_time;
+        }
+    }
+    std::sort(avg_start_time_delayed.begin(), avg_start_time_delayed.end());
+    std::sort(avg_start_time_fast.begin(), avg_start_time_fast.end());
+    auto delayed_avg = std::accumulate(avg_start_time_delayed.begin(), avg_start_time_delayed.begin() + num_trials * 0.9, 0) / num_trials;
+    auto fast_avg = std::accumulate(avg_start_time_fast.begin(), avg_start_time_fast.begin() + num_trials * 0.9, 0) / num_trials;
+    REQUIRE(delayed_avg < fast_avg);
 }
 
+TEST_CASE("Test one-time fast leave") {
+    std::size_t num_threads = utils::get_platform_max_threads();
+    std::size_t num_trials = 20;
+    std::vector<std::size_t> avg_start_time_delayed(num_trials);
+    {
+        tbb::task_arena ta(num_threads, 1, tbb::task_arena::priority::normal, tbb::task_arena::workers_leave::delayed);
+        for (std::size_t i = 0; i < num_trials; ++i) {
+            auto avg_start_time = measure_avg_start_time(ta); 
+            avg_start_time_delayed[i] = avg_start_time;
+        }
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    std::vector<std::size_t> avg_start_time_fast(num_trials);
+    {
+        tbb::task_arena ta(num_threads, 1, tbb::task_arena::priority::normal, tbb::task_arena::workers_leave::delayed);
+        auto start_block = [&ta] { ta.start_parallel_block(); };
+        auto end_block = [&ta] { ta.end_parallel_block(true); };
+        for (std::size_t i = 0; i < num_trials; ++i) {
+            auto avg_start_time = measure_avg_start_time(ta, start_block, end_block);
+            avg_start_time_fast[i] = avg_start_time;
+        }
+    }
+    std::sort(avg_start_time_delayed.begin(), avg_start_time_delayed.end());
+    std::sort(avg_start_time_fast.begin(), avg_start_time_fast.end());
+    auto delayed_avg = std::accumulate(avg_start_time_delayed.begin(), avg_start_time_delayed.begin() + num_trials * 0.9, 0) / num_trials;
+    auto fast_avg = std::accumulate(avg_start_time_fast.begin(), avg_start_time_fast.begin() + num_trials * 0.9, 0) / num_trials;
+    REQUIRE(delayed_avg < fast_avg);
+}
 
 #endif

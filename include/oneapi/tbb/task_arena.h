@@ -479,15 +479,30 @@ public:
     }
 
 #if __TBB_PREVIEW_PARALLEL_BLOCK
-    void parallel_block_start() {
+    void start_parallel_block() {
         initialize();
         r1::register_parallel_block(*this);
+        // Trigger worker threads to join arena
         enqueue([]{});
     }
-    void parallel_block_end(bool set_one_time_fast_leave = false) {
+    void end_parallel_block(bool set_one_time_fast_leave = false) {
         __TBB_ASSERT(my_initialization_state.load(std::memory_order_relaxed) == do_once_state::initialized, nullptr);
         r1::unregister_parallel_block(*this, set_one_time_fast_leave);
     }
+
+    class scoped_parallel_block {
+        task_arena& arena;
+        bool one_time_fast_leave;
+    public:
+        scoped_parallel_block(task_arena& ta, bool set_one_time_fast_leave = true) 
+            : arena(ta), one_time_fast_leave(set_one_time_fast_leave)
+        {
+            arena.start_parallel_block();
+        }
+        ~scoped_parallel_block() {
+            arena.end_parallel_block(one_time_fast_leave);
+        }
+    };
 #endif
 
 #if __TBB_EXTRA_DEBUG
