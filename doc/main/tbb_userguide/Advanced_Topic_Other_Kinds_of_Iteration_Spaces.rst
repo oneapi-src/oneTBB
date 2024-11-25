@@ -75,7 +75,7 @@ This nice cache behavior means that using ``parallel_for`` over a
 equivalent, even on a single processor. 
 
 Also, ``blocked_range2d`` allows to use different value types across
-its first dimenstion (called "rows") and the second one ("columns").
+its first dimension (called "rows") and the second one ("columns").
 That allows combining indexes, pointers, and iterators into a joint
 iteration space. The method functions ``rows()`` and ``cols()`` return
 corresponding dimensions in the form of a ``blocked_range``.
