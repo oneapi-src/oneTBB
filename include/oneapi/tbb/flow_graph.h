@@ -279,9 +279,9 @@ bool remove_successor(sender<C>& s, receiver<C>& r) {
 template< typename T >
 class receiver {
 private:
-    template <typename... TryPutTaskArgs>
-    bool internal_try_put(const T& t, TryPutTaskArgs&&... args) {
-        graph_task* res = try_put_task(t, std::forward<TryPutTaskArgs>(args)...);
+    template <typename... Args>
+    bool internal_try_put(Args&&... args) {
+        graph_task* res = try_put_task(std::forward<Args>(args)...);
         if (!res) return false;
         if (res != SUCCESSFULLY_ENQUEUED) spawn_in_graph_arena(graph_reference(), *res);
         return true;
@@ -294,6 +294,10 @@ public:
     //! Put an item to the receiver
     bool try_put( const T& t ) {
         return internal_try_put(t);
+    }
+
+    bool try_put( T&& t ) {
+        return internal_try_put(std::move(t));
     }
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
@@ -323,6 +327,7 @@ protected:
     template< typename X, typename Y > friend class broadcast_cache;
     template< typename X, typename Y > friend class round_robin_cache;
     virtual graph_task *try_put_task(const T& t) = 0;
+    virtual graph_task *try_put_task(T&& t) = 0;
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
     virtual graph_task *try_put_task(const T& t, const message_metainfo&) = 0;
 #endif
@@ -1258,6 +1263,10 @@ protected:
     //! build a task to run the successor if possible.  Default is old behavior.
     graph_task* try_put_task(const T& t) override {
         return try_put_task_impl(t __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo{}));
+    }
+
+    graph_task* try_put_task(T&& t) override {
+        return try_put_task(t);
     }
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT

@@ -284,7 +284,7 @@ class apply_body_task_bypass
     using with_metainfo = std::false_type;
 
     graph_task* call_apply_body_bypass_impl(without_metainfo) {
-        return my_node.apply_body_bypass(my_input
+        return my_node.apply_body_bypass(std::move(my_input)
                                          __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo{}));
     }
 
@@ -307,9 +307,10 @@ public:
         , my_node(n), my_input(i) {}
 #endif
 
-    apply_body_task_bypass( graph& g, d1::small_object_allocator& allocator, NodeType& n, const Input& i,
+    template <typename InputType>
+    apply_body_task_bypass( graph& g, d1::small_object_allocator& allocator, NodeType& n, InputType&& i,
                             node_priority_t node_priority = no_priority )
-        : BaseTaskType(g, allocator, node_priority), my_node(n), my_input(i) {}
+        : BaseTaskType(g, allocator, node_priority), my_node(n), my_input(std::forward<InputType>(i)) {}
 
     d1::task* execute(d1::execution_data& ed) override {
         graph_task* next_task = call_apply_body_bypass();
@@ -369,6 +370,11 @@ protected:
         if( !result )
             result = SUCCESSFULLY_ENQUEUED;
         return result;
+    }
+
+    // TODO: implement support
+    graph_task* try_put_task(DecrementType&& value) override {
+        return try_put_task(value);
     }
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT

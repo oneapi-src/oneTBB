@@ -306,6 +306,7 @@ public:
     }
 
     virtual graph_task* try_put_task( const T& t ) = 0;
+    virtual graph_task* try_put_task( T&& t ) = 0;
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
     virtual graph_task* try_put_task( const T& t, const message_metainfo& metainfo ) = 0;
 #endif
@@ -368,6 +369,7 @@ public:
     }
 
     virtual graph_task* try_put_task( const continue_msg& t ) = 0;
+    virtual graph_task* try_put_task( continue_msg&& t ) = 0;
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
     virtual graph_task* try_put_task( const continue_msg& t, const message_metainfo& metainfo ) = 0;
 #endif
@@ -380,12 +382,18 @@ class broadcast_cache : public successor_cache<T, M> {
     typedef M mutex_type;
     typedef typename successor_cache<T,M>::successors_type successors_type;
 
-    graph_task* try_put_task_impl( const T& t __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo) ) {
+    template <typename InputType>
+    graph_task* try_put_task_impl( InputType&& t __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo) ) {
         graph_task * last_task = nullptr;
         typename mutex_type::scoped_lock l(this->my_mutex, /*write=*/true);
         typename successors_type::iterator i = this->my_successors.begin();
         while ( i != this->my_successors.end() ) {
-            graph_task *new_task = (*i)->try_put_task(t __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo));
+            graph_task* new_task = nullptr;
+            if (std::next(i) == this->my_successors.end()) {
+                new_task = (*i)->try_put_task(std::forward<InputType>(t) __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo));
+            } else {
+                new_task = (*i)->try_put_task(t __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo));
+            }
             // workaround for icc bug
             graph& graph_ref = (*i)->graph_reference();
             last_task = combine_tasks(graph_ref, last_task, new_task);  // enqueue if necessary
@@ -410,6 +418,10 @@ public:
 
     graph_task* try_put_task( const T &t ) override {
         return try_put_task_impl(t __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo{}));
+    }
+
+    graph_task* try_put_task( T&& t ) override {
+        return try_put_task_impl(std::move(t) __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo{}));
     }
 
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT

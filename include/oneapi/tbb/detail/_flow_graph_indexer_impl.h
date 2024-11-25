@@ -80,6 +80,11 @@
             return my_try_put_task(v, my_indexer_ptr __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo{}));
         }
 
+        // TODO: implement support
+        graph_task* try_put_task(T&& v) override {
+            return try_put_task(v);
+        }
+
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
         graph_task* try_put_task(const T& v, const message_metainfo& metainfo) override {
             return my_try_put_task(v, my_indexer_ptr, metainfo);

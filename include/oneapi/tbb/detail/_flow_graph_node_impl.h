@@ -102,6 +102,10 @@ public:
         return try_put_task_base(t __TBB_FLOW_GRAPH_METAINFO_ARG(message_metainfo{}));
     }
 
+    graph_task* try_put_task(input_type&& t) override {
+        return try_put_task_base(std::move(t));
+    }
+
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
     graph_task* try_put_task( const input_type& t, const message_metainfo& metainfo ) override {
         return try_put_task_base(t, metainfo);
@@ -308,22 +312,24 @@ private:
         return nullptr;
     }
 
-    graph_task* try_put_task_base(const input_type& t
+    template <typename InputType>
+    graph_task* try_put_task_base(InputType&& t
                                   __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo))
     {
         if ( my_is_no_throw )
-            return try_put_task_impl(t, has_policy<lightweight, Policy>()
+            return try_put_task_impl(std::forward<InputType>(t), has_policy<lightweight, Policy>()
                                      __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo));
         else
-            return try_put_task_impl(t, std::false_type()
+            return try_put_task_impl(std::forward<InputType>(t), std::false_type()
                                      __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo));
     }
 
-    graph_task* try_put_task_impl( const input_type& t, /*lightweight=*/std::true_type
+    template <typename InputType>
+    graph_task* try_put_task_impl( InputType&& t, /*lightweight=*/std::true_type
                                    __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo))
     {
         if( my_max_concurrency == 0 ) {
-            return apply_body_bypass(t __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo));
+            return apply_body_bypass(std::forward<InputType>(t) __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo));
         } else {
             operation_type check_op(t, occupy_concurrency);
             my_aggregator.execute(&check_op);
@@ -334,23 +340,25 @@ private:
         }
     }
 
-    graph_task* try_put_task_impl( const input_type& t, /*lightweight=*/std::false_type
+    template <typename InputType>
+    graph_task* try_put_task_impl( InputType&& t, /*lightweight=*/std::false_type
                                    __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo))
     {
         if( my_max_concurrency == 0 ) {
-            return create_body_task(t __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo));
+            return create_body_task(std::forward<InputType>(t) __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo));
         } else {
-            return internal_try_put_bypass(t __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo));
+            return internal_try_put_bypass(std::forward<InputType>(t) __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo));
         }
     }
 
     //! Applies the body to the provided input
     //  then decides if more work is available
-    graph_task* apply_body_bypass( const input_type &i
+    template <typename InputType>
+    graph_task* apply_body_bypass( InputType&& i
                                    __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo))
 
     {
-        return static_cast<ImplType *>(this)->apply_body_impl_bypass(i __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo));
+        return static_cast<ImplType *>(this)->apply_body_impl_bypass(std::forward<InputType>(i) __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo));
     }
 
     //! allocates a task to apply a body
@@ -358,7 +366,8 @@ private:
     template <typename Metainfo>
     graph_task* create_body_task( const input_type &input, Metainfo&& metainfo )
 #else
-    graph_task* create_body_task( const input_type &input )
+    template <typename InputType>
+    graph_task* create_body_task( InputType&& input )
 #endif
     {
         if (!is_graph_active(my_graph_ref)) {
@@ -370,12 +379,12 @@ private:
 #if __TBB_PREVIEW_FLOW_GRAPH_TRY_PUT_AND_WAIT
         if (!metainfo.empty()) {
             using task_type = apply_body_task_bypass<class_type, input_type, trackable_messages_graph_task>;
-            t = allocator.new_object<task_type>(my_graph_ref, allocator, *this, input, my_priority, std::forward<Metainfo>(metainfo));
+            t = allocator.new_object<task_type>(my_graph_ref, allocator, *this, std::forward<InputType>(input), my_priority, std::forward<Metainfo>(metainfo));
         } else
 #endif
         {
             using task_type = apply_body_task_bypass<class_type, input_type>;
-            t = allocator.new_object<task_type>(my_graph_ref, allocator, *this, input, my_priority);
+            t = allocator.new_object<task_type>(my_graph_ref, allocator, *this, std::forward<InputType>(input), my_priority);
         }
         return t;
     }
@@ -470,10 +479,11 @@ public:
     }
 
     //TODO: consider moving into the base class
-    graph_task* apply_body_impl_bypass( const input_type &i
+    template <typename InputType>
+    graph_task* apply_body_impl_bypass( InputType&& i
                                         __TBB_FLOW_GRAPH_METAINFO_ARG(const message_metainfo& metainfo))
     {
-        output_type v = apply_body_impl(i);
+        output_type v = apply_body_impl(std::forward<InputType>(i));
         graph_task* postponed_task = nullptr;
         if( base_type::my_max_concurrency != 0 ) {
             postponed_task = base_type::try_get_postponed_task(i);
@@ -484,7 +494,7 @@ public:
             // execution policy
             spawn_in_graph_arena(base_type::graph_reference(), *postponed_task);
         }
-        graph_task* successor_task = successors().try_put_task(v __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo));
+        graph_task* successor_task = successors().try_put_task(std::move(v) __TBB_FLOW_GRAPH_METAINFO_ARG(metainfo));
 #if _MSC_VER && !__INTEL_COMPILER
 #pragma warning (push)
 #pragma warning (disable: 4127)  /* suppress conditional expression is constant */
