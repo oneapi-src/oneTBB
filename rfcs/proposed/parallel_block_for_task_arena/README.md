@@ -10,7 +10,7 @@ Before PR#1352, workers moved to the thread pool to sleep once there were no are
 demand. However, PR#1352 introduced a delayed leave behavior to the library that
 results in blocking threads for an `implementation-defined` duration inside an arena
 if there is no active demand arcoss all arenas. This change significantly
-improved performance in cases where the application is run on high thread count systems.<br>
+improved performance for various application on high thread count systems.<br>
 The main idea is that usually, after one parallel computation ends,
 another will start after some time. The delayed leave behavior is a heuristic to utilize this,
 covering most cases within `implementation-defined` duration.
