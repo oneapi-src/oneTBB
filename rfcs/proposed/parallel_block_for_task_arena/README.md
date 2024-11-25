@@ -4,16 +4,14 @@
 
 In oneTBB, there has never been an API that allows users to block worker threads within the arena.
 This design choice was made to preserve the composability of the application.<br>
-Since oneTBB is a dynamic runtime based on task stealing, threads migrate from one arena to
-another while they have tasks to execute.<br>
 Before PR#1352, workers moved to the thread pool to sleep once there were no arenas with active
 demand. However, PR#1352 introduced a delayed leave behavior to the library that
-results in blocking threads for an `implementation-defined` duration inside an arena
+results in blocking threads for an _implementation-defined_ duration inside an arena
 if there is no active demand arcoss all arenas. This change significantly
-improved performance for various application on high thread count systems.<br>
+improved performance for various applications on high thread count systems.<br>
 The main idea is that usually, after one parallel computation ends,
 another will start after some time. The delayed leave behavior is a heuristic to utilize this,
-covering most cases within `implementation-defined` duration.
+covering most cases within _implementation-defined_ duration.
 
 However, the new behavior is not the perfect match for all the scenarios:
 * The heuristic of delayed leave is unsuitable for the tasks that are submitted
@@ -65,7 +63,8 @@ where parallel computation ends, they can also indicate where it starts.
 <img src="parallel_block_introduction.png" width=800>
 
 With this approach, the user not only releases threads when necessary but also specifies a
-programmable block where worker threads should stick to the executing arena.
+programmable block where worker threads should expected new work coming regularly
+to the executing arena.
 
 Let’s add new state to the existing state machine. To represent "Parallel Block" state.
 
@@ -92,62 +91,73 @@ The extended state machine aims to answer these questions.
 <img src="parallel_block_state_final.png" width=800>
 
 Let's consider the semantics that an API for explicit parallel blocks can provide:
-* Start of a parallel block:  * Indicates the point from which the scheduler can use a hint and stick threads to the arena.
-  * Serve as a warm-up hint to the scheduler, making some worker threads immediately available
-    at the start of the real computation.
+* Start of a parallel block:
+  * Indicates the point from which the scheduler can use a hint and keep threads in the arena
+    for longer.
+  * Serves as a warm-up hint to the scheduler:
+    * Makes some worker threads immediately available at the start of the real computation.
+    * Should have similar guarantees as `task_arena::enqueue` from a signal standpoint.
 * "Parallel block" itself:
   * Scheduler can implement different policies to retain threads in the arena.
+  * The semantic for retaining threads is a hint to the scheduler;
+    thus, no real guarantee is provided. The scheduler can ignore the hint and
+    move threads to another arena or to sleep if conditions are met.
 * End of a parallel block:
-  * Indicates the point from which the scheduler can drop a hint and unstick threads from the arena.
+  * Indicates the point from which the scheduler may drop a hint and
+    no longer retain threads in the arena.
   * Indicates that arena should enter the “One-time Fast leave” thus workers can leave sooner.
+    * If work was submitted immediately after the end of the parallel block,
+      the default arena "workers leave" state will be restored.
+    * If the default "workers leave" state was the "Fast leave" the result is NOP.
 
 
-Start of a parallel block:<br>
-The warm-up hint should have similar guarantees as `task_arena::enqueue` from a signal standpoint.
-Users should expect the scheduler will do its best to make some threads available in the arena.
-
-"Parallel block" itself:<br>
-The semantic for retaining threads is a hint to the scheduler;
-thus, no real guarantee is provided. The scheduler can ignore the hint and
-move threads to another arena or to sleep if conditions are met.
-
-End of a parallel block:<br>
-Can indicate that arena should enter the “One-time Fast leave” thus workers can leave sooner.
-However, if work was submitted immediately after the end of the parallel block,
-the default arena "workers leave" state will be restored.
-If the default "workers leave" state was the "Fast leave" the result is NOP.
+### Proposed API
 
 ```cpp
 class task_arena {
-    enum class workers_leave {
-        fast,
-        delayed
+    enum class workers_leave : /* unspecified type */ {
+        fast = /* unspecifed */,
+        delayed = /* unspecifed */
     };
+
+    task_arena(int max_concurrency = automatic, unsigned reserved_for_masters = 1,
+               priority a_priority = priority::normal,
+               workers_leave a_workers_leave = workers_leave::delayed);
 
     task_arena(const constraints& constraints_, unsigned reserved_for_masters = 1,
                priority a_priority = priority::normal,
                workers_leave a_workers_leave = workers_leave::delayed);
 
-    void parallel_block_start();
-    void parallel_block_end(bool set_one_time_fast_leave = false);
-    scoped_parallel_block_type scoped_parallel_block(bool set_one_time_fast_leave = false);
+    void initialize(int max_concurrency, unsigned reserved_for_masters = 1,
+                    priority a_priority = priority::normal,
+                    workers_leave a_workers_leave = workers_leave::delayed);
+
+    void initialize(constraints a_constraints, unsigned reserved_for_masters = 1,
+                    priority a_priority = priority::normal,
+                    workers_leave a_workers_leave = workers_leave::delayed);
+
+    void start_parallel_block();
+    void end_parallel_block(bool set_one_time_fast_leave = false);
+
+    class scoped_parallel_block {
+        scoped_parallel_block(task_arena& ta, bool set_one_time_fast_leave = false);
+    };
 };
 
 namespace this_task_arena {
-    void parallel_block_start();
-    void parallel_block_end(bool set_one_time_fast_leave = false);
-    scoped_parallel_block_type scoped_parallel_block(bool set_one_time_fast_leave = false);
+    void start_parallel_block();
+    void end_parallel_block(bool set_one_time_fast_leave = false);
 }
 ```
 
-By the contract, users should call `parallel block start` for each
-subsequent call to `parallel block_end`.<br>
+By the contract, users should indicate the end of _parallel block_ for each
+previous start of _parallel block_.<br>
 Let's introduce RAII scoped object that will help to manage the contract.
 
 If the end of the parallel block is not indicated by the user, it will be done automatically when
 the last public reference is removed from the arena (i.e., task_arena is destroyed or a thread
 is joined for an implicit arena). This ensures correctness is
-preserved (threads will not stick forever).
+preserved (threads will not be retained forever).
 
 ## Considerations
 
@@ -161,8 +171,8 @@ We considered this approach too low-level. Plus, it leaves a question: "How to m
 
 The retaining of worker threads should be implemented with care because
 it might introduce performance problems if:
-* Threads cannot migrate to another arena because they
-  stick to the current arena.
+* Threads cannot migrate to another arena because they are
+  retained in the current arena.
 * Compute resources are not homogeneous, e.g., the CPU is hybrid.
   Heavier involvement of less performant core types might result in artificial work
   imbalance in the arena.
