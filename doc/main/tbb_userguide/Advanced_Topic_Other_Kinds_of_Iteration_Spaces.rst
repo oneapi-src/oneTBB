@@ -72,4 +72,39 @@ along its longest axis. When used with ``parallel_for``, it causes the
 loop to be "recursively blocked" in a way that improves cache usage.
 This nice cache behavior means that using ``parallel_for`` over a
 ``blocked_range2d<T>`` can make a loop run faster than the sequential
-equivalent, even on a single processor.
+equivalent, even on a single processor. 
+
+Also, ``blocked_range2d`` allows to use different value types across
+its first dimenstion (called "rows") and the second one ("columns").
+That allows combining indexes, pointers, and iterators into a joint
+iteration space. The method functions ``rows()`` and ``cols()`` return
+corresponding dimensions in the form of a ``blocked_range``.
+
+The ``blocked_range3d`` class template extends this approach to 3D by adding
+``pages()`` as the first dimension, followed by ``rows()`` and ``cols()``.
+
+The ``blocked_nd_range<T,N>`` class template represents a blocked iteration
+space of any dimensionality, but in a slightly different way. All dimensions
+of ``blocked_nd_range`` must be specified over the same value type, and the
+constructor takes N instances of ``blocked_range<T>``, not individual boundary
+values. To indicate the distinctions, the different naming pattern was chosen.
+
+
+An Example of a Multidimensional Iteration Space
+------------------------------------------------
+
+The example demonstrates calculation of a 3-dimensional filter over the pack
+of feature maps, applying a kernel to a subrange of features.
+
+The ``convolution3d`` function iterates over the output cells and sets cell
+values to the result of the ``kernel3d`` function, which summarizes values
+from feature maps.
+
+For the computation to be performed in parallel, ``tbb::parallel_for`` is called
+with ``tbb::blocked_nd_range<int,3>`` as an argument. The body function then
+iterates over the received 3-dimensional subrange in a loop nest, using
+the ``dim`` method function to obtain loop boundaries for each dimension.
+
+
+.. literalinclude:: ./snippets/blocked_nd_range_example.h
+   :language: c++
