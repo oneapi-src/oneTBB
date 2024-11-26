@@ -77,6 +77,8 @@ essential to have possibility to disable signature verification.
 * Proposal
 Based on the analysis in the "Introduction" section and to support versatile
 distribution models of oneTBB this RFC proposes to:
+
+On Windows only:
 1. Introduce signature verification step to the run-time dependency loading
    process.
 2. Introduce the ~TBB_VERIFY_DEPENDENCY_SIGNATURE~ compilation option that would
@@ -86,7 +88,9 @@ distribution models of oneTBB this RFC proposes to:
 4. Pass ~LOAD_LIBRARY_SAFE_CURRENT_DIRS~ flag to the ~LoadLibraryEx~ calls so
    that current working directory is excluded from the list of directories in
    which the system loader looks when trying to find and resolve dependency.
-5. Change dependency loading approach to load by module names only.
+
+On all OSes:
+- Change dependency loading approach to load by module names only.
 
 * References
 1. [[https://support.microsoft.com/en-us/topic/secure-loading-of-libraries-to-prevent-dll-preloading-attacks-d41303ec-0748-9211-f317-2edc819682e1][Microsoft, "Secure loading of libraries to prevent DLL preloading attacks".]]
