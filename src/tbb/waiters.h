@@ -58,9 +58,11 @@ public:
         __TBB_ASSERT(t == nullptr, nullptr);
 
         if (is_worker_should_leave(slot)) {
-            if (!governor::hybrid_cpu()
+            if (
 #if __TBB_PREVIEW_PARALLEL_BLOCK
-                 && !my_arena.my_thread_leave.should_leave()
+                !my_arena.my_thread_leave.should_leave()
+#else
+            !governor::hybrid_cpu()
 #endif
                )
             {
@@ -75,10 +77,11 @@ public:
                         return true;
                     }
 
-                    if (my_arena.my_threading_control->is_any_other_client_active()
+                    if (
 #if __TBB_PREVIEW_PARALLEL_BLOCK
-                        || my_arena.my_thread_leave.should_leave()
+                        my_arena.my_thread_leave.should_leave() ||
 #endif
+                        my_arena.my_threading_control->is_any_other_client_active()
                        )
                     {
                         break;

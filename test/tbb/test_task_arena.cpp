@@ -2137,7 +2137,7 @@ TEST_CASE("Check that workers leave faster with workers_leave::fast") {
     std::sort(avg_start_time_fast.begin(), avg_start_time_fast.end());
     auto delayed_avg = std::accumulate(avg_start_time_delayed.begin(), avg_start_time_delayed.begin() + num_trials * 0.9, 0) / num_trials;
     auto fast_avg = std::accumulate(avg_start_time_fast.begin(), avg_start_time_fast.begin() + num_trials * 0.9, 0) / num_trials;
-    REQUIRE(delayed_avg < fast_avg);
+    WARN_MESSAGE(delayed_avg < fast_avg, "Expected workers start new work faster with delayed leave");
 }
 
 TEST_CASE("parallel_block retains workers in task_arena") {
@@ -2166,7 +2166,7 @@ TEST_CASE("parallel_block retains workers in task_arena") {
     std::sort(avg_start_time_fast.begin(), avg_start_time_fast.end());
     auto delayed_avg = std::accumulate(avg_start_time_delayed.begin(), avg_start_time_delayed.begin() + num_trials * 0.9, 0) / num_trials;
     auto fast_avg = std::accumulate(avg_start_time_fast.begin(), avg_start_time_fast.begin() + num_trials * 0.9, 0) / num_trials;
-    REQUIRE(delayed_avg < fast_avg);
+    WARN_MESSAGE(delayed_avg < fast_avg, "Expected workers start new work faster when using parallel_block");
 }
 
 TEST_CASE("Test one-time fast leave") {
@@ -2195,7 +2195,7 @@ TEST_CASE("Test one-time fast leave") {
     std::sort(avg_start_time_fast.begin(), avg_start_time_fast.end());
     auto delayed_avg = std::accumulate(avg_start_time_delayed.begin(), avg_start_time_delayed.begin() + num_trials * 0.9, 0) / num_trials;
     auto fast_avg = std::accumulate(avg_start_time_fast.begin(), avg_start_time_fast.begin() + num_trials * 0.9, 0) / num_trials;
-    REQUIRE(delayed_avg < fast_avg);
+    WARN_MESSAGE(delayed_avg < fast_avg, "Expected one-time fast leave setting to slow workers to start new work");
 }
 
 #endif

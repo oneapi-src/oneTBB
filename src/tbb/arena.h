@@ -181,15 +181,19 @@ public:
 
 #if __TBB_PREVIEW_PARALLEL_BLOCK
 class thread_leave_manager {
-    static const std::uintptr_t FAST_LEAVE = 1;
-    static const std::uintptr_t ONE_TIME_FAST_LEAVE = 1 << 1;
-    static const std::uintptr_t DELAYED_LEAVE = 1 << 2;
-    static const std::uintptr_t PARALLEL_BLOCK = 1 << 3;
-    static const std::uintptr_t PARALLEL_BLOCK_MASK = ~((1LLU << 32) - 1) & ~(0x7);
+    static const std::uint64_t FAST_LEAVE = 1;
+    static const std::uint64_t ONE_TIME_FAST_LEAVE = 1 << 1;
+    static const std::uint64_t DELAYED_LEAVE = 1 << 2;
+    static const std::uint64_t PARALLEL_BLOCK = 1 << 3;
+    static const std::uint64_t PARALLEL_BLOCK_MASK = ~((1LLU << 32) - 1) & ~(0x7);
 
-    std::atomic<std::uintptr_t> my_state{0};
+    std::atomic<std::uint64_t> my_state{0};
 public:
     void set_initial_state(tbb::task_arena::workers_leave wl) {
+        if (wl == tbb::task_arena::workers_leave::automatic) {
+          wl = governor::hybrid_cpu() ? tbb::task_arena::workers_leave::fast
+                                      : tbb::task_arena::workers_leave::delayed;
+        }
         if (wl == tbb::task_arena::workers_leave::delayed) {
             my_state.store(DELAYED_LEAVE, std::memory_order_relaxed);
         } else {
@@ -198,7 +202,7 @@ public:
     }
 
     void restore_state_if_needed() {
-        std::uintptr_t curr = ONE_TIME_FAST_LEAVE;
+        std::uint64_t curr = ONE_TIME_FAST_LEAVE;
         if (my_state.load(std::memory_order_relaxed) == curr) {
             // Potentially can override desicion of the parallel block from future epoch
             // but it is not a problem because it does not violate the correctness
@@ -209,8 +213,8 @@ public:
     void register_parallel_block() {
         __TBB_ASSERT(my_state.load(std::memory_order_relaxed) != 0, "The initial state was not set");
 
-        std::uintptr_t prev = my_state.load(std::memory_order_relaxed);
-        std::uintptr_t desired{};
+        std::uint64_t prev = my_state.load(std::memory_order_relaxed);
+        std::uint64_t desired{};
         do {
             if (prev & PARALLEL_BLOCK_MASK) {
                 desired = PARALLEL_BLOCK + prev;
@@ -225,8 +229,8 @@ public:
     void unregister_parallel_block(bool enable_fast_leave) {
         __TBB_ASSERT(my_state.load(std::memory_order_relaxed) != 0, "The initial state was not set");
 
-        std::uintptr_t prev = my_state.load(std::memory_order_relaxed);
-        std::uintptr_t desired{};
+        std::uint64_t prev = my_state.load(std::memory_order_relaxed);
+        std::uint64_t desired{};
         do {
             if (((prev - PARALLEL_BLOCK) & PARALLEL_BLOCK_MASK) != 0) {
                 desired = prev - PARALLEL_BLOCK;
@@ -239,7 +243,7 @@ public:
     bool should_leave() {
         __TBB_ASSERT(my_state.load(std::memory_order_relaxed) != 0, "The initial state was not set");
 
-        std::uintptr_t curr = my_state.load(std::memory_order_relaxed);
+        std::uint64_t curr = my_state.load(std::memory_order_relaxed);
         return curr == FAST_LEAVE || curr == ONE_TIME_FAST_LEAVE;
     }
 };

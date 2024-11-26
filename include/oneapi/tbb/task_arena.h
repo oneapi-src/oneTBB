@@ -130,6 +130,7 @@ public:
 
 #if __TBB_PREVIEW_PARALLEL_BLOCK
     enum class workers_leave : int {
+        automatic = 0,
         fast = 1,
         delayed = 2
     };
@@ -293,7 +294,7 @@ public:
     task_arena(int max_concurrency_ = automatic, unsigned reserved_for_masters = 1,
                priority a_priority = priority::normal
 #if __TBB_PREVIEW_PARALLEL_BLOCK
-                    , workers_leave wl = workers_leave::delayed
+                    , workers_leave wl = workers_leave::automatic
 #endif
     )
         : task_arena_base(max_concurrency_, reserved_for_masters, a_priority
@@ -308,7 +309,7 @@ public:
     task_arena(const constraints& constraints_, unsigned reserved_for_masters = 1,
                priority a_priority = priority::normal
 #if __TBB_PREVIEW_PARALLEL_BLOCK
-               , workers_leave wl = workers_leave::delayed
+               , workers_leave wl = workers_leave::automatic
 #endif
     )
         : task_arena_base(constraints_, reserved_for_masters, a_priority
@@ -350,7 +351,7 @@ public:
     explicit task_arena( attach )
         : task_arena_base(automatic, 1, priority::normal
 #if __TBB_PREVIEW_PARALLEL_BLOCK
-        , workers_leave::delayed
+        , workers_leave::automatic
 #endif
         ) // use default settings if attach fails
     {
@@ -373,7 +374,7 @@ public:
     void initialize(int max_concurrency_, unsigned reserved_for_masters = 1,
                     priority a_priority = priority::normal
 #if __TBB_PREVIEW_PARALLEL_BLOCK
-                    , workers_leave wl = workers_leave::delayed
+                    , workers_leave wl = workers_leave::automatic
 #endif
     )
     {
@@ -394,7 +395,7 @@ public:
     void initialize(constraints constraints_, unsigned reserved_for_masters = 1,
                     priority a_priority = priority::normal
 #if __TBB_PREVIEW_PARALLEL_BLOCK
-                    , workers_leave wl = workers_leave::delayed
+                    , workers_leave wl = workers_leave::automatic
 #endif
     )
     {
