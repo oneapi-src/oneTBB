@@ -101,6 +101,7 @@ class function_body : no_assign {
 public:
     virtual ~function_body() {}
     virtual Output operator()(const Input &input) = 0;
+    virtual Output operator()(Input&& input) = 0;
     virtual function_body* clone() = 0;
 };
 
@@ -110,6 +111,7 @@ class function_body_leaf : public function_body< Input, Output > {
 public:
     function_body_leaf( const B &_body ) : body(_body) { }
     Output operator()(const Input &i) override { return tbb::detail::invoke(body,i); }
+    Output operator()(Input&& i) override { return tbb::detail::invoke(body, std::move(i)); }
     B get_body() { return body; }
     function_body_leaf* clone() override {
         return new function_body_leaf< Input, Output, B >(body);

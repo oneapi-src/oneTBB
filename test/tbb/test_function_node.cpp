@@ -842,7 +842,7 @@ std::size_t counter_printer::move_count = 0;
 
 struct body_type {
     counter_printer operator()(const counter_printer& res) { return res; }
-    counter_printer operator()(counter_printer&& res) { return res; }
+    counter_printer operator()(counter_printer&& res) { return std::move(res); }
 };
 
 TEST_CASE("123") {
@@ -852,7 +852,7 @@ TEST_CASE("123") {
         std::cout << "start" << std::endl;
 
         tbb::flow::graph g;
-        auto threshold = 1;
+        auto threshold = tbb::flow::unlimited;
 
         body_type body;
 
@@ -866,7 +866,7 @@ TEST_CASE("123") {
         tbb::flow::make_edge(f2, f3);
 
         f1.try_put(counter_printer{});
-        f1.try_put(counter_printer{});
+        // f1.try_put(counter_printer{});
 
         g.wait_for_all();
 

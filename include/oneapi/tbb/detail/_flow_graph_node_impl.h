@@ -469,11 +469,12 @@ public:
         return dynamic_cast< function_body_leaf<input_type, output_type, Body> & >(body_ref).get_body();
     }
 
-    output_type apply_body_impl( const input_type& i) {
+    template <typename InputType>
+    output_type apply_body_impl( InputType&& i) {
         // There is an extra copied needed to capture the
         // body execution without the try_put
         fgt_begin_body( my_body );
-        output_type v = tbb::detail::invoke(*my_body, i);
+        output_type v = tbb::detail::invoke(*my_body, std::forward<InputType>(i));
         fgt_end_body( my_body );
         return v;
     }
