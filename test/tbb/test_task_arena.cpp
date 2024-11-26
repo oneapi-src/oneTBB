@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#include "common/dummy_body.h"
 #include "common/test.h"
 
 #define __TBB_EXTRA_DEBUG 1
@@ -41,6 +42,7 @@
 #include <stdexcept>
 #include <thread>
 #include <vector>
+#include <numeric>
 
 //#include "harness_fp.h"
 
@@ -2099,6 +2101,7 @@ std::size_t measure_avg_start_time(tbb::task_arena& ta, const F1& start_block = 
     };
 
     for (std::size_t i = 0; i < num_runs; ++i) {
+        // std::cout << i << std::endl;
         ta.execute([&] {
             auto start_time = std::chrono::steady_clock::now();
             start_block();
@@ -2106,9 +2109,9 @@ std::size_t measure_avg_start_time(tbb::task_arena& ta, const F1& start_block = 
             end_block();
             longest_start_times.push_back(get_longest_start(start_time));
         });
-        std::this_thread::sleep_for(std::chrono::microseconds(i));
+        // std::this_thread::sleep_for(std::chrono::microseconds(500));
+        utils::doDummyWork(i*100);
     }
-    // return std::accumulate(longest_start_times.begin(), longest_start_times.end(), 0) / num_runs;
     return utils::median(longest_start_times.begin(), longest_start_times.end());
 }
 
@@ -2118,7 +2121,7 @@ TEST_CASE("Check that workers leave faster with workers_leave::fast") {
     std::size_t num_trials = 20;
     std::vector<std::size_t> avg_start_time_delayed(num_trials);
     {
-        tbb::task_arena ta(num_threads, 1, tbb::task_arena::priority::normal, tbb::task_arena::workers_leave::delayed);
+        tbb::task_arena ta((int)num_threads, 1, tbb::task_arena::priority::normal, tbb::task_arena::workers_leave::delayed);
         for (std::size_t i = 0; i < num_trials; ++i) {
             auto avg_start_time = measure_avg_start_time(ta);
             avg_start_time_delayed[i] = avg_start_time;
@@ -2127,7 +2130,7 @@ TEST_CASE("Check that workers leave faster with workers_leave::fast") {
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
     std::vector<std::size_t> avg_start_time_fast(num_trials);
     {
-        tbb::task_arena ta(num_threads, 1, tbb::task_arena::priority::normal, tbb::task_arena::workers_leave::fast);
+        tbb::task_arena ta((int)num_threads, 1, tbb::task_arena::priority::normal, tbb::task_arena::workers_leave::fast);
         for (std::size_t i = 0; i < num_trials; ++i) {
             auto avg_start_time = measure_avg_start_time(ta);
             avg_start_time_fast[i] = avg_start_time;
@@ -2135,8 +2138,8 @@ TEST_CASE("Check that workers leave faster with workers_leave::fast") {
     }
     std::sort(avg_start_time_delayed.begin(), avg_start_time_delayed.end());
     std::sort(avg_start_time_fast.begin(), avg_start_time_fast.end());
-    auto delayed_avg = std::accumulate(avg_start_time_delayed.begin(), avg_start_time_delayed.begin() + num_trials * 0.9, 0) / num_trials;
-    auto fast_avg = std::accumulate(avg_start_time_fast.begin(), avg_start_time_fast.begin() + num_trials * 0.9, 0) / num_trials;
+    auto delayed_avg = std::accumulate(avg_start_time_delayed.begin(), avg_start_time_delayed.begin() + int(num_trials * 0.9), 0ull) / num_trials;
+    auto fast_avg = std::accumulate(avg_start_time_fast.begin(), avg_start_time_fast.begin() + int(num_trials * 0.9), 0ull) / num_trials;
     WARN_MESSAGE(delayed_avg < fast_avg, "Expected workers start new work faster with delayed leave");
 }
 
@@ -2145,7 +2148,7 @@ TEST_CASE("parallel_block retains workers in task_arena") {
     std::size_t num_trials = 20;
     std::vector<std::size_t> avg_start_time_delayed(num_trials);
     {
-        tbb::task_arena ta(num_threads, 1, tbb::task_arena::priority::normal, tbb::task_arena::workers_leave::fast);
+        tbb::task_arena ta((int)num_threads, 1, tbb::task_arena::priority::normal, tbb::task_arena::workers_leave::fast);
         for (std::size_t i = 0; i < num_trials; ++i) {
             ta.start_parallel_block();
             auto avg_start_time = measure_avg_start_time(ta); 
@@ -2156,7 +2159,7 @@ TEST_CASE("parallel_block retains workers in task_arena") {
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
     std::vector<std::size_t> avg_start_time_fast(num_trials);
     {
-        tbb::task_arena ta(num_threads, 1, tbb::task_arena::priority::normal, tbb::task_arena::workers_leave::fast);
+        tbb::task_arena ta((int)num_threads, 1, tbb::task_arena::priority::normal, tbb::task_arena::workers_leave::fast);
         for (std::size_t i = 0; i < num_trials; ++i) {
             auto avg_start_time = measure_avg_start_time(ta);
             avg_start_time_fast[i] = avg_start_time;
@@ -2164,8 +2167,8 @@ TEST_CASE("parallel_block retains workers in task_arena") {
     }
     std::sort(avg_start_time_delayed.begin(), avg_start_time_delayed.end());
     std::sort(avg_start_time_fast.begin(), avg_start_time_fast.end());
-    auto delayed_avg = std::accumulate(avg_start_time_delayed.begin(), avg_start_time_delayed.begin() + num_trials * 0.9, 0) / num_trials;
-    auto fast_avg = std::accumulate(avg_start_time_fast.begin(), avg_start_time_fast.begin() + num_trials * 0.9, 0) / num_trials;
+    auto delayed_avg = std::accumulate(avg_start_time_delayed.begin(), avg_start_time_delayed.begin() + int(num_trials * 0.9), 0ull) / num_trials;
+    auto fast_avg = std::accumulate(avg_start_time_fast.begin(), avg_start_time_fast.begin() + int(num_trials * 0.9), 0ull) / num_trials;
     WARN_MESSAGE(delayed_avg < fast_avg, "Expected workers start new work faster when using parallel_block");
 }
 
@@ -2174,7 +2177,7 @@ TEST_CASE("Test one-time fast leave") {
     std::size_t num_trials = 20;
     std::vector<std::size_t> avg_start_time_delayed(num_trials);
     {
-        tbb::task_arena ta(num_threads, 1, tbb::task_arena::priority::normal, tbb::task_arena::workers_leave::delayed);
+        tbb::task_arena ta((int)num_threads, 1, tbb::task_arena::priority::normal, tbb::task_arena::workers_leave::delayed);
         for (std::size_t i = 0; i < num_trials; ++i) {
             auto avg_start_time = measure_avg_start_time(ta); 
             avg_start_time_delayed[i] = avg_start_time;
@@ -2183,7 +2186,7 @@ TEST_CASE("Test one-time fast leave") {
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
     std::vector<std::size_t> avg_start_time_fast(num_trials);
     {
-        tbb::task_arena ta(num_threads, 1, tbb::task_arena::priority::normal, tbb::task_arena::workers_leave::delayed);
+        tbb::task_arena ta((int)num_threads, 1, tbb::task_arena::priority::normal, tbb::task_arena::workers_leave::delayed);
         auto start_block = [&ta] { ta.start_parallel_block(); };
         auto end_block = [&ta] { ta.end_parallel_block(true); };
         for (std::size_t i = 0; i < num_trials; ++i) {
@@ -2193,8 +2196,8 @@ TEST_CASE("Test one-time fast leave") {
     }
     std::sort(avg_start_time_delayed.begin(), avg_start_time_delayed.end());
     std::sort(avg_start_time_fast.begin(), avg_start_time_fast.end());
-    auto delayed_avg = std::accumulate(avg_start_time_delayed.begin(), avg_start_time_delayed.begin() + num_trials * 0.9, 0) / num_trials;
-    auto fast_avg = std::accumulate(avg_start_time_fast.begin(), avg_start_time_fast.begin() + num_trials * 0.9, 0) / num_trials;
+    auto delayed_avg = std::accumulate(avg_start_time_delayed.begin(), avg_start_time_delayed.begin() + int(num_trials * 0.9), 0ull) / num_trials;
+    auto fast_avg = std::accumulate(avg_start_time_fast.begin(), avg_start_time_fast.begin() + int(num_trials * 0.9), 0ull) / num_trials;
     WARN_MESSAGE(delayed_avg < fast_avg, "Expected one-time fast leave setting to slow workers to start new work");
 }
 
