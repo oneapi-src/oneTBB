@@ -35,10 +35,10 @@ Let's tackle these problems one by one.
 ### Completely disable new behavior
 
 Let’s consider both “Delayed leave” and “Fast leave” as 2 different states in state machine.<br>
-* Therefore, workloads that knows that they cannot benefit from the heuristic of delayed leave
-  but rather, it brings performance problems can create an arena in “Fast leave” state.
-* And the opposite by default arena will be created in “Delayed leave” state because
-  the delayed leave behavior is a heuristic that benefit most of the workloads.
+* The "Delayed leave" heuristic benefits most of the workloads. Therefore, this is the 
+  default behavior for arena. 
+* Workloads that has rather negative performance impact from the heuristic of delayed leave
+  can create an arena in “Fast leave” state.
 
 <img src="completely_disable_new_behavior.png" width=800>
 
@@ -50,7 +50,7 @@ There will be a question that we need to answer:
 ### When threads should leave?
 
 oneTBB itself can only guess when the ideal time to release threads from the arena is.
-Therefore, it do the best effort to preserve and enhance performance without completely
+Therefore, it does the best effort to preserve and enhance performance without completely
 messing composability guarantees (that is how delayed leave is implemented).
 
 As we already discussed, there are cases where it does not work perfectly,
@@ -95,11 +95,11 @@ Let's consider the semantics that an API for explicit parallel blocks can provid
   * Indicates the point from which the scheduler can use a hint and keep threads in the arena
     for longer.
   * Serves as a warm-up hint to the scheduler:
-    * Makes some worker threads immediately available at the start of the real computation.
+    * Allows worker threads to be available by the time real computation starts.
     * Should have similar guarantees as `task_arena::enqueue` from a signal standpoint.
 * "Parallel block" itself:
   * Scheduler can implement different policies to retain threads in the arena.
-  * The semantic for retaining threads is a hint to the scheduler;
+  * The semantics for retaining threads is a hint to the scheduler;
     thus, no real guarantee is provided. The scheduler can ignore the hint and
     move threads to another arena or to sleep if conditions are met.
 * End of a parallel block:
