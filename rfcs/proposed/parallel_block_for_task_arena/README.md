@@ -44,8 +44,10 @@ Let’s consider both “Delayed leave” and “Fast leave” as 2 different st
 
 There will be a question that we need to answer:
 * Do we see any value if arena potentially can transition from one to another state?
-  * What if different types of workloads are mixed in one application?
-  * Different types of arenas can be used for different types of workloads.
+
+To answer this question, the following scenarios should be considired:
+* What if different types of workloads are mixed in one application?
+* Different types of arenas can be used for different types of workloads.
 
 ### When threads should leave?
 
@@ -69,8 +71,8 @@ to the executing arena.
 Let’s add new state to the existing state machine. To represent "Parallel Block" state.
 
 > **_NOTE:_** The "Fast leave" state is colored Grey just for simplicity of the chart.
-              Assume, that arena was created with the "Delayed leave" and the same logic
-              is applicable to the "Fast leave".
+              Let's assume that arena was created with the "Delayed leave". 
+              The logic demonstrated below is applicable to the "Fast leave" as well.
 
 <img src="parallel_block_state_initial.png" width=800>
 
@@ -96,7 +98,6 @@ Let's consider the semantics that an API for explicit parallel blocks can provid
     for longer.
   * Serves as a warm-up hint to the scheduler:
     * Allows worker threads to be available by the time real computation starts.
-    * Should have similar guarantees as `task_arena::enqueue` from a signal standpoint.
 * "Parallel block" itself:
   * Scheduler can implement different policies to retain threads in the arena.
   * The semantics for retaining threads is a hint to the scheduler;
