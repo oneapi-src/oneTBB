@@ -108,8 +108,8 @@ Let's consider the semantics that an API for explicit parallel blocks can provid
     no longer retain threads in the arena.
   * Indicates that arena should enter the “One-time Fast leave” thus workers can leave sooner.
     * If work was submitted immediately after the end of the parallel block,
-      the default arena "workers leave" state will be restored.
-    * If the default "workers leave" state was the "Fast leave" the result is NOP.
+      the default arena behavior with regard to "workers leave" policy is restored.
+    * If the default "workers leave" policy was the "Fast leave", the result is NOP.
 
 
 ### Proposed API
