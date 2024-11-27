@@ -1,6 +1,6 @@
 # -*- fill-column: 80; -*-
 
-#+title: Improve predictability of API for NUMA support
+#+title: Link ~tbbbind~ with static HWLOC to improve predictability of NUMA support API
 
 *Note:* This is a sub-RFC of the https://github.com/oneapi-src/oneTBB/pull/1535.
 Specifically, its section about "Increased availability of NUMA support".
