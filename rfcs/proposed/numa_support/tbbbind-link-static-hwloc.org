@@ -63,34 +63,37 @@ statically with one of the ~tbbbind~ libraries that are distributed together
 with oneTBB, yet leaving possibility to specify another version of HWLOC library
 if users see the need.
 
+Since HWLOC 1.x is an old version of HWLOC and modern versions of operating
+systems install HWLOC 2.x by default, the probability of someone who is
+constrained by using only HWLOC 1.x on their system is relatively small. Thus,
+the filename of the ~tbbbind~ library that is linked against HWLOC 1.x can be
+re-used for the library that is linked against static HWLOC version 2.x.
+
 * Proposal
-1. Introduce new variant of the ~tbbbind~ library with the name ~tbbbind_static~
-   which is linked with a static HWLOC library and distributed along side with
-   the other ~tbbbind~ variants.
-2. Add loading of ~tbbbind_static~ as the last attempt to resolve the dependency
-   on functionality provided by ~tbbbind~ layer.
+1. Replace the dynamic link of ~tbbbind~ library which is currently linked
+   against HWLOC 1.x with the link to a static HWLOC library version 2.x.
+2. Add loading of that ~tbbbind~ variant as the last attempt to resolve the
+   dependency on functionality provided by ~tbbbind~ layer.
 3. Update the oneTBB documentation considering [[https://oneapi-src.github.io/oneTBB/search.html?q=tbb%3A%3Ainfo][these documentation pages]] to
    include steps determining the variant of ~tbbbind~ being used.
 
 ** Advantages
-The proposed behavior allows having a mechanism for resolving a dependency on
-HWLOC library in case it cannot be found in the environment, while still
-preferring user-provided version of HWLOC.
-
-As a result, the problematic use of oneTBB API mentioned above should work as
-expected, returning enumerated list of actual NUMA nodes and core types on the
-system the code is running on, provided that the loaded HWLOC library works on
-that system and that an application properly distributes all binaries of oneTBB,
-sets the environment so that the necessary variant of ~tbbbind~ library can be
-found and loaded.
+1. The proposed behavior allows having a mechanism for resolving a dependency on
+   HWLOC library in case it cannot be found in the environment, while still
+   preferring user-provided version of HWLOC. As a result, the problematic use of
+   oneTBB API mentioned above should work as expected, returning enumerated list
+   of actual NUMA nodes and core types on the system the code is running on,
+   provided that the loaded HWLOC library works on that system and that an
+   application properly distributes all binaries of oneTBB, sets the environment
+   so that the necessary variant of ~tbbbind~ library can be found and loaded.
+2. The drop of support for HWLOC 1.x allows to not introducing additional
+   ~tbbbind~ variant of the library, yet maintaining support for popular
+   versions of HWLOC.
 
 ** Disadvantages
-1. There will be one more variation of a ~tbbbind~ binary to ship in oneTBB
-   distribution packages.
-2. By default still no diagnostics if users failed to setup environment with
-   their own version of HWLOC library correctly. Although, specifying
-   ~TBB_VERSION=1~ envar will help identifying an issue with setup of
-   environment pretty quickly.
+By default still no diagnostics if users failed to setup environment with their
+own version of HWLOC library correctly. Although, specifying ~TBB_VERSION=1~
+envar will help identifying an issue with setup of environment pretty quickly.
 
 * Alternative handling of inability to parse system topology
 The other behavior in case HWLOC library cannot be found is to be more explicit
