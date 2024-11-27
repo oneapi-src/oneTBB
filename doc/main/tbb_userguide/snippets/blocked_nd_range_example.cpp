@@ -1,9 +1,6 @@
-#include "oneapi/tbb/tbb_config.h"
-
 #include "blocked_nd_range_example.h"
-
-#include "oneapi/tbb/tbb_stddef.h"
 #include <vector>
+#include <cassert>
 
 int main() {
     const int kernel_length = 9;
@@ -32,7 +29,7 @@ int main() {
     for (auto i : out) {
         for (auto j : i) {
             for (auto k : j) {
-                __TBB_ASSERT_RELEASE(k == expected, "convolution fails to calculate correctly");
+                assert(k == expected && "convolution failed to calculate correctly");
             }
         }
     }
