@@ -185,7 +185,9 @@ class thread_leave_manager {
     static const std::uint64_t ONE_TIME_FAST_LEAVE = 1 << 1;
     static const std::uint64_t DELAYED_LEAVE = 1 << 2;
     static const std::uint64_t PARALLEL_BLOCK = 1 << 3;
-    static const std::uint64_t PARALLEL_BLOCK_MASK = ~((1LLU << 32) - 1) & ~(0x7);
+    // Use 29 bits for the parallel block state + reference counter,
+    // reserve 32 most significant bits.
+    static const std::uint64_t PARALLEL_BLOCK_MASK = ((1LLU << 32) - 1) & (PARALLEL_BLOCK - 1);
 
     std::atomic<std::uint64_t> my_state{0};
 public:
