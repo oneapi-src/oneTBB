@@ -206,7 +206,7 @@ public:
     void restore_state_if_needed() {
         std::uint64_t curr = ONE_TIME_FAST_LEAVE;
         if (my_state.load(std::memory_order_relaxed) == curr) {
-            // Potentially can override desicion of the parallel block from future epoch
+            // Potentially can override decision of the parallel block from future epoch
             // but it is not a problem because it does not violate the correctness
             my_state.compare_exchange_strong(curr, DELAYED_LEAVE);
         }
