@@ -1,4 +1,4 @@
-# Adding API for parallel block to task_arena to warm-up/retain/release worker threads
+# Adding API for parallel phase to task_arena to warm-up/retain/release worker threads
 
 ## Introduction
 
@@ -62,100 +62,111 @@ aspect of oneTBB behavior should be able to do it.
 This problem can be considered from another angle. Essentially, if the user can indicate
 where parallel computation ends, they can also indicate where it starts.
 
-<img src="parallel_block_introduction.png" width=800>
+<img src="parallel_phase_introduction.png" width=800>
 
 With this approach, the user not only releases threads when necessary but also specifies a
 programmable block where worker threads should expected new work coming regularly
 to the executing arena.
 
-Let’s add new state to the existing state machine. To represent "Parallel Block" state.
+Let’s add new state to the existing state machine. To represent "Parallel Phase" state.
 
 > **_NOTE:_** The "Fast leave" state is colored Grey just for simplicity of the chart.
               Let's assume that arena was created with the "Delayed leave". 
               The logic demonstrated below is applicable to the "Fast leave" as well.
 
-<img src="parallel_block_state_initial.png" width=800>
+<img src="parallel_phase_state_initial.png" width=800>
 
 This state diagram leads to several questions. There are some of them:
-* What if there are multiple Parallel Blocks?
-* If “End of Parallel Block” leads back to “Delayed leave” how soon threads
+* What if there are multiple Parallel Phases?
+* If “End of Parallel Phase” leads back to “Delayed leave” how soon threads
   will be released from arena?
-  * What if we indicated that threads should leave arena after the "Parallel Block"?
-  * What if we just indicated the end of the "Parallel Block"?
+  * What if we indicated that threads should leave arena after the "Parallel Phase"?
+  * What if we just indicated the end of the "Parallel Phase"?
 
 The extended state machine aims to answer these questions.
-* The first call to the “Start of PB” will transition into the “Parallel Block” state.
+* The first call to the “Start of PB” will transition into the “Parallel Phase” state.
 * The last call to the “End of PB” will transition back to the “Delayed leave” state
   or into the "One-time Fast leave" if it is indicated that threads should leave sooner.
 * Concurrent or nested calls to the “Start of PB” or the “End of PB”
   increment/decrement reference counter.
 
-<img src="parallel_block_state_final.png" width=800>
+<img src="parallel_phase_state_final.png" width=800>
 
-Let's consider the semantics that an API for explicit parallel blocks can provide:
-* Start of a parallel block:
+Let's consider the semantics that an API for explicit parallel phases can provide:
+* Start of a parallel phase:
   * Indicates the point from which the scheduler can use a hint and keep threads in the arena
     for longer.
   * Serves as a warm-up hint to the scheduler:
-    * Allows worker threads to be available by the time real computation starts.
-* "Parallel block" itself:
+    * Allows reducing computation start delays by initationg the wake-up of worker threads
+      in advance.
+* "Parallel phase" itself:
   * Scheduler can implement different policies to retain threads in the arena.
   * The semantics for retaining threads is a hint to the scheduler;
     thus, no real guarantee is provided. The scheduler can ignore the hint and
     move threads to another arena or to sleep if conditions are met.
-* End of a parallel block:
+* End of a parallel phase:
   * Indicates the point from which the scheduler may drop a hint and
     no longer retain threads in the arena.
   * Indicates that arena should enter the “One-time Fast leave” thus workers can leave sooner.
-    * If work was submitted immediately after the end of the parallel block,
+    * If work was submitted immediately after the end of the parallel phase,
       the default arena behavior with regard to "workers leave" policy is restored.
     * If the default "workers leave" policy was the "Fast leave", the result is NOP.
 
 
 ### Proposed API
 
+Summary of API changes:
+
+* Add enumeration class for the arena leave policy.
+* Add the policy as the last parameter to the arena constructor and initializer
+defaulted to "automatic".
+* Add functions to start and end the parallel phase to the `task_arena` class
+and the `this_task_arena` namespace.
+* Add RAII class to map a parallel phase to a code scope.
+
 ```cpp
 class task_arena {
-    enum class workers_leave : /* unspecified type */ {
+    enum class leave_policy : /* unspecified type */ {
+        automatic = /* unspecifed */,
         fast = /* unspecifed */,
         delayed = /* unspecifed */
     };
 
     task_arena(int max_concurrency = automatic, unsigned reserved_for_masters = 1,
                priority a_priority = priority::normal,
-               workers_leave a_workers_leave = workers_leave::delayed);
+               leave_policy a_leave_policy = leave_policy::automatic);
 
     task_arena(const constraints& constraints_, unsigned reserved_for_masters = 1,
                priority a_priority = priority::normal,
-               workers_leave a_workers_leave = workers_leave::delayed);
+               leave_policy a_leave_policy = leave_policy::automatic);
 
     void initialize(int max_concurrency, unsigned reserved_for_masters = 1,
                     priority a_priority = priority::normal,
-                    workers_leave a_workers_leave = workers_leave::delayed);
+                    leave_policy a_leave_policy = leave_policy::automatic);
 
     void initialize(constraints a_constraints, unsigned reserved_for_masters = 1,
                     priority a_priority = priority::normal,
-                    workers_leave a_workers_leave = workers_leave::delayed);
+                    leave_policy a_leave_policy = leave_policy::automatic);
 
-    void start_parallel_block();
-    void end_parallel_block(bool set_one_time_fast_leave = false);
+    void start_parallel_phase();
+    void end_parallel_phase(bool with_fast_leave = false);
 
-    class scoped_parallel_block {
-        scoped_parallel_block(task_arena& ta, bool set_one_time_fast_leave = false);
+    class scoped_parallel_phase {
+        scoped_parallel_phase(task_arena& ta, bool with_fast_leave = false);
     };
 };
 
 namespace this_task_arena {
-    void start_parallel_block();
-    void end_parallel_block(bool set_one_time_fast_leave = false);
+    void start_parallel_phase();
+    void end_parallel_phase(bool with_fast_leave = false);
 }
 ```
 
-By the contract, users should indicate the end of _parallel block_ for each
-previous start of _parallel block_.<br>
+By the contract, users should indicate the end of _parallel phase_ for each
+previous start of _parallel phase_.<br>
 Let's introduce RAII scoped object that will help to manage the contract.
 
-If the end of the parallel block is not indicated by the user, it will be done automatically when
+If the end of the parallel phase is not indicated by the user, it will be done automatically when
 the last public reference is removed from the arena (i.e., task_arena is destroyed or a thread
 is joined for an implicit arena). This ensures correctness is
 preserved (threads will not be retained forever).
