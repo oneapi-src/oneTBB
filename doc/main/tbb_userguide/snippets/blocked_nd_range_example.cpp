@@ -19,12 +19,12 @@ int main() {
     std::vector<std::vector<std::vector<float>>> feature_maps(feature_maps_length, std::vector<std::vector<float>>(feature_maps_width, std::vector<float>(feature_maps_heigth, 1.0f)));
     std::vector<std::vector<std::vector<float>>> out(out_length, std::vector<std::vector<float>>(out_width, std::vector<float>(out_heigth, 0.f)));
 
-    // 3D convolution calculates sum of all elements in kernel
+    // 3D convolution calculates the sum of all elements in the kernel
     convolution3d(feature_maps, out,
                   out_length, out_width, out_heigth,
                   kernel_length, kernel_width, kernel_height);
 
-    // Checks correctness of convolution by equality to expected sum of elements
+    // Checks correctness of convolution by equality to the expected sum of elements
     float expected = float(kernel_length * kernel_height * kernel_width);
     for (auto i : out) {
         for (auto j : i) {

@@ -76,7 +76,7 @@ equivalent, even on a single processor.
 
 Also, ``blocked_range2d`` allows to use different value types across
 its first dimension (called "rows") and the second one ("columns").
-That allows combining indexes, pointers, and iterators into a joint
+That means you can combine indexes, pointers, and iterators into a joint
 iteration space. The method functions ``rows()`` and ``cols()`` return
 corresponding dimensions in the form of a ``blocked_range``.
 
@@ -90,7 +90,7 @@ constructor takes N instances of ``blocked_range<T>``, not individual boundary
 values. To indicate the distinctions, the different naming pattern was chosen.
 
 
-An Example of a Multidimensional Iteration Space
+Example of a Multidimensional Iteration Space
 ------------------------------------------------
 
 The example demonstrates calculation of a 3-dimensional filter over the pack
