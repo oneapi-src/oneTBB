@@ -96,9 +96,9 @@ TBB_EXPORT void __TBB_EXPORTED_FUNC enqueue(d1::task&, d1::task_arena_base*);
 TBB_EXPORT void __TBB_EXPORTED_FUNC enqueue(d1::task&, d1::task_group_context&, d1::task_arena_base*);
 TBB_EXPORT void __TBB_EXPORTED_FUNC submit(d1::task&, d1::task_group_context&, arena*, std::uintptr_t);
 
-#if __TBB_PREVIEW_PARALLEL_BLOCK
-TBB_EXPORT void __TBB_EXPORTED_FUNC register_parallel_block(d1::task_arena_base&);
-TBB_EXPORT void __TBB_EXPORTED_FUNC unregister_parallel_block(d1::task_arena_base&, bool);
+#if __TBB_PREVIEW_PARALLEL_PHASE
+TBB_EXPORT void __TBB_EXPORTED_FUNC register_parallel_phase(d1::task_arena_base&);
+TBB_EXPORT void __TBB_EXPORTED_FUNC unregister_parallel_phase(d1::task_arena_base&, std::uintptr_t);
 #endif
 } // namespace r1
 
@@ -128,8 +128,8 @@ public:
         high   = 3 * priority_stride
     };
 
-#if __TBB_PREVIEW_PARALLEL_BLOCK
-    enum class workers_leave : int {
+#if __TBB_PREVIEW_PARALLEL_PHASE
+    enum class leave_policy : int {
         automatic = 0,
         fast = 1,
         delayed = 2
@@ -168,9 +168,9 @@ protected:
     //! Number of threads per core
     int my_max_threads_per_core;
 
-#if __TBB_PREVIEW_PARALLEL_BLOCK
-    //! Defines the initial behavior of the workers_leave state machine
-    workers_leave my_workers_leave;
+#if __TBB_PREVIEW_PARALLEL_PHASE
+    //! Defines the initial behavior of the leave_policy state machine
+    leave_policy my_leave_policy;
 #endif
 
     // Backward compatibility checks.
@@ -187,8 +187,8 @@ protected:
     };
 
     task_arena_base(int max_concurrency, unsigned reserved_for_masters, priority a_priority
-#if __TBB_PREVIEW_PARALLEL_BLOCK
-                    , workers_leave wl
+#if __TBB_PREVIEW_PARALLEL_PHASE
+                    , leave_policy wl
 #endif
     )
         : my_version_and_traits(default_flags | core_type_support_flag)
@@ -200,15 +200,15 @@ protected:
         , my_numa_id(automatic)
         , my_core_type(automatic)
         , my_max_threads_per_core(automatic)
-#if __TBB_PREVIEW_PARALLEL_BLOCK
-        , my_workers_leave(wl)
+#if __TBB_PREVIEW_PARALLEL_PHASE
+        , my_leave_policy(wl)
 #endif
         {}
 
 #if __TBB_ARENA_BINDING
     task_arena_base(const constraints& constraints_, unsigned reserved_for_masters, priority a_priority
-#if __TBB_PREVIEW_PARALLEL_BLOCK
-                    , workers_leave wl
+#if __TBB_PREVIEW_PARALLEL_PHASE
+                    , leave_policy wl
 #endif
     )
         : my_version_and_traits(default_flags | core_type_support_flag)
@@ -220,8 +220,8 @@ protected:
         , my_numa_id(constraints_.numa_id)
         , my_core_type(constraints_.core_type)
         , my_max_threads_per_core(constraints_.max_threads_per_core)
-#if __TBB_PREVIEW_PARALLEL_BLOCK
-        , my_workers_leave(wl)
+#if __TBB_PREVIEW_PARALLEL_PHASE
+        , my_leave_policy(wl)
 #endif
         {}
 #endif /*__TBB_ARENA_BINDING*/
@@ -293,12 +293,12 @@ public:
      **/
     task_arena(int max_concurrency_ = automatic, unsigned reserved_for_masters = 1,
                priority a_priority = priority::normal
-#if __TBB_PREVIEW_PARALLEL_BLOCK
-                    , workers_leave wl = workers_leave::automatic
+#if __TBB_PREVIEW_PARALLEL_PHASE
+                    , leave_policy wl = leave_policy::automatic
 #endif
     )
         : task_arena_base(max_concurrency_, reserved_for_masters, a_priority
-#if __TBB_PREVIEW_PARALLEL_BLOCK
+#if __TBB_PREVIEW_PARALLEL_PHASE
                          , wl
 #endif
           )
@@ -308,12 +308,12 @@ public:
     //! Creates task arena pinned to certain NUMA node
     task_arena(const constraints& constraints_, unsigned reserved_for_masters = 1,
                priority a_priority = priority::normal
-#if __TBB_PREVIEW_PARALLEL_BLOCK
-               , workers_leave wl = workers_leave::automatic
+#if __TBB_PREVIEW_PARALLEL_PHASE
+               , leave_policy wl = leave_policy::automatic
 #endif
     )
         : task_arena_base(constraints_, reserved_for_masters, a_priority
-#if __TBB_PREVIEW_PARALLEL_BLOCK
+#if __TBB_PREVIEW_PARALLEL_PHASE
                          , wl
 #endif
           )
@@ -328,8 +328,8 @@ public:
                 .set_core_type(a.my_core_type)
                 .set_max_threads_per_core(a.my_max_threads_per_core)
             , a.my_num_reserved_slots, a.my_priority
-#if __TBB_PREVIEW_PARALLEL_BLOCK
-            , a.my_workers_leave
+#if __TBB_PREVIEW_PARALLEL_PHASE
+            , a.my_leave_policy
 #endif
           )
     {}
@@ -337,8 +337,8 @@ public:
     //! Copies settings from another task_arena
     task_arena(const task_arena& a) // copy settings but not the reference or instance
         : task_arena_base(a.my_max_concurrency, a.my_num_reserved_slots, a.my_priority
-#if __TBB_PREVIEW_PARALLEL_BLOCK
-            , a.my_workers_leave
+#if __TBB_PREVIEW_PARALLEL_PHASE
+            , a.my_leave_policy
 #endif
           )
     {}
@@ -350,8 +350,8 @@ public:
     //! Creates an instance of task_arena attached to the current arena of the thread
     explicit task_arena( attach )
         : task_arena_base(automatic, 1, priority::normal
-#if __TBB_PREVIEW_PARALLEL_BLOCK
-        , workers_leave::automatic
+#if __TBB_PREVIEW_PARALLEL_PHASE
+        , leave_policy::automatic
 #endif
         ) // use default settings if attach fails
     {
@@ -373,8 +373,8 @@ public:
     //! Overrides concurrency level and forces initialization of internal representation
     void initialize(int max_concurrency_, unsigned reserved_for_masters = 1,
                     priority a_priority = priority::normal
-#if __TBB_PREVIEW_PARALLEL_BLOCK
-                    , workers_leave wl = workers_leave::automatic
+#if __TBB_PREVIEW_PARALLEL_PHASE
+                    , leave_policy wl = leave_policy::automatic
 #endif
     )
     {
@@ -383,8 +383,8 @@ public:
             my_max_concurrency = max_concurrency_;
             my_num_reserved_slots = reserved_for_masters;
             my_priority = a_priority;
-#if __TBB_PREVIEW_PARALLEL_BLOCK
-            my_workers_leave = wl;
+#if __TBB_PREVIEW_PARALLEL_PHASE
+            my_leave_policy = wl;
 #endif
             r1::initialize(*this);
             mark_initialized();
@@ -394,8 +394,8 @@ public:
 #if __TBB_ARENA_BINDING
     void initialize(constraints constraints_, unsigned reserved_for_masters = 1,
                     priority a_priority = priority::normal
-#if __TBB_PREVIEW_PARALLEL_BLOCK
-                    , workers_leave wl = workers_leave::automatic
+#if __TBB_PREVIEW_PARALLEL_PHASE
+                    , leave_policy wl = leave_policy::automatic
 #endif
     )
     {
@@ -407,8 +407,8 @@ public:
             my_max_threads_per_core = constraints_.max_threads_per_core;
             my_num_reserved_slots = reserved_for_masters;
             my_priority = a_priority;
-#if __TBB_PREVIEW_PARALLEL_BLOCK
-            my_workers_leave = wl;
+#if __TBB_PREVIEW_PARALLEL_PHASE
+            my_leave_policy = wl;
 #endif
             r1::initialize(*this);
             mark_initialized();
@@ -479,29 +479,29 @@ public:
         return execute_impl<decltype(f())>(f);
     }
 
-#if __TBB_PREVIEW_PARALLEL_BLOCK
-    void start_parallel_block() {
+#if __TBB_PREVIEW_PARALLEL_PHASE
+    void start_parallel_phase() {
         initialize();
-        r1::register_parallel_block(*this);
+        r1::register_parallel_phase(*this);
         // Trigger worker threads to join arena
         enqueue([]{});
     }
-    void end_parallel_block(bool set_one_time_fast_leave = false) {
+    void end_parallel_phase(bool with_fast_leave = false) {
         __TBB_ASSERT(my_initialization_state.load(std::memory_order_relaxed) == do_once_state::initialized, nullptr);
-        r1::unregister_parallel_block(*this, set_one_time_fast_leave);
+        r1::unregister_parallel_phase(*this, with_fast_leave);
     }
 
-    class scoped_parallel_block {
+    class scoped_parallel_phase {
         task_arena& arena;
         bool one_time_fast_leave;
     public:
-        scoped_parallel_block(task_arena& ta, bool set_one_time_fast_leave = true) 
-            : arena(ta), one_time_fast_leave(set_one_time_fast_leave)
+        scoped_parallel_phase(task_arena& ta, bool with_fast_leave = true) 
+            : arena(ta), one_time_fast_leave(with_fast_leave)
         {
-            arena.start_parallel_block();
+            arena.start_parallel_phase();
         }
-        ~scoped_parallel_block() {
-            arena.end_parallel_block(one_time_fast_leave);
+        ~scoped_parallel_phase() {
+            arena.end_parallel_phase(one_time_fast_leave);
         }
     };
 #endif
