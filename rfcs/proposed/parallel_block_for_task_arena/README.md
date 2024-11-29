@@ -84,10 +84,10 @@ This state diagram leads to several questions. There are some of them:
   * What if we just indicated the end of the "Parallel Phase"?
 
 The extended state machine aims to answer these questions.
-* The first call to the “Start of PB” will transition into the “Parallel Phase” state.
-* The last call to the “End of PB” will transition back to the “Delayed leave” state
+* The first call to the “Start of Phase” will transition into the “Parallel Phase” state.
+* The last call to the “End of Phase” will transition back to the “Delayed leave” state
   or into the "One-time Fast leave" if it is indicated that threads should leave sooner.
-* Concurrent or nested calls to the “Start of PB” or the “End of PB”
+* Concurrent or nested calls to the “Start of Phase” or the “End of Phase”
   increment/decrement reference counter.
 
 <img src="parallel_phase_state_final.png" width=800>
@@ -101,16 +101,17 @@ Let's consider the semantics that an API for explicit parallel phases can provid
       in advance.
 * "Parallel phase" itself:
   * Scheduler can implement different policies to retain threads in the arena.
+    * For instance, more aggressive policy might be implemented for _parallel phase_.
+      It can be beneficial in cases when the default arena leave policy is not sufficient enough.
   * The semantics for retaining threads is a hint to the scheduler;
     thus, no real guarantee is provided. The scheduler can ignore the hint and
     move threads to another arena or to sleep if conditions are met.
 * End of a parallel phase:
   * Indicates the point from which the scheduler may drop a hint and
     no longer retain threads in the arena.
-  * Indicates that arena should enter the “One-time Fast leave” thus workers can leave sooner.
-    * If work was submitted immediately after the end of the parallel phase,
-      the default arena behavior with regard to "workers leave" policy is restored.
-    * If the default "workers leave" policy was the "Fast leave", the result is NOP.
+  * Indicates that worker threads should avoid busy-waiting once there is no more work in the arena.
+    * Temporarily overrides the default arena leave policy, which will be restored when
+      new work is submitted.
 
 
 ### Proposed API
@@ -129,7 +130,6 @@ class task_arena {
     enum class leave_policy : /* unspecified type */ {
         automatic = /* unspecifed */,
         fast = /* unspecifed */,
-        delayed = /* unspecifed */
     };
 
     task_arena(int max_concurrency = automatic, unsigned reserved_for_masters = 1,
@@ -161,9 +161,8 @@ namespace this_task_arena {
     void end_parallel_phase(bool with_fast_leave = false);
 }
 ```
-
-By the contract, users should indicate the end of _parallel phase_ for each
-previous start of _parallel phase_.<br>
+The _parallel phase_ continues until each previous `start_parallel_phase` call
+has a matching `end_parallel_phase` call.<br>
 Let's introduce RAII scoped object that will help to manage the contract.
 
 If the end of the parallel phase is not indicated by the user, it will be done automatically when
