@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
   // Parallel execution
   std::vector<int> hist_p(num_bins);
   t0 = tbb::tick_count::now();
-  parallel_for(tbb::blocked_range<size_t>{0, image.size()},
+  tbb::parallel_for(tbb::blocked_range<size_t>{0, image.size()},
               [&](const tbb::blocked_range<size_t>& r)
               {
                 for (size_t i = r.begin(); i < r.end(); ++i)
