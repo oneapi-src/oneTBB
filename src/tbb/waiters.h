@@ -58,16 +58,10 @@ public:
         __TBB_ASSERT(t == nullptr, nullptr);
 
         if (is_worker_should_leave(slot)) {
-            if (
-#if __TBB_PREVIEW_PARALLEL_BLOCK
-                !my_arena.my_thread_leave.should_leave()
-#else
-            !governor::hybrid_cpu()
-#endif
-               )
-            {
+            if (can_worker_be_retained()) {
                 static constexpr std::chrono::microseconds worker_wait_leave_duration(1000);
-                static_assert(worker_wait_leave_duration > std::chrono::steady_clock::duration(1), "Clock resolution is not enough for measured interval.");
+                static_assert(worker_wait_leave_duration > std::chrono::steady_clock::duration(1),
+                        "Clock resolution is not enough for measured interval.");
 
                 for (auto t1 = std::chrono::steady_clock::now(), t2 = t1;
                     std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1) < worker_wait_leave_duration;
@@ -77,13 +71,7 @@ public:
                         return true;
                     }
 
-                    if (
-#if __TBB_PREVIEW_PARALLEL_BLOCK
-                        my_arena.my_thread_leave.should_leave() ||
-#endif
-                        my_arena.my_threading_control->is_any_other_client_active()
-                       )
-                    {
+                    if (!my_arena.my_thread_leave.is_retention_allowed() || my_arena.my_threading_control->is_any_other_client_active()) {
                         break;
                     }
                     d0::yield();
@@ -112,6 +100,14 @@ public:
 
 private:
     using base_type = waiter_base;
+
+    bool can_worker_be_retained() {
+ #if __TBB_PREVIEW_PARALLEL_PHASE
+       return my_arena.my_thread_leave.is_retention_allowed();
+#else
+       return !governor::hybrid_cpu();
+#endif   
+    }
 
     bool is_worker_should_leave(arena_slot& slot) const {
         bool is_top_priority_arena = my_arena.is_top_priority();

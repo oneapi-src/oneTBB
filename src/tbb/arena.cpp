@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#include "oneapi/tbb/detail/_assert.h"
 #include "task_dispatcher.h"
 #include "governor.h"
 #include "threading_control.h"
@@ -242,8 +243,8 @@ void arena::process(thread_data& tls) {
 }
 
 arena::arena(threading_control* control, unsigned num_slots, unsigned num_reserved_slots, unsigned priority_level
-#if __TBB_PREVIEW_PARALLEL_BLOCK
-             , tbb::task_arena::workers_leave wl
+#if __TBB_PREVIEW_PARALLEL_PHASE
+             , tbb::task_arena::leave_policy lp 
 #endif
 )
 {
@@ -282,15 +283,15 @@ arena::arena(threading_control* control, unsigned num_slots, unsigned num_reserv
 #endif
     my_mandatory_requests = 0;
 
-#if __TBB_PREVIEW_PARALLEL_BLOCK
-    my_thread_leave.set_initial_state(wl);
+#if __TBB_PREVIEW_PARALLEL_PHASE
+    my_thread_leave.set_initial_state(lp);
 #endif
 }
 
 arena& arena::allocate_arena(threading_control* control, unsigned num_slots, unsigned num_reserved_slots,
                              unsigned priority_level
-#if __TBB_PREVIEW_PARALLEL_BLOCK
-                             , tbb::task_arena::workers_leave wl
+#if __TBB_PREVIEW_PARALLEL_PHASE
+                             , tbb::task_arena::leave_policy wl
 #endif
 )
 {
@@ -304,7 +305,7 @@ arena& arena::allocate_arena(threading_control* control, unsigned num_slots, uns
 
     return *new( storage + num_arena_slots(num_slots, num_reserved_slots) * sizeof(mail_outbox) )
         arena(control, num_slots, num_reserved_slots, priority_level
-#if __TBB_PREVIEW_PARALLEL_BLOCK
+#if __TBB_PREVIEW_PARALLEL_PHASE
               , wl
 #endif
         );
@@ -357,7 +358,7 @@ bool arena::has_enqueued_tasks() {
 }
 
 void arena::request_workers(int mandatory_delta, int workers_delta, bool wakeup_threads) {
-#if __TBB_PREVIEW_PARALLEL_BLOCK
+#if __TBB_PREVIEW_PARALLEL_PHASE
     my_thread_leave.restore_state_if_needed();
 #endif
     my_threading_control->adjust_demand(my_tc_client, mandatory_delta, workers_delta);
@@ -463,18 +464,19 @@ void arena::enqueue_task(d1::task& t, d1::task_group_context& ctx, thread_data& 
     advertise_new_work<work_enqueued>();
 }
 
-arena& arena::create(threading_control* control, unsigned num_slots, unsigned num_reserved_slots, unsigned arena_priority_level, d1::constraints constraints
-#if __TBB_PREVIEW_PARALLEL_BLOCK
-                     , tbb::task_arena::workers_leave wl
+arena &arena::create(threading_control *control, unsigned num_slots,
+                     unsigned num_reserved_slots, unsigned arena_priority_level,
+                     d1::constraints constraints
+#if __TBB_PREVIEW_PARALLEL_PHASE
+                     , tbb::task_arena::leave_policy lp 
 #endif
-)
-{
+) {
     __TBB_ASSERT(num_slots > 0, NULL);
     __TBB_ASSERT(num_reserved_slots <= num_slots, NULL);
     // Add public market reference for an external thread/task_arena (that adds an internal reference in exchange).
     arena& a = arena::allocate_arena(control, num_slots, num_reserved_slots, arena_priority_level
-#if __TBB_PREVIEW_PARALLEL_BLOCK
-                                     , wl
+#if __TBB_PREVIEW_PARALLEL_PHASE
+                                     , lp
 #endif
     );
     a.my_tc_client = control->create_client(a);
@@ -529,8 +531,8 @@ struct task_arena_impl {
     static int max_concurrency(const d1::task_arena_base*);
     static void enqueue(d1::task&, d1::task_group_context*, d1::task_arena_base*);
     static d1::slot_id execution_slot(const d1::task_arena_base&);
-    static void register_parallel_phase(d1::task_arena_base&);
-    static void unregister_parallel_phase(d1::task_arena_base&, bool);
+    static void register_parallel_phase(d1::task_arena_base*);
+    static void unregister_parallel_phase(d1::task_arena_base*, bool);
 };
 
 void __TBB_EXPORTED_FUNC initialize(d1::task_arena_base& ta) {
@@ -565,11 +567,11 @@ d1::slot_id __TBB_EXPORTED_FUNC execution_slot(const d1::task_arena_base& arena)
     return task_arena_impl::execution_slot(arena);
 }
 
-void __TBB_EXPORTED_FUNC register_parallel_phase(d1::task_arena_base& ta) {
+void __TBB_EXPORTED_FUNC register_parallel_phase(d1::task_arena_base* ta, std::uintptr_t /*reserved*/) {
     task_arena_impl::register_parallel_phase(ta);
 }
 
-void __TBB_EXPORTED_FUNC unregister_parallel_phase(d1::task_arena_base& ta, std::uintptr_t flags) {
+void __TBB_EXPORTED_FUNC unregister_parallel_phase(d1::task_arena_base* ta, std::uintptr_t flags) {
     task_arena_impl::unregister_parallel_phase(ta, flags);
 }
 
@@ -608,8 +610,8 @@ void task_arena_impl::initialize(d1::task_arena_base& ta) {
     unsigned priority_level = arena_priority_level(ta.my_priority);
     threading_control* thr_control = threading_control::register_public_reference();
     arena& a = arena::create(thr_control, unsigned(ta.my_max_concurrency), ta.my_num_reserved_slots, priority_level, arena_constraints
-#if __TBB_PREVIEW_PARALLEL_BLOCK
-                             , ta.my_workers_leave
+#if __TBB_PREVIEW_PARALLEL_PHASE
+                             , ta.get_leave_policy()
 #endif
     );
 
@@ -918,13 +920,17 @@ int task_arena_impl::max_concurrency(const d1::task_arena_base *ta) {
     return int(governor::default_num_threads());
 }
 
-#if __TBB_PREVIEW_PARALLEL_BLOCK
-void task_arena_impl::register_parallel_phase(d1::task_arena_base& ta) {
-    ta.my_arena.load(std::memory_order_relaxed)->my_thread_leave.register_parallel_phase();
+#if __TBB_PREVIEW_PARALLEL_PHASE
+void task_arena_impl::register_parallel_phase(d1::task_arena_base* ta) {
+    arena* a = ta ? ta->my_arena.load(std::memory_order_relaxed) : governor::get_thread_data()->my_arena;
+    __TBB_ASSERT(a, nullptr);
+    a->my_thread_leave.register_parallel_phase();
 }
 
-void task_arena_impl::unregister_parallel_phase(d1::task_arena_base& ta, bool with_fast_leave) {
-    ta.my_arena.load(std::memory_order_relaxed)->my_thread_leave.unregister_parallel_phase(with_fast_leave);
+void task_arena_impl::unregister_parallel_phase(d1::task_arena_base* ta, bool with_fast_leave) {
+    arena* a = ta ? ta->my_arena.load(std::memory_order_relaxed) : governor::get_thread_data()->my_arena;
+    __TBB_ASSERT(a, nullptr);
+    a->my_thread_leave.unregister_parallel_phase(with_fast_leave);
 }
 #endif
 

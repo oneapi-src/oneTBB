@@ -179,25 +179,22 @@ public:
     }
 };
 
-#if __TBB_PREVIEW_PARALLEL_BLOCK
+#if __TBB_PREVIEW_PARALLEL_PHASE
 class thread_leave_manager {
     static const std::uint64_t FAST_LEAVE = 1;
     static const std::uint64_t ONE_TIME_FAST_LEAVE = 1 << 1;
     static const std::uint64_t DELAYED_LEAVE = 1 << 2;
-    static const std::uint64_t PARALLEL_BLOCK = 1 << 3;
+    static const std::uint64_t PARALLEL_PHASE = 1 << 3;
     // Use 29 bits for the parallel block state + reference counter,
     // reserve 32 most significant bits.
-    static const std::uint64_t PARALLEL_BLOCK_MASK = ((1LLU << 32) - 1) & (PARALLEL_BLOCK - 1);
+    static const std::uint64_t PARALLEL_PHASE_MASK = ((1LLU << 32) - 1) & (PARALLEL_PHASE - 1);
 
     std::atomic<std::uint64_t> my_state{0};
 public:
-    void set_initial_state(tbb::task_arena::workers_leave wl) {
-        if (wl == tbb::task_arena::workers_leave::automatic) {
-          wl = governor::hybrid_cpu() ? tbb::task_arena::workers_leave::fast
-                                      : tbb::task_arena::workers_leave::delayed;
-        }
-        if (wl == tbb::task_arena::workers_leave::delayed) {
-            my_state.store(DELAYED_LEAVE, std::memory_order_relaxed);
+    void set_initial_state(tbb::task_arena::leave_policy wl) {
+        if (wl == tbb::task_arena::leave_policy::automatic) {
+            std::uint64_t platform_policy = governor::hybrid_cpu() ? FAST_LEAVE : DELAYED_LEAVE;
+            my_state.store(platform_policy, std::memory_order_relaxed);
         } else {
             my_state.store(FAST_LEAVE, std::memory_order_relaxed);
         }
@@ -212,44 +209,44 @@ public:
         }
     }
 
-    void register_parallel_block() {
+    void register_parallel_phase() {
         __TBB_ASSERT(my_state.load(std::memory_order_relaxed) != 0, "The initial state was not set");
 
         std::uint64_t prev = my_state.load(std::memory_order_relaxed);
         std::uint64_t desired{};
         do {
-            if (prev & PARALLEL_BLOCK_MASK) {
-                desired = PARALLEL_BLOCK + prev;
+            if (prev & PARALLEL_PHASE_MASK) {
+                desired = PARALLEL_PHASE + prev;
             } else if (prev == ONE_TIME_FAST_LEAVE) {
-                desired = PARALLEL_BLOCK | DELAYED_LEAVE;
+                desired = PARALLEL_PHASE | DELAYED_LEAVE;
             } else {
-                desired = PARALLEL_BLOCK | prev;
+                desired = PARALLEL_PHASE | prev;
             }
         } while (!my_state.compare_exchange_strong(prev, desired));
     }
 
-    void unregister_parallel_block(bool enable_fast_leave) {
+    void unregister_parallel_phase(bool enable_fast_leave) {
         __TBB_ASSERT(my_state.load(std::memory_order_relaxed) != 0, "The initial state was not set");
 
         std::uint64_t prev = my_state.load(std::memory_order_relaxed);
         std::uint64_t desired{};
         do {
-            if (((prev - PARALLEL_BLOCK) & PARALLEL_BLOCK_MASK) != 0) {
-                desired = prev - PARALLEL_BLOCK;
+            if (((prev - PARALLEL_PHASE) & PARALLEL_PHASE_MASK) != 0) {
+                desired = prev - PARALLEL_PHASE;
             } else {
-                desired = enable_fast_leave && (prev - PARALLEL_BLOCK == DELAYED_LEAVE) ? ONE_TIME_FAST_LEAVE : prev - PARALLEL_BLOCK;
+                desired = enable_fast_leave && (prev - PARALLEL_PHASE == DELAYED_LEAVE) ? ONE_TIME_FAST_LEAVE : prev - PARALLEL_PHASE;
             }
         } while (!my_state.compare_exchange_strong(prev, desired));
     }
 
-    bool should_leave() {
+    bool is_retention_allowed() {
         __TBB_ASSERT(my_state.load(std::memory_order_relaxed) != 0, "The initial state was not set");
 
         std::uint64_t curr = my_state.load(std::memory_order_relaxed);
-        return curr == FAST_LEAVE || curr == ONE_TIME_FAST_LEAVE;
+        return curr != FAST_LEAVE && curr != ONE_TIME_FAST_LEAVE;
     }
 };
-#endif /* __TBB_PREVIEW_PARALLEL_BLOCK */
+#endif /* __TBB_PREVIEW_PARALLEL_PHASE */
 
 //! The structure of an arena, except the array of slots.
 /** Separated in order to simplify padding.
@@ -317,7 +314,7 @@ struct arena_base : padded<intrusive_list_node> {
     //! Waiting object for external threads that cannot join the arena.
     concurrent_monitor my_exit_monitors;
 
-#if __TBB_PREVIEW_PARALLEL_BLOCK
+#if __TBB_PREVIEW_PARALLEL_PHASE
     //! Manages state of thread_leave state machine
     thread_leave_manager my_thread_leave;
 #endif
@@ -359,22 +356,22 @@ public:
 
     //! Constructor
     arena(threading_control* control, unsigned max_num_workers, unsigned num_reserved_slots, unsigned priority_level
-#if __TBB_PREVIEW_PARALLEL_BLOCK
-          , tbb::task_arena::workers_leave wl
+#if __TBB_PREVIEW_PARALLEL_PHASE
+          , tbb::task_arena::leave_policy wl
 #endif
     );
 
     //! Allocate an instance of arena.
     static arena& allocate_arena(threading_control* control, unsigned num_slots, unsigned num_reserved_slots,
                                  unsigned priority_level
-#if __TBB_PREVIEW_PARALLEL_BLOCK
-                                 , tbb::task_arena::workers_leave wl
+#if __TBB_PREVIEW_PARALLEL_PHASE
+                                 , tbb::task_arena::leave_policy wl
 #endif
     );
 
     static arena& create(threading_control* control, unsigned num_slots, unsigned num_reserved_slots, unsigned arena_priority_level, d1::constraints constraints = d1::constraints{}
-#if __TBB_PREVIEW_PARALLEL_BLOCK
-                         , tbb::task_arena::workers_leave wl = tbb::task_arena::workers_leave::delayed
+#if __TBB_PREVIEW_PARALLEL_PHASE
+                         , tbb::task_arena::leave_policy wl = tbb::task_arena::leave_policy::automatic
 #endif
     );
 
