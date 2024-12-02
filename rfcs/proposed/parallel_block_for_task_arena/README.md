@@ -170,6 +170,48 @@ the last public reference is removed from the arena (i.e., task_arena is destroy
 is joined for an implicit arena). This ensures correctness is
 preserved (threads will not be retained forever).
 
+### Examples
+
+Following code snippets show how the new API can be used.
+
+```cpp
+void task_arena_leave_policy_example() {
+    tbb::task_arena ta(tbb::task_arena::automatic, 1, priority::normal, leave_policy::fast);
+    ta.execute([]() {
+        // Parallel computation
+    });
+    // Different parallel runtime is used
+    // so it is preffered that worker threads won't be retained
+    // in the arena at this point.
+    #pragma omp parallel for
+    for (int i = 0; i < work_size; ++i) {
+        // Computation
+    }
+}
+
+void parallel_phase_example() {
+    tbb::this_task_arena::start_parallel_phase();
+    tbb::parallel_for(0, work_size, [] (int idx) {
+        // User defined body
+    });
+
+    // Some serial computation
+
+    tbb::parallel_for(0, work_size, [] (int idx) {
+        // User defined body
+    });
+    tbb::this_task_arena::end_parallel_phase(/*with_fast_leave=*/true);
+
+    // Different parallel runtime (for example, OpenMP) is used
+    // so it is preffered that worker threads won't be retained
+    // in the arena at this point.
+    #pragma omp parallel for
+    for (int i = 0; i < work_size; ++i) {
+        // Computation
+    }
+}
+```
+
 ## Considerations
 
 The alternative approaches were also considered.<br>
