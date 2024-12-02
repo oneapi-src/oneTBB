@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
                   my_hist[image[i]]++;
               });
   //Sequential reduction of the private histograms
-  vector_t hist_p = priv_h.combine([](const vector_t& a, const vector_t& b) -> vector_t
+  vector_t hist_p = priv_h.combine([](vector_t& a, vector_t& b) -> vector_t
     {// for each priv histogram
       std::transform(a.begin(),         // source 1 begin
                      a.end(),           // source 1 end
