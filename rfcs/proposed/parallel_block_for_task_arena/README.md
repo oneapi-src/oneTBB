@@ -181,7 +181,7 @@ void task_arena_leave_policy_example() {
         // Parallel computation
     });
     // Different parallel runtime is used
-    // so it is preffered that worker threads won't be retained
+    // so it is preferred that worker threads won't be retained
     // in the arena at this point.
     #pragma omp parallel for
     for (int i = 0; i < work_size; ++i) {
@@ -203,7 +203,7 @@ void parallel_phase_example() {
     tbb::this_task_arena::end_parallel_phase(/*with_fast_leave=*/true);
 
     // Different parallel runtime (for example, OpenMP) is used
-    // so it is preffered that worker threads won't be retained
+    // so it is preferred that worker threads won't be retained
     // in the arena at this point.
     #pragma omp parallel for
     for (int i = 0; i < work_size; ++i) {
