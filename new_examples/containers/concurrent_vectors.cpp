@@ -23,7 +23,7 @@ void oneway() {
 //  Create a vector containing integers
     tbb::concurrent_vector<int> v = {3, 14, 15, 92};
 
-    // Add more integers to vector IN PARALLEL 
+    // Add more integers to vector SERIALLY 
     for( int i = 100; i < 1000; ++i ) {
 	v.push_back(i*100+11);
 	v.push_back(i*100+22);
