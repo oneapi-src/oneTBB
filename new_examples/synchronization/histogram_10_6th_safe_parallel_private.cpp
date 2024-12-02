@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
               });
   //Sequential reduction of the private histograms
   vector_t hist_p(num_bins);
-  priv_h.combine_each([&](vector_t& a)
+  priv_h.combine_each([&](const vector_t& a)
     { // for each priv histogram a
       std::transform(hist_p.begin(),    // source 1 begin
                      hist_p.end(),      // source 1 end
