@@ -214,17 +214,22 @@ void parallel_phase_example() {
 void scoped_parallel_phase_example() {
     tbb::task_arena ta{/*arena constraints*/};
     {
+        // Start of the parallel phase
         tbb::task_arena::scoped_parallel_phase phase{ta, /*with_fast_leave=*/true};
         ta.execute([]() {
             // Parallel computation
         });
 
-        // Serial computation 
+        // Serial computation
 
         ta.execute([]() {
             // Parallel computation
         });
     } // End of the parallel phase
+
+    // Different parallel runtime (for example, OpenMP) is used
+    // so it is preferred that worker threads won't be retained
+    // in the arena at this point.
     #pragma omp parallel for
     for (int i = 0; i < work_size; ++i) {
         // Computation
