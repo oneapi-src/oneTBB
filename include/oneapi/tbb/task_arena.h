@@ -207,7 +207,11 @@ protected:
                     , leave_policy lp
 #endif
     )
-        : my_version_and_traits(default_flags | core_type_support_flag | leave_policy_to_traits(lp))
+        : my_version_and_traits(default_flags | core_type_support_flag
+#if __TBB_PREVIEW_PARALLEL_PHASE
+                | leave_policy_to_traits(lp)
+#endif
+        )
         , my_initialization_state(do_once_state::uninitialized)
         , my_arena(nullptr)
         , my_max_concurrency(max_concurrency)
@@ -224,7 +228,11 @@ protected:
                     , leave_policy lp
 #endif
     )
-        : my_version_and_traits(default_flags | core_type_support_flag | leave_policy_to_traits(lp))
+        : my_version_and_traits(default_flags | core_type_support_flag 
+#if __TBB_PREVIEW_PARALLEL_PHASE
+                | leave_policy_to_traits(lp)
+#endif
+                )
         , my_initialization_state(do_once_state::uninitialized)
         , my_arena(nullptr)
         , my_max_concurrency(constraints_.max_concurrency)
