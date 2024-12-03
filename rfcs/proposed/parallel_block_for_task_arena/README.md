@@ -176,7 +176,7 @@ Following code snippets show how the new API can be used.
 
 ```cpp
 void task_arena_leave_policy_example() {
-    tbb::task_arena ta(tbb::task_arena::automatic, 1, priority::normal, leave_policy::fast);
+    tbb::task_arena ta{tbb::task_arena::automatic, 1, priority::normal, leave_policy::fast};
     ta.execute([]() {
         // Parallel computation
     });
@@ -210,6 +210,27 @@ void parallel_phase_example() {
         // Computation
     }
 }
+
+void scoped_parallel_phase_example() {
+    tbb::task_arena ta{/*arena constraints*/};
+    {
+        tbb::task_arena::scoped_parallel_phase phase{ta, /*with_fast_leave=*/true};
+        ta.execute([]() {
+            // Parallel computation
+        });
+
+        // Serial computation 
+
+        ta.execute([]() {
+            // Parallel computation
+        });
+    } // End of the parallel phase
+    #pragma omp parallel for
+    for (int i = 0; i < work_size; ++i) {
+        // Computation
+    }
+}
+
 ```
 
 ## Considerations
