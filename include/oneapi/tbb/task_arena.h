@@ -516,7 +516,7 @@ public:
         task_arena& arena;
         bool one_time_fast_leave;
     public:
-        scoped_parallel_phase(task_arena& ta, bool with_fast_leave = true) 
+        scoped_parallel_phase(task_arena& ta, bool with_fast_leave = false)
             : arena(ta), one_time_fast_leave(with_fast_leave)
         {
             arena.start_parallel_phase();
