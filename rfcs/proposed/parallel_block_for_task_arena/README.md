@@ -3,19 +3,19 @@
 ## Introduction
 
 In oneTBB, there has never been an API that allows users to block worker threads within the arena.
-This design choice was made to preserve the composability of the application.<br>
+This design choice was made to preserve the composability of the application.
 Before PR#1352, workers moved to the thread pool to sleep once there were no arenas with active
 demand. However, PR#1352 introduced a delayed leave behavior to the library that
 results in blocking threads for an _implementation-defined_ duration inside an arena
 if there is no active demand arcoss all arenas. This change significantly
-improved performance for various applications on high thread count systems.<br>
+improved performance for various applications on high thread count systems.
 The main idea is that usually, after one parallel computation ends,
 another will start after some time. The delayed leave behavior is a heuristic to utilize this,
 covering most cases within _implementation-defined_ duration.
 
 However, the new behavior is not the perfect match for all the scenarios:
 * The heuristic of delayed leave is unsuitable for the tasks that are submitted
-  in unpredictable pattern and/or duration.
+  in an unpredictable pattern and/or durations.
 * If oneTBB is used in composable scenarios it is not behaving as
   a good citizen consuming CPU resources.
   * For example, if an application builds a pipeline where oneTBB is used for one stage
@@ -26,7 +26,7 @@ However, the new behavior is not the perfect match for all the scenarios:
 So there are two related problems but with different resolutions:
 * Completely disable new behavior for scenarios where the heuristic of delayed leave is unsuitable.
 * Optimize library behavior so customers can benefit from the heuristic of delayed leave but
-  make it possible to indicate that "it is the time to release threads".
+  make it possible to indicate that "it is the time for the TBB arena to release threads".
 
 ## Proposal
 
@@ -45,15 +45,15 @@ Let’s consider both “Delayed leave” and “Fast leave” as 2 different st
 There will be a question that we need to answer:
 * Do we see any value if arena potentially can transition from one to another state?
 
-To answer this question, the following scenarios should be considired:
+To answer this question, the following scenarios should be considered:
 * What if different types of workloads are mixed in one application?
 * Different types of arenas can be used for different types of workloads.
 
 ### When threads should leave?
 
 oneTBB itself can only guess when the ideal time to release threads from the arena is.
-Therefore, it does the best effort to preserve and enhance performance without completely
-messing composability guarantees (that is how delayed leave is implemented).
+Therefore, it does its best effort to preserve and enhance performance without completely
+messing up composability guarantees (that is how delayed leave is implemented).
 
 As we already discussed, there are cases where it does not work perfectly,
 therefore customers that want to further optimize this
@@ -65,10 +65,10 @@ where parallel computation ends, they can also indicate where it starts.
 <img src="parallel_phase_introduction.png" width=800>
 
 With this approach, the user not only releases threads when necessary but also specifies a
-programmable block where worker threads should expected new work coming regularly
+programmable block where worker threads should expect new work coming regularly
 to the executing arena.
 
-Let’s add new state to the existing state machine. To represent "Parallel Phase" state.
+Let’s add a new state to the existing state machine. To represent "Parallel Phase" state.
 
 > **_NOTE:_** The "Fast leave" state is colored Grey just for simplicity of the chart.
               Let's assume that arena was created with the "Delayed leave". 
@@ -76,10 +76,10 @@ Let’s add new state to the existing state machine. To represent "Parallel Phas
 
 <img src="parallel_phase_state_initial.png" width=800>
 
-This state diagram leads to several questions. There are some of them:
+This state diagram leads to several questions:
 * What if there are multiple Parallel Phases?
-* If “End of Parallel Phase” leads back to “Delayed leave” how soon threads
-  will be released from arena?
+* If “End of Parallel Phase” leads back to “Delayed leave” how soon will threads
+  be released from arena?
   * What if we indicated that threads should leave arena after the "Parallel Phase"?
   * What if we just indicated the end of the "Parallel Phase"?
 
@@ -88,7 +88,7 @@ The extended state machine aims to answer these questions.
 * The last call to the “End of Phase” will transition back to the “Delayed leave” state
   or into the "One-time Fast leave" if it is indicated that threads should leave sooner.
 * Concurrent or nested calls to the “Start of Phase” or the “End of Phase”
-  increment/decrement reference counter.
+  increment/decrement a reference counter.
 
 <img src="parallel_phase_state_final.png" width=800>
 
@@ -107,7 +107,7 @@ Let's consider the semantics that an API for explicit parallel phases can provid
     thus, no real guarantee is provided. The scheduler can ignore the hint and
     move threads to another arena or to sleep if conditions are met.
 * End of a parallel phase:
-  * Indicates the point from which the scheduler may drop a hint and
+  * Indicates the point from which the scheduler may drop the hint and
     no longer retain threads in the arena.
   * Indicates that worker threads should avoid busy-waiting once there is no more work in the arena.
     * Temporarily overrides the default arena leave policy, which will be restored when
@@ -162,7 +162,7 @@ namespace this_task_arena {
 }
 ```
 The _parallel phase_ continues until each previous `start_parallel_phase` call
-has a matching `end_parallel_phase` call.<br>
+to the same arena has a matching `end_parallel_phase` call.<br>
 Let's introduce RAII scoped object that will help to manage the contract.
 
 If the end of the parallel phase is not indicated by the user, it will be done automatically when
