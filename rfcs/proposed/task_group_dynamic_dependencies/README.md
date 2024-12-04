@@ -205,8 +205,8 @@ potential race.
 One possible spelling for this function would be `transfer_successors_to(h)`, 
 where `h` is a `task_handle` to a created task and the 
 `transfer_successors_to` function must be called from within a task. Calling
-this function from outside a task, or passing anything other than a task in
-the created state is undefined behavior.
+this function from outside a task, or passing anything other than a `task_handle`
+representing a task in the created state is undefined behavior.
 
 ### Proposed changes to task_handle
 
