@@ -167,7 +167,7 @@ users. Recursive parallel algorithms are one of the primary cases that we want
 our task_group extension to cover.
 
 The key capability required for recursive decomposition is the ability to 
-create work while executing a task and insert this newly create work before 
+create work while executing a task and insert this newly created work before 
 the (perhaps already submitted) successors of the currently executing task. 
 As a simple example, consider a merge sort. As shown in the figure that 
 follows, the top-level algorithm breaks a collection into two pieces and 
