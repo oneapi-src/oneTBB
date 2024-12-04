@@ -516,10 +516,13 @@ public:
         ) {
             topology.fit_num_threads_per_core(affinity_buffer[slot_num], affinity_backup[slot_num], handler_affinity_mask);
             thread_affinity = affinity_buffer[slot_num];
-        } else if (topology.number_of_processors_groups > 1) {
+        }
+    #if __TBBBIND_HWLOC_WINDOWS_API_AVAILABLE
+        else if (topology.number_of_processors_groups > 1) {
             topology.fit_to_processor_group(affinity_buffer[slot_num], handler_affinity_mask, slot_num);
             thread_affinity = affinity_buffer[slot_num];
         }
+    #endif
 #endif
         topology.set_affinity_mask(thread_affinity);
     }
