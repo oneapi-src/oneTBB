@@ -97,7 +97,7 @@ The first extension is to expand the semantics and usable lifetime of
 `task_handle` so that remains valid after it is passed to run and it can 
 represent tasks in any state, including submitted, executing, and completed 
 tasks. Similarly, a `task_handle` in the submitted state may represent a task
-that has predecessors that must complete before it can executed, and so passing
+that has predecessors that must complete before it can execute, and so passing
 a `task_handle` to `task_group::run` or `task_group::run_and_wait` only makes
 it available for dependency tracking, and does not make it immediately legal to
 execute.
