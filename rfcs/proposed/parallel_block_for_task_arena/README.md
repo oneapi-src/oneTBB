@@ -18,7 +18,7 @@ However, the new behavior is not the perfect match for all the scenarios:
   in an unpredictable pattern and/or durations.
 * If oneTBB is used in composable scenarios it is not behaving as
   a good citizen consuming CPU resources.
-  * For example, if an application builds a pipeline where oneTBB is used for one stage
+  * For example, if an application runs a series of stages where oneTBB is used for one stage
     and OpenMP is used for a subsequent stage, there is a chance that oneTBB workers will
     interfere with OpenMP threads. This interference might result in slight oversubscription,
     which in turn might lead to underperformance.
