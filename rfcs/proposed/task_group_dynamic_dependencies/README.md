@@ -234,7 +234,7 @@ representing a task in the created state is undefined behavior.
 
 #### void task_handle::add_predecessor(task_handle& th);
 
-Adds `th` as a predecessor that must complete before the task represnted by
+Adds `th` as a predecessor that must complete before the task represented by
 `*this` can start executing.
 
 #### void task_handle::add_successor(task_handle& th);
