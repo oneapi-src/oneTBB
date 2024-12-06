@@ -166,9 +166,9 @@ to the same arena has a matching `end_parallel_phase` call.<br>
 Let's introduce RAII scoped object that will help to manage the contract.
 
 If the end of the parallel phase is not indicated by the user, it will be done automatically when
-the last public reference is removed from the arena (i.e., task_arena is destroyed or a thread
-is joined for an implicit arena). This ensures correctness is
-preserved (threads will not be retained forever).
+the last public reference is removed from the arena (i.e., task_arena has been destroyed or,
+for an implicitly created arena, the thread that owns it has completed).
+This ensures correctness is preserved (threads will not be retained forever).
 
 ### Examples
 
