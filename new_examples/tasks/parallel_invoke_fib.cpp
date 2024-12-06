@@ -73,7 +73,7 @@ int main(int argc, char** argv)
 
   std::cout << "SerialFib:   " << fib_s << " Time: " << t_s << "\n";
   std::cout << "ParallelFib: " << fib_p << " Time: " << t_p << " Speedup: " << t_s/t_p << "\n";
-  std::cout << "ParallelFibCutoff_30: " << fib_c << " Time: " << t_p << " Speedup: " << t_s/t_c << "\n";
+  std::cout << "ParallelFibCutoff_30: " << fib_c << " Time: " << t_c << " Speedup: " << t_s/t_c << "\n";
   return 0;
 }
 

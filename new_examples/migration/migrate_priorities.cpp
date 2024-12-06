@@ -71,6 +71,7 @@ void runParallelForWithHighPriority() {
   std::printf("\n");
 }
 #else
+#warning Using tbb::task directly
 auto P = tbb::task_scheduler_init::default_num_threads();
 
 class MyTask : public tbb::task {

@@ -27,8 +27,7 @@ void tryPutLoop() {
     }
   };
   for (int count = 0; count < limit; ++count) {
-    int value = count;
-    my_node.try_put(value);
+    my_node.try_put(count);
   }
   g.wait_for_all();
 }

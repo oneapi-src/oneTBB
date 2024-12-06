@@ -1,6 +1,3 @@
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -tbb")
-set(CMAKE_CXX_LINKER_FLAGS "-tbb")
-
 foreach(tpp graph_composite_node.cpp
             graph_execute_while_building.cpp
             graph_fwd_substitution.cpp
@@ -10,6 +7,7 @@ foreach(tpp graph_composite_node.cpp
             graph_node_priorities.cpp
             graph_reestablish_order.cpp
             graph_small_nodes.cpp
+            graph_stereoscopic_3d.cpp
             graph_two_nodes.cpp 
             graph_two_nodes_deduced.cpp
             graph_with_join.cpp)

@@ -1,6 +1,3 @@
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -tbb -pthread")
-set(CMAKE_CXX_LINKER_FLAGS "-tbb -pthread")
-
 foreach(tpp parallel_invoke_fib.cpp
             task_group_fib.cpp
             task_group_poor_scaling.cpp

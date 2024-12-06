@@ -54,6 +54,7 @@ void serialFwdSubTiled(std::vector<double>& x,
   }
 }
 
+#if TBB_VERSION_MAJOR > 2020
 tbb::task_handle fwdSubTGBody(tbb::task_group& tg,
                               int N, int num_blocks, 
                               const std::pair<size_t, size_t> bi, 
@@ -86,6 +87,30 @@ tbb::task_handle fwdSubTGBody(tbb::task_group& tg,
 
   return deferred_task;
 }
+#else
+void fwdSubTGBody(tbb::task_group& tg,
+                int N, int num_blocks, 
+                const std::pair<size_t, size_t> bi, 
+                std::vector<double>& x, 
+                const std::vector<double>& a, 
+                std::vector<double>& b,
+                std::vector<std::atomic<char>>& ref_count) {
+  auto [r, c] = bi;
+  computeBlock(N, r, c, x, a, b);
+  // add successor to right if ready
+  if (c + 1 <= r && --ref_count[r*num_blocks + c + 1] == 0) {
+    tg.run([&, N, num_blocks, r, c]() { 
+      fwdSubTGBody(tg, N, num_blocks, BlockIndex(r, c+1), x, a, b, ref_count);
+    });
+  }
+  // add succesor below if ready
+  if (r + 1 < (size_t)num_blocks && --ref_count[(r+1)*num_blocks + c] == 0) {
+    tg.run([&, N, num_blocks, r, c]() { 
+      fwdSubTGBody(tg, N, num_blocks, BlockIndex(r+1, c), x, a, b, ref_count);
+    });
+  }
+}
+#endif
 
 void parallelFwdSubTaskGroup(std::vector<double>& x, 
                              const std::vector<double>& a, 
@@ -114,6 +139,7 @@ void parallelFwdSubTaskGroup(std::vector<double>& x,
 }
 
 #if TBB_VERSION_MAJOR <= 2020
+#warning Using tbb::task directly
 using RootTask = tbb::empty_task;
 
 class FwdSubTask : public tbb::task {

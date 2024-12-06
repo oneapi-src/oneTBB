@@ -1,7 +1,5 @@
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -tbb -pthread")
-set(CMAKE_CXX_LINKER_FLAGS "-tbb -pthread")
-
-foreach(tpp migrate_task_scheduler_init.cpp
+foreach(tpp migrate_atomics.cpp
+            migrate_task_scheduler_init.cpp
             migrate_parallel_do.cpp
             migrate_priorities.cpp
             migrate_task_blocking.cpp

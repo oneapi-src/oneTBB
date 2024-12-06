@@ -87,6 +87,7 @@ void parallelFwdSub(std::vector<double>& x,
     }
   );
 #else
+#warning Using tbb::parallel_do instead of tbb::parallel_for_each
   tbb::parallel_do( &top_left, &top_left+1, 
     [&](const BlockIndex& bi, tbb::parallel_do_feeder<BlockIndex>& f) {
       auto [r, c] = bi;

@@ -62,8 +62,8 @@ public:
                 const std::vector<double>& a, 
                 std::vector<double>& b,
                 std::vector<std::atomic<char>>& ref_count) : 
-                my_tg(tg), my_N(N), my_num_blocks(num_blocks), 
-                my_index(new BlockIndex{bi}), 
+                my_tg(tg), my_index(new BlockIndex{bi}),
+                my_N(N), my_num_blocks(num_blocks),  
                 my_x(x), my_a(a), my_b(b), my_ref_count(ref_count) {}
 
   void operator()() const {
@@ -123,6 +123,7 @@ void parallelFwdSub(std::vector<double>& x,
   tg.wait();
 }
 #else
+#warning Using tbb::task directly with recycling 
 using RootTask = tbb::empty_task;
 
 class FwdSubTask : public tbb::task {

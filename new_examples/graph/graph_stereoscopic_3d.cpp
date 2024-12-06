@@ -21,10 +21,10 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include "../algorithms/lodepng.h"
+#include "../common/lodepng.h"
 #include <tbb/tbb.h>
 
-class PNGImage {
+class Image {
 public:
   uint64_t frameNumber = -1;
   unsigned int width = 0, height = 0;
@@ -34,26 +34,26 @@ public:
   static const int greenOffset = 1; 
   static const int blueOffset = 2; 
 
-  PNGImage() {} 
-  PNGImage(uint64_t frame_number, const std::string& file_name);
-  PNGImage(const PNGImage& p);
-  virtual ~PNGImage() {}
+  Image() {} 
+  Image(uint64_t frame_number, const std::string& file_name);
+  Image(const Image& p);
+  virtual ~Image() {}
   void write() const;
 };
 
 int getNextFrameNumber();
-PNGImage getLeftImage(uint64_t frameNumber);
-PNGImage getRightImage(uint64_t frameNumber);
-void increasePNGChannel(PNGImage& image, int channel_offset, int increase);
-void mergePNGImages(PNGImage& right, const PNGImage& left);
+Image getLeftImage(uint64_t frameNumber);
+Image getRightImage(uint64_t frameNumber);
+void increasePNGChannel(Image& image, int channel_offset, int increase);
+void mergeImages(Image& right, const Image& left);
 
 void stereo3D() {
-  using Image = PNGImage;
+  using Image = Image;
   // step 1: create graph object
   tbb::flow::graph g;
 
   // step 2: create nodes
-  tbb::flow::input_node<uint64_t> frame_no_node{g,
+  tbb::flow::input_node frame_no_node{g,
     []( tbb::flow_control &fc ) -> uint64_t {
       uint64_t frame_number = getNextFrameNumber();
       if (frame_number)
@@ -99,7 +99,7 @@ void stereo3D() {
     [] (std::tuple<Image, Image> t) -> Image {
       auto& l = std::get<0>(t);
       auto& r = std::get<1>(t);
-      mergePNGImages(r, l);
+      mergeImages(r, l);
       return r;
     }
   };
@@ -128,7 +128,7 @@ void stereo3D() {
   g.wait_for_all();
 }
 
-PNGImage::PNGImage(uint64_t frame_number, const std::string& file_name) :
+Image::Image(uint64_t frame_number, const std::string& file_name) :
   frameNumber{frame_number}, buffer{std::make_shared< std::vector<unsigned char> >()} {
   if (lodepng::decode(*buffer, width, height, file_name)) {
      std::cerr << "Error: could not read PNG file!" << std::endl;
@@ -136,11 +136,11 @@ PNGImage::PNGImage(uint64_t frame_number, const std::string& file_name) :
   }
 };
 
-PNGImage::PNGImage(const PNGImage& p) : frameNumber{p.frameNumber}, 
+Image::Image(const Image& p) : frameNumber{p.frameNumber}, 
                                         width{p.width}, height{p.height},
                                         buffer{p.buffer} {}
 
-void PNGImage::write() const {
+void Image::write() const {
   std::string file_name = std::string("out") + std::to_string(frameNumber) + ".png";
   if (lodepng::encode(file_name, *buffer, width, height)) {
     std::cerr << "Error: could not write PNG file!" << std::endl;
@@ -163,30 +163,30 @@ int getNextFrameNumber() {
   }
 }
 
-PNGImage getLeftImage(uint64_t frameNumber) {
-  return PNGImage(frameNumber, "input1.png");
+Image getLeftImage(uint64_t frameNumber) {
+  return Image(frameNumber, "input1.png");
 }
 
-PNGImage getRightImage(uint64_t frameNumber) {
-  return PNGImage(frameNumber, "input2.png");
+Image getRightImage(uint64_t frameNumber) {
+  return Image(frameNumber, "input2.png");
 }
 
-void increasePNGChannel(PNGImage& image, int channel_offset, int increase) {
-  const int height_base = PNGImage::numChannels * image.width;
+void increasePNGChannel(Image& image, int channel_offset, int increase) {
+  const int height_base = Image::numChannels * image.width;
   std::vector<unsigned char>& buffer = *image.buffer;
 
   // Increase selected color channel by a predefined value
   for (unsigned int y = 0; y < image.height; y++) {
     const int height_offset = height_base * y;
     for (unsigned int x = 0; x < image.width; x++) {
-      int pixel_offset = height_offset + PNGImage::numChannels * x + channel_offset;
+      int pixel_offset = height_offset + Image::numChannels * x + channel_offset;
       buffer[pixel_offset] = static_cast<uint8_t>(std::min(buffer[pixel_offset] + increase, 255));
     }
   }
 }
 
-void mergePNGImages(PNGImage& right, const PNGImage& left) {
-  const int channels_per_pixel = PNGImage::numChannels;
+void mergeImages(Image& right, const Image& left) {
+  const int channels_per_pixel = Image::numChannels;
   const int height_base = channels_per_pixel * right.width;
   std::vector<unsigned char>& left_buffer = *left.buffer;
   std::vector<unsigned char>& right_buffer = *right.buffer;
@@ -195,7 +195,7 @@ void mergePNGImages(PNGImage& right, const PNGImage& left) {
     const int height_offset = height_base * y;
     for (unsigned int x = 0; x < right.width; x++) {
       const int pixel_offset = height_offset + channels_per_pixel * x;
-      const int red_index = pixel_offset + PNGImage::redOffset;
+      const int red_index = pixel_offset + Image::redOffset;
       right_buffer[red_index] = left_buffer[red_index];
     }
   }

@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-#include <iostream>
 #include <tbb/tbb.h>
 
 const int default_P = tbb::info::default_concurrency();
@@ -33,10 +32,7 @@ void arenaGlobalControlExplicitArena(int p) {
 }
 
 #include <atomic>
-#include <cstdio>
-#include <vector>
-#include <map>
-#include <set>
+#include <iostream>
 #include <vector>
 
 std::atomic<int> next_tid;
@@ -65,7 +61,6 @@ void clearParticipation() {
 }
 
 void dumpParticipation(int p) {
-  int end = next_tid;
   int sum = tid_participation[0];
   std::cout << "[" << tid_participation[0];
   for (int i = 1; i < p; ++i) {
@@ -76,7 +71,7 @@ void dumpParticipation(int p) {
     std::cout << ", -";
   std::cout << "]\n" 
             << "sum == " << sum  << "\n"
-            << "expected sum " << 10*default_P << "\n";
+            << "expected sum " << 10*default_P << "\n\n";
   clearParticipation();
 }
 

@@ -28,6 +28,7 @@ void taskBlocking() {
   g.wait();
 }
 #else
+#warning Using tbb::task directly
 const int P = tbb::task_scheduler_init::default_num_threads();
 
 class MyTask : public tbb::task {

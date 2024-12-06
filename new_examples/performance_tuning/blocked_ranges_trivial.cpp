@@ -16,9 +16,7 @@
 
 #include <cstdio>
 #include <vector>
-
-#define TBB_PREVIEW_BLOCKED_RANGE_ND 1
-#include <tbb/tbb.h>
+#include "tbb/tbb.h"
 
 double f(double v);
 
@@ -64,26 +62,10 @@ void example3d(int Z, int P, int N, int M, double* a) {
   );
 }
 
-void exampleNd(int Z, int P, int N, int M, double* a) {
-  tbb::parallel_for(tbb::blocked_rangeNd<int,4>{{0,Z},{0,P},{0,N}, {0,M}}, 
-    [=](const tbb::blocked_rangeNd<int,4>& r_ijkl) {
-      const auto& r_i = r_ijkl.dim(0);
-      const auto& r_j = r_ijkl.dim(1);
-      const auto& r_k = r_ijkl.dim(2);
-      const auto& r_l = r_ijkl.dim(3);
-      for (int i = r_i.begin(); i < r_i.end(); ++i)
-        for (int j = r_j.begin(); j < r_j.end(); ++j)
-          for (int k = r_k.begin(); k < r_k.end(); ++k) 
-            for (int l = r_l.begin(); l < r_l.end(); ++l) 
-              a[i*P*N*M+j*N*M+k*M+l] = f(a[i*P*N*M+j*N*M+k*M+l]);
-    }
-  );
-}
-
 #include <iostream>
 
 static void warmupTBB();
-static bool resultsAreValid(int, const double*, const double*, const double*, const double*, const double*);
+static bool resultsAreValid(int, const double*, const double*, const double*, const double*);
 static void serialDouble(int, double*);
 
 int main() {
@@ -98,9 +80,9 @@ int main() {
   double* a1 = new double[Size];
   double* a2 = new double[Size];
   double* a3 = new double[Size];
-  double* aN = new double[Size];
+
   for (int i = 0; i < Size; ++i)
-    a0[i] = a1[i] = a2[i] = a3[i] = aN[i] = 1.0;
+    a0[i] = a1[i] = a2[i] = a3[i] = 1.0;
 
   // Perform serial double
   tbb::tick_count t0 = tbb::tick_count::now();
@@ -127,21 +109,14 @@ int main() {
   double tbb3d_time = (tbb::tick_count::now() - t0).seconds();
   std::printf("3d done\n");
   
-  t0 = tbb::tick_count::now();
-  exampleNd(Z, P, N, M, aN);
-  double tbbNd_time = (tbb::tick_count::now() - t0).seconds();
-  std::printf("Nd done\n");
-
-  if (resultsAreValid(Size, a0, a1, a2, a3, aN)) {
+  if (resultsAreValid(Size, a0, a1, a2, a3)) {
     std::cout << "serial_time == " << serial_time << " seconds\n"
               << "tbb1d_time == " << tbb1d_time << " seconds\n"
               << "speedup == " << serial_time/tbb1d_time << "\n"
               << "tbb2d_time == " << tbb2d_time << " seconds\n"
               << "speedup == " << serial_time/tbb2d_time << "\n"
               << "tbb3d_time == " << tbb3d_time << " seconds\n"
-              << "speedup == " << serial_time/tbb3d_time << "\n"
-              << "tbbNd_time == " << tbbNd_time << " seconds\n"
-              << "speedup == " << serial_time/tbbNd_time << "\n";
+              << "speedup == " << serial_time/tbb3d_time << "\n";
     return 0;
   } else {
     std::cout << "ERROR: invalid results!\n";
@@ -181,14 +156,12 @@ double f(double v) {
 
 static bool resultsAreValid(int N, 
                             const double* a0, const double* a1, 
-                            const double* a2, const double* a3,
-                            const double* aN) {
+                            const double* a2, const double* a3) {
   for (int i = 0; i < N; ++i) {
     if (a0[i] != 2.0 
         || a1[i] != 2.0
         || a2[i] != 2.0
-        || a3[i] != 2.0
-        || aN[i] != 2.0) {
+        || a3[i] != 2.0) {
       std::printf("%d: %f, %f, %f, %f\n", i, a0[i], a1[i], a2[i], a3[i]); 
       std::cerr << "Invalid results" << std::endl;
       return false;

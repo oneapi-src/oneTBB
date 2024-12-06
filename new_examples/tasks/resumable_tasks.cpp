@@ -32,7 +32,7 @@ int main() {
         tbb::task::suspend([=,&sycl_q](tbb::task::suspend_point tag) {
           auto sycl_event = sycl_q.fill(a, id, N);
           sycl_q.submit([=](sycl::handler& sycl_h) {
-            sycl_h.depends_on(sycl_event); // only run after e is done
+            sycl_h.depends_on(sycl_event); // run after sycl_event is done
             sycl_h.host_task([tag]() { 
               tbb::task::resume(tag);
             });
