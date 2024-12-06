@@ -58,7 +58,7 @@ public:
         __TBB_ASSERT(t == nullptr, nullptr);
 
         if (is_worker_should_leave(slot)) {
-            if (can_worker_be_retained()) {
+            if (is_delayed_leave_enabled()) {
                 static constexpr std::chrono::microseconds worker_wait_leave_duration(1000);
                 static_assert(worker_wait_leave_duration > std::chrono::steady_clock::duration(1),
                         "Clock resolution is not enough for measured interval.");

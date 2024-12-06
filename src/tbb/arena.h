@@ -187,7 +187,7 @@ class thread_leave_manager {
     static const std::uint64_t PARALLEL_PHASE = 1 << 3;
     // Use 29 bits for the parallel block state + reference counter,
     // reserve 32 most significant bits.
-    static const std::uint64_t PARALLEL_PHASE_MASK = ((1LLU << 32) - 1) & (PARALLEL_PHASE - 1);
+    static const std::uint64_t PARALLEL_PHASE_MASK = ((1LLU << 32) - 1) & ~(PARALLEL_PHASE - 1);
 
     std::atomic<std::uint64_t> my_state{0};
 public:
@@ -210,7 +210,8 @@ public:
             my_state.compare_exchange_strong(curr, DELAYED_LEAVE);
         }
     }
-
+    
+    // Indicate start of parallel phase in the state machine
     void register_parallel_phase() {
         __TBB_ASSERT(my_state.load(std::memory_order_relaxed) != 0, "The initial state was not set");
 
@@ -218,15 +219,20 @@ public:
         std::uint64_t desired{};
         do {
             if (prev & PARALLEL_PHASE_MASK) {
+                // The parallel phase is already started, thus simply add a reference to it
                 desired = PARALLEL_PHASE + prev;
             } else if (prev == ONE_TIME_FAST_LEAVE) {
+                // State was previously transitioned to "One-time Fast leave", thus
+                // with the start of new parallel phase, it should be then transitioned to "Delayed leave"
                 desired = PARALLEL_PHASE | DELAYED_LEAVE;
             } else {
+                // Transition to "start of parallel phase" state and preserving the default state
                 desired = PARALLEL_PHASE | prev;
             }
         } while (!my_state.compare_exchange_strong(prev, desired));
     }
 
+    // Indicate the end of parallel phase in the state machine
     void unregister_parallel_phase(bool enable_fast_leave) {
         __TBB_ASSERT(my_state.load(std::memory_order_relaxed) != 0, "The initial state was not set");
 
@@ -234,8 +240,11 @@ public:
         std::uint64_t desired{};
         do {
             if (((prev - PARALLEL_PHASE) & PARALLEL_PHASE_MASK) != 0) {
+                // There are still other parallel phases, thus just decrease the reference counter
                 desired = prev - PARALLEL_PHASE;
             } else {
+                // We are the last parallel phase, thus transition to the default state
+                // or to the "One-time Fast leave" state if it was requested
                 desired = enable_fast_leave && (prev - PARALLEL_PHASE == DELAYED_LEAVE) ? ONE_TIME_FAST_LEAVE : prev - PARALLEL_PHASE;
             }
         } while (!my_state.compare_exchange_strong(prev, desired));

@@ -27,8 +27,6 @@
 #include "detail/_task.h"
 
 #include "detail/_task_handle.h"
-#include "oneapi/tbb/detail/_assert.h"
-#include <cstdint>
 
 #if __TBB_ARENA_BINDING
 #include "info.h"
@@ -199,7 +197,7 @@ protected:
 
     enum {
         default_flags               = 0,
-        core_type_support_flag      = 1,
+        core_type_support_flag      = 1
     };
 
     task_arena_base(int max_concurrency, unsigned reserved_for_masters, priority a_priority
