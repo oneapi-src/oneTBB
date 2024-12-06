@@ -97,7 +97,7 @@ Let's consider the semantics that an API for explicit parallel phases can provid
   * Indicates the point from which the scheduler can use a hint and keep threads in the arena
     for longer.
   * Serves as a warm-up hint to the scheduler:
-    * Allows reducing computation start delays by initationg the wake-up of worker threads
+    * Allows reducing delays of computation start by initiating the wake-up of worker threads
       in advance.
 * "Parallel phase" itself:
   * Scheduler can implement different policies to retain threads in the arena.
