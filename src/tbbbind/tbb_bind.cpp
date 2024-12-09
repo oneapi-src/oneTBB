@@ -243,8 +243,18 @@ private:
         processor_groups_affinity_masks_list.resize(number_of_processors_groups);
         for (unsigned group = 0; group < number_of_processors_groups; ++group) {
             processor_groups_affinity_masks_list[group] = hwloc_bitmap_alloc();
-            assertion_hwloc_wrapper(hwloc_windows_get_processor_group_cpuset, topology, group, processor_groups_affinity_masks_list[group], 0);
+            assertion_hwloc_wrapper(hwloc_windows_get_processor_group_cpuset, topology, group,
+                                    processor_groups_affinity_masks_list[group], /*flags*/0);
         }
+
+#if TBB_USE_ASSERT
+        affinity_mask tmp = hwloc_bitmap_alloc();
+        for (auto proc_group_mask : processor_groups_affinity_masks_list) {
+            __TBB_ASSERT(!hwloc_bitmap_intersects(tmp, proc_group_mask), "Masks of processor groups intersect.");
+            hwloc_bitmap_or(tmp, tmp, proc_group_mask);
+        }
+        hwloc_bitmap_free(tmp);
+#endif
     }
 #endif
 
