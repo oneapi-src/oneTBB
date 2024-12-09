@@ -609,7 +609,8 @@ void task_arena_impl::initialize(d1::task_arena_base& ta) {
     __TBB_ASSERT(ta.my_arena.load(std::memory_order_relaxed) == nullptr, "Arena already initialized");
     unsigned priority_level = arena_priority_level(ta.my_priority);
     threading_control* thr_control = threading_control::register_public_reference();
-    arena& a = arena::create(thr_control, unsigned(ta.my_max_concurrency), ta.my_num_reserved_slots, priority_level, arena_constraints
+    arena& a = arena::create(thr_control, unsigned(ta.my_max_concurrency), ta.my_num_reserved_slots,
+                             priority_level, arena_constraints
 #if __TBB_PREVIEW_PARALLEL_PHASE
                              , ta.get_leave_policy()
 #endif

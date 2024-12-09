@@ -503,7 +503,7 @@ public:
 #if __TBB_PREVIEW_PARALLEL_PHASE
     void start_parallel_phase() {
         initialize();
-        r1::register_parallel_phase(this, 0);
+        r1::register_parallel_phase(this, /*reserved*/0);
         // Trigger worker threads to join arena
         enqueue([]{});
     }
@@ -597,7 +597,7 @@ inline void enqueue(F&& f) {
 
 #if __TBB_PREVIEW_PARALLEL_PHASE
 inline void start_parallel_phase() {
-    r1::register_parallel_phase(nullptr, 0);
+    r1::register_parallel_phase(nullptr, /*reserved*/0);
 }
 
 inline void end_parallel_phase(bool with_fast_leave) {

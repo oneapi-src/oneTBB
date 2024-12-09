@@ -196,6 +196,8 @@ public:
             std::uint64_t platform_policy = governor::hybrid_cpu() ? FAST_LEAVE : DELAYED_LEAVE;
             my_state.store(platform_policy, std::memory_order_relaxed);
         } else {
+            __TBB_ASSERT(wl == tbb::task_arena::leave_policy::fast,
+                         "Was the new value introduced for leave policy?");
             my_state.store(FAST_LEAVE, std::memory_order_relaxed);
         }
     }
@@ -369,7 +371,9 @@ public:
 #endif
     );
 
-    static arena& create(threading_control* control, unsigned num_slots, unsigned num_reserved_slots, unsigned arena_priority_level, d1::constraints constraints = d1::constraints{}
+    static arena& create(threading_control* control, unsigned num_slots, unsigned num_reserved_slots,
+                         unsigned arena_priority_level,
+                         d1::constraints constraints = d1::constraints{}
 #if __TBB_PREVIEW_PARALLEL_PHASE
                          , tbb::task_arena::leave_policy wl = tbb::task_arena::leave_policy::automatic
 #endif
