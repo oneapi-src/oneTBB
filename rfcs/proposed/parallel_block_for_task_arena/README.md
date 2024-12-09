@@ -266,7 +266,7 @@ Some open questions that remain:
   * What should be expected from "Parallel Phase" API for `this_task_arena` when a calling thread
     doesn't yet have any associated arena?
   * Should parallel phase API be limited only to RAII-only style?
-    * Are there any scenarios where incovinience of handling `scoped_parallel_phase` object is
+    * Are there any scenarios where inconvenience of handling `scoped_parallel_phase` object is
       not acceptable?
 * Are there additional use cases that should be considered that we missed in our analysis?
 * Do we see any value if arena potentially can transition from one to another state?
