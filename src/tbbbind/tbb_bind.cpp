@@ -260,7 +260,7 @@ private:
 #endif
     }
 
-  
+
     void initialize( std::size_t groups_num ) {
         if ( initialization_state != uninitialized )
             return;
@@ -393,21 +393,28 @@ public:
         }
         hwloc_bitmap_and(result_mask, result_mask, constraints_mask);
     }
-    
-    void fit_to_processor_group(affinity_mask result_mask, affinity_mask constraints_mask, std::size_t hint) {
+
+    /**
+     * Finds processor group for the passed slot number, which are from 0 to max concurrency - 1, by
+     * traversing masks of processor groups one by one, intersecting them with the constrained mask.
+     * Once total weight of processor groups united mask is greater than the slot number, the mask
+     * of the last traversed processor group is returned, denoting the mask to apply to the thread
+     * occupying given slot number.
+     */
+    void fit_to_processor_group(affinity_mask result_mask, affinity_mask constraints_mask, std::size_t slot_num) {
         __TBB_ASSERT(number_of_processors_groups > 1, nullptr);
         hwloc_bitmap_zero(result_mask);
         int constraints_mask_weight = hwloc_bitmap_weight(constraints_mask);
         // Map slot number to a number within constraints mask if
         // max concurrency is greater than weight of the mask.
-        hint %= constraints_mask_weight;
+        slot_num %= constraints_mask_weight;
         std::size_t total_weight = 0;
         for (auto& processor_group : processor_groups_affinity_masks_list) {
             if (hwloc_bitmap_intersects(constraints_mask, processor_group)) {
                 hwloc_bitmap_and(result_mask, processor_group, constraints_mask);
                 total_weight += hwloc_bitmap_weight(result_mask);
-                if (hint > total_weight) {
-                    return;
+                if (slot_num < total_weight) {
+                    return;     // Correponding processor group where to bind the thread is found
                 }
             }
         }
@@ -451,7 +458,7 @@ public:
 system_topology* system_topology::instance_ptr{nullptr};
 
 class binding_handler {
-    // Following vector saves thread affinity mask on scheduler entry to return it to this thread 
+    // Following vector saves thread affinity mask on scheduler entry to return it to this thread
     // on scheduler exit.
     typedef std::vector<system_topology::affinity_mask> affinity_masks_container;
     affinity_masks_container affinity_backup;
@@ -509,7 +516,7 @@ public:
         // constraints affinity mask may cross the border between several processor groups
         // on systems with more then 64 logical processors. That is why we need to use the special
         // function, which regulates the number of threads in the current threads mask.
-        bool is_default_numa = my_numa_node_id == -1 || topology.numa_indexes_list.size() == 1; 
+        bool is_default_numa = my_numa_node_id == -1 || topology.numa_indexes_list.size() == 1;
         bool is_default_core_type = my_core_type_id == -1 || topology.core_types_indexes_list.size() == 1;
         if (topology.number_of_processors_groups > 1 && my_max_threads_per_core != -1 &&
             is_default_numa && is_default_core_type
