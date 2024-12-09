@@ -424,7 +424,7 @@ public:
                 hwloc_bitmap_and(result_mask, processor_group, constraints_mask);
                 total_weight += hwloc_bitmap_weight(result_mask);
                 if (slot_num < total_weight) {
-                    return;     // Correponding processor group where to bind the thread is found
+                    return;     // Corresponding processor group where to bind the thread is found
                 }
             }
         }
