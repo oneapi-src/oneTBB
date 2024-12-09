@@ -265,6 +265,9 @@ Some open questions that remain:
     only for already existing `task_arena`. Should it be possible for `this_task_arena` as well?
   * What should be expected from "Parallel Phase" API for `this_task_arena` when a calling thread
     doesn't yet have any associated arena?
+  * Should parallel phase API be limited only to RAII-only style?
+    * Are there any scenarios where incovinience of handling `scoped_parallel_phase` object is
+      not acceptable?
 * Are there additional use cases that should be considered that we missed in our analysis?
 * Do we see any value if arena potentially can transition from one to another state?
   * What if different types of workloads are mixed in one application?
