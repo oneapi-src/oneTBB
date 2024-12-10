@@ -1,22 +1,22 @@
 #+title: Loading Dependencies By Module Name
 
 * Introduction
-There is a well-known attack that implies loading of a malicious dependency
+There is a well-known attack that involves loading of a malicious dependency
 instead of the original one without notice to the party that does this loading.
 In the industry it is usually called /DLL injection/ or /DLL preloading attack/
 and it is mostly associated with the Windows platform as it is known to be
-particularly vulnerable to this kind of attack.[1] One of the recommendations
+particularly vulnerable to this kind of attack [1]. One of the recommendations
 that safeguards against this type of attack is to specify fully qualified path
-to a dependency.[2]
+to a dependency [2].
 
 Historically, oneTBB loads its optional dependencies during its initialization
-process when these dependencies can be used for the first time. The way oneTBB
+process when these dependencies are used for the first time. The way oneTBB
 does this is by building full paths to their dependencies using the path where
-oneTBB library resides by itself. It is the only sensible path which can be
+the oneTBB library itself resides. It is the only sensible path which can be
 obtained by oneTBB, whose usage conditions are not known at the time of
 development. The purpose is to minimize the risk of a DLL injection attack issue
 so that only certain paths are probed by the system loader. However,
-dependencies of a dependency are still searched by their module names only.[3]
+dependencies of a dependency are still searched by their module names only [3].
 So, the risk is minimized only for a dependency itself and not for the libraries
 it depends on, not to mention that the file of a dependency can be replaced in
 the file system by an attacker, which breaks even that protection. Besides that,
@@ -25,40 +25,40 @@ the developers who want to make use of their own variant of a dependency. Not
 only they need to place their variant of a dependency to all of the places from
 which it is going to be found and loaded by every client component that depends
 on it, but also this makes problematic the implementation (if not impossible) of
-some scenarios where being loaded dependency maintains single state shared among
+some scenarios where the dependency  being loaded maintains single state shared among
 all its clients. Such scenarios are hard to implement because copies of the same
 DLL loaded from different paths are considered to be different DLLs and in
 certain cases there is no support for filesystem linking mechanism to point to a
-single file.[4, 5]
+single file [4, 5].
 
 So, what is the main problem due to which loading by a module name makes Windows
 much more vulnerable to DLL injection than Linux?
 
 Besides difference in the order of accessing paths specified in the environment,
 Windows also prioritizes searching in the directory from which the application
-is loaded and current working directory.[2] Assuming that application is loaded
-from the directory that requires administrative permission on write, which is
+is loaded and current working directory [2]. Assuming that application is loaded
+from a directory that requires administrative permission on write, which is
 usually the case, it is the current working directory that forms the main DLL
-preloading attack scenario.[1]
+preloading attack scenario [1].
 
 There are approaches to exclude the current working directory from the search
 order. However, for a library to avoid process-wide changes to the search order
-the only viable solution for a run-time loading is to pass
-~LOAD_LIBRARY_SAFE_CURRENT_DIRS~ flag to the ~LoadLibraryEx~ Windows API.[6]
+the only viable solution for run-time loading is to pass
+~LOAD_LIBRARY_SAFE_CURRENT_DIRS~ flag to the ~LoadLibraryEx~ Windows API [6].
 
 With the removal of the current working directory from loader's consideration,
 the search order on Windows starts having little difference with the search
 order on Linux. The difference includes the order in which directories specified
 in the environment and system directories are considered, and the presence of
-the first step of looking into an application directory on Windows.[2, 7]
+the first step of looking into an application directory on Windows [2, 7].
 
 Since the system environment variables and the environment of other processes
-cannot be changed, the only vulnerable place is an application directory.[8, 9]
+cannot be changed, the only vulnerable place is an application directory [8, 9].
 Because the application can be installed in a directory that does not require
 administrative permissions on write, it still can be started by an account
 having them. Unlike Linux systems, for the process started with administrative
 permissions, the paths specified in the environment and the application
-directory are still considered by the Windows system loader.[2, 7] Therefore, an
+directory are still considered by the Windows system loader [2, 7]. Therefore, an
 attacker can update permissive installation directory with a malicious version
 of a binary, hence making it loaded in a process with elevated permissions. Note
 that specifying fully qualified path to the dependency does not help in this
@@ -72,7 +72,7 @@ loading the binary because of the failed signature verification might not be
 always desired. Especially, during the development phase or for a software
 distributor who does not have the signature with which to sign the binary.
 Therefore, to preserve backward compatibility of such usage models, it is
-essential to have possibility to disable signature verification.
+essential to have the possibility to disable signature verification.
 
 * Proposal
 Based on the analysis in the "Introduction" section and to support versatile
