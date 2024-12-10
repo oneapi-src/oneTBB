@@ -10,9 +10,9 @@ that safeguards against this type of attack is to specify fully qualified path
 to a dependency [2].
 
 Historically, oneTBB loads its optional dependencies during its initialization
-process when these dependencies are used for the first time. The way oneTBB
-does this is by building full paths to their dependencies using the path where
-the oneTBB library itself resides. It is the only sensible path which can be
+process when these dependencies are used for the first time. The way oneTBB does
+this is by building full paths to their dependencies using the path where the
+oneTBB library itself resides. It is the only sensible path which can be
 obtained by oneTBB, whose usage conditions are not known at the time of
 development. The purpose is to minimize the risk of a DLL injection attack issue
 so that only certain paths are probed by the system loader. However,
@@ -25,11 +25,11 @@ the developers who want to make use of their own variant of a dependency. Not
 only they need to place their variant of a dependency to all of the places from
 which it is going to be found and loaded by every client component that depends
 on it, but also this makes problematic the implementation (if not impossible) of
-some scenarios where the dependency  being loaded maintains single state shared among
-all its clients. Such scenarios are hard to implement because copies of the same
-DLL loaded from different paths are considered to be different DLLs and in
-certain cases there is no support for filesystem linking mechanism to point to a
-single file [4, 5].
+some scenarios where the dependency being loaded maintains single state shared
+among all its clients. Such scenarios are hard to implement because copies of
+the same DLL loaded from different paths are considered to be different DLLs and
+in certain cases there is no support for filesystem linking mechanism to point
+to a single file [4, 5].
 
 So, what is the main problem due to which loading by a module name makes Windows
 much more vulnerable to DLL injection than Linux?
@@ -58,11 +58,11 @@ Because the application can be installed in a directory that does not require
 administrative permissions on write, it still can be started by an account
 having them. Unlike Linux systems, for the process started with administrative
 permissions, the paths specified in the environment and the application
-directory are still considered by the Windows system loader [2, 7]. Therefore, an
-attacker can update permissive installation directory with a malicious version
-of a binary, hence making it loaded in a process with elevated permissions. Note
-that specifying fully qualified path to the dependency does not help in this
-case.
+directory are still considered by the Windows system loader [2, 7]. Therefore,
+an attacker can update permissive installation directory with a malicious
+version of a binary, hence making it loaded in a process with elevated
+permissions. Note that specifying fully qualified path to the dependency does
+not help in this case.
 
 Fortunately, there is a signature verification process that helps validating the
 authenticity of a binary before loading it into process address space and
