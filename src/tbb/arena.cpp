@@ -572,7 +572,7 @@ void __TBB_EXPORTED_FUNC register_parallel_phase(d1::task_arena_base* ta, std::u
 }
 
 void __TBB_EXPORTED_FUNC unregister_parallel_phase(d1::task_arena_base* ta, std::uintptr_t flags) {
-    task_arena_impl::unregister_parallel_phase(ta, flags);
+    task_arena_impl::unregister_parallel_phase(ta, static_cast<bool>(flags));
 }
 
 void task_arena_impl::initialize(d1::task_arena_base& ta) {
@@ -926,6 +926,7 @@ void task_arena_impl::register_parallel_phase(d1::task_arena_base* ta) {
     arena* a = ta ? ta->my_arena.load(std::memory_order_relaxed) : governor::get_thread_data()->my_arena;
     __TBB_ASSERT(a, nullptr);
     a->my_thread_leave.register_parallel_phase();
+    a->advertise_new_work<arena::work_enqueued>();
 }
 
 void task_arena_impl::unregister_parallel_phase(d1::task_arena_base* ta, bool with_fast_leave) {

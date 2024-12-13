@@ -2079,7 +2079,7 @@ struct dummy_func {
 };
 
 template <typename F1 = dummy_func, typename F2 = dummy_func> 
-std::size_t measure_avg_start_time(tbb::task_arena& ta, const F1& start = F1{}, const F2& end = F2{}) {
+std::size_t measure_median_start_time(tbb::task_arena& ta, const F1& start = F1{}, const F2& end = F2{}) {
     std::size_t num_threads = ta.max_concurrency();
     std::size_t num_runs = 1000;
     std::vector<std::size_t> longest_start_times;
@@ -2108,7 +2108,7 @@ std::size_t measure_avg_start_time(tbb::task_arena& ta, const F1& start = F1{}, 
             end();
             longest_start_times.push_back(get_longest_start(start_time));
         });
-        utils::doDummyWork(i*100);
+        utils::doDummyWork(i*1000);
     }
     return utils::median(longest_start_times.begin(), longest_start_times.end());
 }
@@ -2118,19 +2118,19 @@ class start_time_collection_base {
     friend Impl;
 public:
     start_time_collection_base(tbb::task_arena& ta, std::size_t ntrials) :
-        arena(ta), num_trials(ntrials), average_start_times(ntrials) {}
+        arena(ta), num_trials(ntrials), start_times(ntrials) {}
 
     std::vector<std::size_t> measure() {
         for (std::size_t i = 0; i < num_trials; ++i) {
-            std::size_t avg_start_time = static_cast<Impl*>(this)->measure_impl(); 
-            average_start_times[i] = avg_start_time;
+            std::size_t median_start_time = static_cast<Impl*>(this)->measure_impl();
+            start_times[i] = median_start_time;
         }
-        return average_start_times;
+        return start_times;
     }
 protected:
     tbb::task_arena& arena;
     std::size_t num_trials;
-    std::vector<std::size_t> average_start_times;
+    std::vector<std::size_t> start_times;
 };
 
 class start_time_collection : public start_time_collection_base<start_time_collection> {
@@ -2139,7 +2139,7 @@ class start_time_collection : public start_time_collection_base<start_time_colle
     friend base;
 
     std::size_t measure_impl() {
-        return measure_avg_start_time(arena);
+        return measure_median_start_time(arena);
     };
 };
 
@@ -2150,9 +2150,9 @@ class start_time_collection_phase_wrapped : public start_time_collection_base<st
 
     std::size_t measure_impl() {
         arena.start_parallel_phase();
-        auto avg_start_time = measure_avg_start_time(arena);
+        auto median_start_time = measure_median_start_time(arena);
         arena.end_parallel_phase(true);
-        return avg_start_time;
+        return median_start_time;
     };
 };
 
@@ -2163,29 +2163,27 @@ class start_time_collection_sequenced_phases: public start_time_collection_base<
 
 
     std::size_t measure_impl() {
-        auto avg_start_time = measure_avg_start_time(arena,
+        auto median_start_time = measure_median_start_time(arena,
                 [this] {
                     arena.start_parallel_phase();
                 },
                 [this] {
                     arena.end_parallel_phase(/*with_fast_leave=*/true);
                 });
-        return avg_start_time;
+        return median_start_time;
     };
 };
 
 template <typename Collection1, typename Collection2>
-bool test_start_times(Collection1& collector1, Collection2& collector2) {
+std::pair<std::size_t, std::size_t> test_start_times(Collection1& collector1, Collection2& collector2) {
     auto times1 = collector1.measure();
-
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
-
     auto times2 = collector2.measure();
 
     auto median1 = utils::median(times1.begin(), times1.end());
     auto median2 = utils::median(times2.begin(), times2.end());
 
-    return median1 < median2;
+    return { median1, median2 };
 }
 
 TEST_CASE("Check that workers leave faster with leave_policy::fast") {
@@ -2201,7 +2199,8 @@ TEST_CASE("Check that workers leave faster with leave_policy::fast") {
     };
     start_time_collection st_collector1{ta_automatic_leave, /*num_trials=*/20};
     start_time_collection st_collector2{ta_fast_leave, /*num_trials=*/20};
-    WARN_MESSAGE(test_start_times(st_collector1, st_collector2),
+    auto times = test_start_times(st_collector1, st_collector2);
+    WARN_MESSAGE(times.first < times.second,
         "Expected workers to start new work faster with delayed leave");
 }
 
@@ -2218,7 +2217,8 @@ TEST_CASE("parallel_phase retains workers in task_arena") {
     };
     start_time_collection_phase_wrapped st_collector1{ta_fast1, /*num_trials=*/20};
     start_time_collection st_collector2{ta_fast2, /*num_trials=*/20};
-    WARN_MESSAGE(test_start_times(st_collector1, st_collector2),
+    auto times = test_start_times(st_collector1, st_collector2);
+    WARN_MESSAGE(times.first < times.second,
         "Expected workers start new work faster when using parallel_phase");
 }
 
@@ -2227,7 +2227,8 @@ TEST_CASE("Test one-time fast leave") {
     tbb::task_arena ta2{};
     start_time_collection st_collector1{ta1, /*num_trials=*/20};
     start_time_collection_sequenced_phases st_collector2{ta2, /*num_trials=*/20};
-    WARN_MESSAGE(test_start_times(st_collector1, st_collector2),
+    auto times = test_start_times(st_collector1, st_collector2);
+    WARN_MESSAGE(times.first < times.second,
         "Expected one-time fast leave setting to slow workers to start new work");
 }
 

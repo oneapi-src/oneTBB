@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2023 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -502,12 +502,11 @@ public:
     void start_parallel_phase() {
         initialize();
         r1::register_parallel_phase(this, /*reserved*/0);
-        // Trigger worker threads to join arena
-        enqueue([]{});
     }
     void end_parallel_phase(bool with_fast_leave = false) {
         __TBB_ASSERT(my_initialization_state.load(std::memory_order_relaxed) == do_once_state::initialized, nullptr);
-        r1::unregister_parallel_phase(this, with_fast_leave);
+        // It is guaranteed by the standard that conversion of boolean to integral type will result in either 0 or 1
+        r1::unregister_parallel_phase(this, static_cast<std::uintptr_t>(with_fast_leave));
     }
 
     class scoped_parallel_phase {
@@ -599,7 +598,8 @@ inline void start_parallel_phase() {
 }
 
 inline void end_parallel_phase(bool with_fast_leave) {
-    r1::unregister_parallel_phase(nullptr, with_fast_leave);
+    // It is guaranteed by the standard that conversion of boolean to integral type will result in either 0 or 1
+    r1::unregister_parallel_phase(nullptr, static_cast<std::uintptr_t>(with_fast_leave));
 }
 #endif
 
