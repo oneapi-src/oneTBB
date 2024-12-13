@@ -2,12 +2,9 @@ foreach(tpp intro_pi.cpp
             intro_pi_timing.cpp
             intro_flowgraph.cpp
             intro_gamma.cpp
-            intro_helloPSTL.cpp
             intro_helloTBB.cpp
-	    intro_parallel_for.cpp
-            intro_parallel_for_transform.cpp
-	    intro_sidebar_functor.cpp
-            intro_sidebar_lambda.cpp)
+	          intro_parallel_for.cpp
+            intro_parallel_for_transform.cpp)
   string(REPLACE ".cpp" "" texe ${tpp})
   add_executable(${texe} ${tpp})
   target_include_directories(${texe} PUBLIC

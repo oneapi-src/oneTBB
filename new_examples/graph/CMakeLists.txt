@@ -3,7 +3,6 @@ foreach(tpp graph_composite_node.cpp
             graph_fwd_substitution.cpp
             graph_limiting_messages.cpp
             graph_loops.cpp
-            graph_nest_parallelism.cpp
             graph_node_priorities.cpp
             graph_reestablish_order.cpp
             graph_small_nodes.cpp

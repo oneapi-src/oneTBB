@@ -20,7 +20,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "lodepng.h"
+#include "../common/lodepng.h"
 #include <tbb/tbb.h>
 
 class PNGImage {

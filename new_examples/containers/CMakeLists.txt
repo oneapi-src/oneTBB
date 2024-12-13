@@ -1,6 +1,3 @@
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -tbb")
-set(CMAKE_CXX_LINKER_FLAGS "-tbb")
-
 foreach(tpp concurrent_hash_maps.cpp
         concurrent_maps.cpp
 	concurrent_queues.cpp

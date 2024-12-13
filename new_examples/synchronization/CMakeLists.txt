@@ -1,6 +1,3 @@
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -tbb")
-set(CMAKE_CXX_LINKER_FLAGS "-tbb")
-
 foreach(tpp histogram_01_sequential.cpp
     histogram_02_unsafe_parallel.cpp
     histogram_03_1st_safe_parallel.cpp
