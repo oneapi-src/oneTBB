@@ -4,6 +4,13 @@
 /oneTBB/src/tbb/ @dnmokhov
 /oneTBB/src/tbb/ @JhaShweta1
 /oneTBB/src/tbb/ @sarathnandu
+/oneTBB/include/oneapi/tbb/parallel_* @pavelkumbrasev
+/oneTBB/include/oneapi/tbb/concurrent_* @kboyarinov
+/oneTBB/include/oneapi/tbb/flow_graph* @kboyarinov
+/oneTBB/include/oneapi/tbb/flow_graph* @aleksei-fedotov
+/oneTBB/include/oneapi/tbb/detail/_flow_graph* @kboyarinov
+/oneTBB/include/oneapi/tbb/detail/_flow_graph* @aleksei-fedotov
+/oneTBB/include/oneapi/tbb/detail/_concurrent* @kboyarinov
 /oneTBB/src/doc @aepanchi
 /oneTBB/src/tbbbind/ @isaevil
 /oneTBB/src/tbbmalloc/ @lplewa
