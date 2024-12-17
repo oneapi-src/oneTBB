@@ -210,9 +210,9 @@ public:
     
     // Indicate start of parallel phase in the state machine
     void register_parallel_phase() {
-        __TBB_ASSERT(my_state.load(std::memory_order_relaxed) != 0, "The initial state was not set");
-
         std::uint64_t prev = my_state.load(std::memory_order_relaxed);
+        __TBB_ASSERT(prev != 0, "The initial state was not set");
+
         std::uint64_t desired{};
         do {
             // Need to add a reference for this start of a parallel phase, preserving the leave
@@ -224,17 +224,20 @@ public:
                 // of new parallel phase, it should be transitioned to "Delayed leave"
                 desired = DELAYED_LEAVE;
             }
+            __TBB_ASSERT(desired + PARALLEL_PHASE > desired, "Overflow detected");
             desired += PARALLEL_PHASE; // Take into account this start of a parallel phase
         } while (!my_state.compare_exchange_strong(prev, desired));
     }
 
     // Indicate the end of parallel phase in the state machine
     void unregister_parallel_phase(bool enable_fast_leave) {
-        __TBB_ASSERT(my_state.load(std::memory_order_relaxed) != 0, "The initial state was not set");
-
         std::uint64_t prev = my_state.load(std::memory_order_relaxed);
+        __TBB_ASSERT(prev != 0, "The initial state was not set");
+
         std::uint64_t desired{};
         do {
+            __TBB_ASSERT(prev - PARALLEL_PHASE < prev,
+                         "A call to unregister without its register complement");
             desired = prev - PARALLEL_PHASE; // Mark the end of this phase in reference counter
             if (enable_fast_leave && /*it was the last parallel phase*/desired == DELAYED_LEAVE) {
                 desired = ONE_TIME_FAST_LEAVE;
@@ -243,9 +246,9 @@ public:
     }
 
     bool is_retention_allowed() {
-        __TBB_ASSERT(my_state.load(std::memory_order_relaxed) != 0, "The initial state was not set");
-
         std::uint64_t curr = my_state.load(std::memory_order_relaxed);
+        __TBB_ASSERT(curr != 0, "The initial state was not set");
+
         return curr != FAST_LEAVE && curr != ONE_TIME_FAST_LEAVE;
     }
 };
@@ -360,7 +363,7 @@ public:
     //! Constructor
     arena(threading_control* control, unsigned max_num_workers, unsigned num_reserved_slots, unsigned priority_level
 #if __TBB_PREVIEW_PARALLEL_PHASE
-          , tbb::task_arena::leave_policy wl
+          , tbb::task_arena::leave_policy lp
 #endif
     );
 
@@ -368,7 +371,7 @@ public:
     static arena& allocate_arena(threading_control* control, unsigned num_slots, unsigned num_reserved_slots,
                                  unsigned priority_level
 #if __TBB_PREVIEW_PARALLEL_PHASE
-                                 , tbb::task_arena::leave_policy wl
+                                 , tbb::task_arena::leave_policy lp
 #endif
     );
 
@@ -376,7 +379,7 @@ public:
                          unsigned arena_priority_level,
                          d1::constraints constraints = d1::constraints{}
 #if __TBB_PREVIEW_PARALLEL_PHASE
-                         , tbb::task_arena::leave_policy wl = tbb::task_arena::leave_policy::automatic
+                         , tbb::task_arena::leave_policy lp = tbb::task_arena::leave_policy::automatic
 #endif
     );
 

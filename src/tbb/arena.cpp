@@ -530,8 +530,8 @@ struct task_arena_impl {
     static int max_concurrency(const d1::task_arena_base*);
     static void enqueue(d1::task&, d1::task_group_context*, d1::task_arena_base*);
     static d1::slot_id execution_slot(const d1::task_arena_base&);
-    static void register_parallel_phase(d1::task_arena_base*);
-    static void unregister_parallel_phase(d1::task_arena_base*, bool);
+    static void register_parallel_phase(d1::task_arena_base*, std::uintptr_t);
+    static void unregister_parallel_phase(d1::task_arena_base*, std::uintptr_t);
 };
 
 void __TBB_EXPORTED_FUNC initialize(d1::task_arena_base& ta) {
@@ -566,12 +566,12 @@ d1::slot_id __TBB_EXPORTED_FUNC execution_slot(const d1::task_arena_base& arena)
     return task_arena_impl::execution_slot(arena);
 }
 
-void __TBB_EXPORTED_FUNC register_parallel_phase(d1::task_arena_base* ta, std::uintptr_t /*reserved*/) {
-    task_arena_impl::register_parallel_phase(ta);
+void __TBB_EXPORTED_FUNC register_parallel_phase(d1::task_arena_base* ta, std::uintptr_t flags) {
+    task_arena_impl::register_parallel_phase(ta, flags);
 }
 
 void __TBB_EXPORTED_FUNC unregister_parallel_phase(d1::task_arena_base* ta, std::uintptr_t flags) {
-    task_arena_impl::unregister_parallel_phase(ta, static_cast<bool>(flags));
+    task_arena_impl::unregister_parallel_phase(ta, flags);
 }
 
 void task_arena_impl::initialize(d1::task_arena_base& ta) {
@@ -921,17 +921,17 @@ int task_arena_impl::max_concurrency(const d1::task_arena_base *ta) {
 }
 
 #if __TBB_PREVIEW_PARALLEL_PHASE
-void task_arena_impl::register_parallel_phase(d1::task_arena_base* ta) {
+void task_arena_impl::register_parallel_phase(d1::task_arena_base* ta, std::uintptr_t /*reserved*/) {
     arena* a = ta ? ta->my_arena.load(std::memory_order_relaxed) : governor::get_thread_data()->my_arena;
     __TBB_ASSERT(a, nullptr);
     a->my_thread_leave.register_parallel_phase();
     a->advertise_new_work<arena::work_enqueued>();
 }
 
-void task_arena_impl::unregister_parallel_phase(d1::task_arena_base* ta, bool with_fast_leave) {
+void task_arena_impl::unregister_parallel_phase(d1::task_arena_base* ta, std::uintptr_t flags) {
     arena* a = ta ? ta->my_arena.load(std::memory_order_relaxed) : governor::get_thread_data()->my_arena;
     __TBB_ASSERT(a, nullptr);
-    a->my_thread_leave.unregister_parallel_phase(with_fast_leave);
+    a->my_thread_leave.unregister_parallel_phase(/*with_fast_leave=*/static_cast<bool>(flags));
 }
 #endif
 

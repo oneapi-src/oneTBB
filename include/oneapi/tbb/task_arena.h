@@ -118,11 +118,6 @@ namespace d1 {
 static constexpr unsigned num_priority_levels = 3;
 static constexpr int priority_stride = INT_MAX / (num_priority_levels + 1);
 
-#if __TBB_PREVIEW_PARALLEL_PHASE
-static constexpr int leave_policy_trait_offset = 1;
-static constexpr int leave_policy_trait_mask = ~((1 << leave_policy_trait_offset) - 1);
-#endif
-
 class task_arena_base {
     friend struct r1::task_arena_impl;
     friend void r1::observe(d1::task_scheduler_observer&, bool);
@@ -181,23 +176,24 @@ protected:
     }
 
 #if __TBB_PREVIEW_PARALLEL_PHASE
-    int leave_policy_to_traits(leave_policy lp) const {
-        return static_cast<int>(lp) << leave_policy_trait_offset;
+    leave_policy get_leave_policy() const {
+        bool fast_policy_set = (my_version_and_traits & fast_leave_policy_flag) == fast_leave_policy_flag;
+        return fast_policy_set ? leave_policy::fast : leave_policy::automatic;
     }
 
-    leave_policy get_leave_policy() const {
-        int underlying_policy_v = (my_version_and_traits & leave_policy_trait_mask) >> leave_policy_trait_offset;
-        return static_cast<leave_policy>(underlying_policy_v);
+    int leave_policy_to_traits(leave_policy lp) const {
+        return lp == leave_policy::fast ? fast_leave_policy_flag : 0;
     }
 
     void set_leave_policy(leave_policy lp) {
-        my_version_and_traits = (my_version_and_traits & ~leave_policy_trait_mask) | leave_policy_to_traits(lp);
+        my_version_and_traits |= leave_policy_to_traits(lp);
     }
 #endif
 
     enum {
         default_flags               = 0,
-        core_type_support_flag      = 1
+        core_type_support_flag      = 1,
+        fast_leave_policy_flag      = 1 << 1
     };
 
     task_arena_base(int max_concurrency, unsigned reserved_for_masters, priority a_priority

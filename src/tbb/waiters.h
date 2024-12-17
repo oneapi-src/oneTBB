@@ -61,7 +61,7 @@ public:
             if (is_delayed_leave_enabled()) {
                 static constexpr std::chrono::microseconds worker_wait_leave_duration(1000);
                 static_assert(worker_wait_leave_duration > std::chrono::steady_clock::duration(1),
-                        "Clock resolution is not enough for measured interval.");
+                              "Clock resolution is not enough for measured interval.");
 
                 for (auto t1 = std::chrono::steady_clock::now(), t2 = t1;
                     std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1) < worker_wait_leave_duration;
@@ -71,7 +71,9 @@ public:
                         return true;
                     }
 
-                    if (!my_arena.my_thread_leave.is_retention_allowed() || my_arena.my_threading_control->is_any_other_client_active()) {
+                    if (!my_arena.my_thread_leave.is_retention_allowed() ||
+                        my_arena.my_threading_control->is_any_other_client_active())
+                    {
                         break;
                     }
                     d0::yield();
