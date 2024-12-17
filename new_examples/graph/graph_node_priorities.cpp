@@ -17,8 +17,6 @@
 #include <atomic>
 #include "tbb/tbb.h"
 
-static void wait_for_ms(int ms);
-
 void inAnyOrder() {
   tbb::task_arena a(2);
   std::printf("No priorities:\n");
@@ -98,10 +96,6 @@ int main() {
   std::cout << "inAnyOrder    : " << t_any << " seconds\n";
   std::cout << "withPriorities: " << t_prio << " seconds\n";
   return 0;
-}
-
-static void wait_for_ms(int ms) {
-  std::this_thread::sleep_for(std::chrono::milliseconds(ms));
 }
 
 static void warmupTBB() {

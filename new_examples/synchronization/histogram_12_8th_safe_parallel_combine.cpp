@@ -26,7 +26,6 @@
 int main(int argc, char** argv) {
 
   long int n = 1000000000;
-  int nth = 4;
   constexpr int num_bins = 256;
 
   // Initialize random number generator
@@ -51,7 +50,7 @@ int main(int argc, char** argv) {
 
   // Parallel execution
   using vector_t = std::vector<int>;
-  tbb::combinable<vector_t> priv_h{[num_bins](){return vector_t(num_bins);}};
+  tbb::combinable<vector_t> priv_h{[](){return vector_t(num_bins);}};
   t0 = tbb::tick_count::now();
   parallel_for(tbb::blocked_range<size_t>{0, image.size()},
               [&](const tbb::blocked_range<size_t>& r)

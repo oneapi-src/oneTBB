@@ -26,7 +26,6 @@
 int main(int argc, char** argv) {
 
   long int n = 1000000000;
-  int nth = 4;
   constexpr int num_bins = 256;
 
   // Initialize random number generator
@@ -63,7 +62,7 @@ int main(int argc, char** argv) {
 	        return v;
 	    },
 	// 2nd Lambda: Parallel reduction of the private histograms
-	[num_bins](vector_t a, const vector_t & b) -> vector_t {
+	[](vector_t a, const vector_t & b) -> vector_t {
 	    for(int i=0; i<num_bins; ++i) a[i] += b[i];
 	    return a;
 	});

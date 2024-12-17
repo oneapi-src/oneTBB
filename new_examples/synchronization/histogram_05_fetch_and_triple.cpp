@@ -39,9 +39,8 @@ void fetch_and_triple(std::atomic<uint32_t>& v)
 int main(int argc, char** argv)
 {
   long int N = 100; //1000000000;
-  int nth = 2 ;
 
-  std::cout<< "N="<< N << " and nth=" << nth << "\t";
+  std::cout<< "N="<< N << "\t";
 
   tbb::parallel_invoke(
     [&](){for(int i=0; i<N; ++i) fetch_and_triple(v);},

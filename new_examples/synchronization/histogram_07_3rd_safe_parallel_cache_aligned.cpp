@@ -30,7 +30,6 @@ struct atom_bin {
 int main(int argc, char** argv) {
 
   long int n = 1000000000;
-  int nth = 4;
   constexpr int num_bins = 256;
 
   // Initialize random number generator

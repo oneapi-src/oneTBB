@@ -91,7 +91,6 @@ static void warmupTBB();
 int main() {
   int num_strings = 100; 
   int string_len = 100000;
-  int free_list_size = 1;
 
   double serial_time = 0.0, tbb_time = 0.0;
   {

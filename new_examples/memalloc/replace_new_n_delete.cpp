@@ -18,7 +18,7 @@
 #include <tbb/tbb.h>
 #include <tbb/scalable_allocator.h>
 
-void* operator new (size_t size, const std::nothrow_t&)
+void* operator new (size_t size, const std::nothrow_t&) noexcept
 {
   if (size == 0) size = 1; 
   if (void* ptr = scalable_malloc (size))
@@ -26,17 +26,17 @@ void* operator new (size_t size, const std::nothrow_t&)
   return NULL;
 }
 
-void* operator new[] (size_t size, const std::nothrow_t&)
+void* operator new[] (size_t size, const std::nothrow_t&) noexcept
 {
   return operator new (size, std::nothrow);
 }
 
-void operator delete (void* ptr, const std::nothrow_t&)
+void operator delete (void* ptr, const std::nothrow_t&) noexcept
 {
   if (ptr != 0) scalable_free (ptr);
 }
 
-void operator delete[] (void* ptr, const std::nothrow_t&)
+void operator delete[] (void* ptr, const std::nothrow_t&) noexcept
 {
   operator delete (ptr, std::nothrow);
 }

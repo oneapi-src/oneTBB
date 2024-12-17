@@ -66,11 +66,9 @@ static void warmupTBB();
 
 int main() {
   const int num_intervals = std::numeric_limits<int>::max();
-  double parallel_time = 0.0;
 
   tbb::tick_count t0 = tbb::tick_count::now();
   double serial_pi = serialPI(num_intervals);
-  parallel_time = (tbb::tick_count::now() - t0).seconds();
   double serial_time = (tbb::tick_count::now() - t0).seconds();
 
   warmupTBB();

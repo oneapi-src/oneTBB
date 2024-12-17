@@ -38,7 +38,6 @@ void serialLineOfSight(const std::vector<double>& altitude,
 
 void parallelLineOfSight(const std::vector<double>& altitude, std::vector<bool>& is_visible, double dx) {
   const int N = altitude.size();
-  double max_angle = std::atan2(dx, altitude[0] - altitude[1]);
   
   double final_max_angle = tbb::parallel_scan(
     /*  range = */ tbb::blocked_range<int>(1, N), 
@@ -74,7 +73,6 @@ static void warmupTBB();
 
 int main() {
   const int N = 100000000;
-  const double dx = 1;
 
   auto input_types = { ALT_FLAT, ALT_DECREASING, ALT_WAVE, ALT_PLATEAU };
   std::vector<bool> serial_is_visible(N, true);

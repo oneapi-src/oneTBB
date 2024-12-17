@@ -90,7 +90,7 @@ void orderWithMulti() {
   std::vector<MessagePtr> v{(const unsigned)N, MessagePtr{}};
 
   MFNSequencer sequencer{g, tbb::flow::serial,
-  [N, &seq_i, &v](MessagePtr m, MFNPorts& p) { 
+  [&seq_i, &v](MessagePtr m, MFNPorts& p) { 
     v[m->my_seq_no] = m;
     while (seq_i < N && v[seq_i].use_count()) {
       std::get<0>(p).try_put(v[seq_i++]);
