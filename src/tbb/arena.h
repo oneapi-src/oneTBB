@@ -185,9 +185,6 @@ class thread_leave_manager {
     static const std::uint64_t ONE_TIME_FAST_LEAVE = 1 << 1;
     static const std::uint64_t DELAYED_LEAVE = 1 << 2;
     static const std::uint64_t PARALLEL_PHASE = 1 << 3;
-    // Use 29 bits for the parallel block state + reference counter,
-    // reserve 32 most significant bits.
-    static const std::uint64_t PARALLEL_PHASE_MASK = ((1LLU << 32) - 1) & ~(PARALLEL_PHASE - 1);
 
     std::atomic<std::uint64_t> my_state{0};
 public:
@@ -202,7 +199,7 @@ public:
         }
     }
 
-    void restore_state_if_needed() {
+    void restore_default_policy_if_needed() {
         std::uint64_t curr = ONE_TIME_FAST_LEAVE;
         if (my_state.load(std::memory_order_relaxed) == curr) {
             // Potentially can override decision of the parallel block from future epoch
@@ -218,17 +215,16 @@ public:
         std::uint64_t prev = my_state.load(std::memory_order_relaxed);
         std::uint64_t desired{};
         do {
-            if (prev & PARALLEL_PHASE_MASK) {
-                // The parallel phase is already started, thus simply add a reference to it
-                desired = prev + PARALLEL_PHASE;
-            } else if (prev == ONE_TIME_FAST_LEAVE) {
-                // State was previously transitioned to "One-time Fast leave", thus
-                // with the start of new parallel phase, it should be then transitioned to "Delayed leave"
-                desired = PARALLEL_PHASE | DELAYED_LEAVE;
-            } else {
-                // Transition to "start of parallel phase" state and preserving the default state
-                desired = PARALLEL_PHASE | prev;
+            // Need to add a reference for this start of a parallel phase, preserving the leave
+            // policy. Except for the case when one time fast leave was requested at the end of a
+            // previous phase.
+            desired = prev;
+            if (prev == ONE_TIME_FAST_LEAVE) {
+                // State was previously transitioned to "One-time Fast leave", thus with the start
+                // of new parallel phase, it should be transitioned to "Delayed leave"
+                desired = DELAYED_LEAVE;
             }
+            desired += PARALLEL_PHASE; // Take into account this start of a parallel phase
         } while (!my_state.compare_exchange_strong(prev, desired));
     }
 
@@ -239,13 +235,9 @@ public:
         std::uint64_t prev = my_state.load(std::memory_order_relaxed);
         std::uint64_t desired{};
         do {
-            if (((prev - PARALLEL_PHASE) & PARALLEL_PHASE_MASK) != 0) {
-                // There are still other parallel phases, thus just decrease the reference counter
-                desired = prev - PARALLEL_PHASE;
-            } else {
-                // We are the last parallel phase, thus transition to the default state
-                // or to the "One-time Fast leave" state if it was requested
-                desired = enable_fast_leave && (prev - PARALLEL_PHASE == DELAYED_LEAVE) ? ONE_TIME_FAST_LEAVE : prev - PARALLEL_PHASE;
+            desired = prev - PARALLEL_PHASE; // Mark the end of this phase in reference counter
+            if (enable_fast_leave && /*it was the last parallel phase*/desired == DELAYED_LEAVE) {
+                desired = ONE_TIME_FAST_LEAVE;
             }
         } while (!my_state.compare_exchange_strong(prev, desired));
     }

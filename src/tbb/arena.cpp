@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-#include "oneapi/tbb/detail/_assert.h"
 #include "task_dispatcher.h"
 #include "governor.h"
 #include "threading_control.h"
@@ -306,7 +305,7 @@ arena& arena::allocate_arena(threading_control* control, unsigned num_slots, uns
     return *new( storage + num_arena_slots(num_slots, num_reserved_slots) * sizeof(mail_outbox) )
         arena(control, num_slots, num_reserved_slots, priority_level
 #if __TBB_PREVIEW_PARALLEL_PHASE
-              , wl
+              , lp
 #endif
         );
 }

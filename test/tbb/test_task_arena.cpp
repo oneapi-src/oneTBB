@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-#include "common/dummy_body.h"
 #include "common/test.h"
 
 #define __TBB_EXTRA_DEBUG 1
@@ -42,7 +41,6 @@
 #include <stdexcept>
 #include <thread>
 #include <vector>
-#include <numeric>
 
 //#include "harness_fp.h"
 
