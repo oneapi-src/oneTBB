@@ -1,6 +1,6 @@
 find_package(TBB)
 
-foreach(tpp tbb_mem.cpp windows_proxy.cpp)
+foreach(tpp tbb_mem.cpp)
   string(REPLACE ".cpp" "" texe ${tpp})
   add_executable(${texe} ${tpp})
   target_include_directories(${texe} PUBLIC
