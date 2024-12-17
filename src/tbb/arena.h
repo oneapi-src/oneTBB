@@ -188,12 +188,12 @@ class thread_leave_manager {
 
     std::atomic<std::uint64_t> my_state{0};
 public:
-    void set_initial_state(tbb::task_arena::leave_policy wl) {
-        if (wl == tbb::task_arena::leave_policy::automatic) {
+    void set_initial_state(tbb::task_arena::leave_policy lp) {
+        if (lp == tbb::task_arena::leave_policy::automatic) {
             std::uint64_t platform_policy = governor::hybrid_cpu() ? FAST_LEAVE : DELAYED_LEAVE;
             my_state.store(platform_policy, std::memory_order_relaxed);
         } else {
-            __TBB_ASSERT(wl == tbb::task_arena::leave_policy::fast,
+            __TBB_ASSERT(lp == tbb::task_arena::leave_policy::fast,
                          "Was the new value introduced for leave policy?");
             my_state.store(FAST_LEAVE, std::memory_order_relaxed);
         }
