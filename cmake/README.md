@@ -20,6 +20,7 @@ TBB_INSTALL_VARS:BOOL - Enable auto-generated vars installation(packages generat
 TBB_VALGRIND_MEMCHECK:BOOL - Enable scan for memory leaks using Valgrind (OFF by default)
 TBB_DISABLE_HWLOC_AUTOMATIC_SEARCH - Disable HWLOC automatic search by pkg-config tool (OFF by default)
 TBB_ENABLE_IPO - Enable Interprocedural Optimization (IPO) during the compilation (ON by default)
+TBB_CONTROL_FLOW_GUARD:BOOL - Enable Control Flow Guard (CFG) during the compilation (OFF by default)
 TBB_BUILD_APPLE_FRAMEWORKS - Enable the Apple* frameworks instead of dylibs, only available on the Apple platform. (OFF by default)
 TBB_FILE_TRIM - Enable __FILE__ trim, replace a build-time full path with a relative path in the debug info and macro __FILE__; use it to make
            reproducible location-independent builds (ON by default)
