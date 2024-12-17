@@ -220,7 +220,7 @@ public:
         do {
             if (prev & PARALLEL_PHASE_MASK) {
                 // The parallel phase is already started, thus simply add a reference to it
-                desired = PARALLEL_PHASE + prev;
+                desired = prev + PARALLEL_PHASE;
             } else if (prev == ONE_TIME_FAST_LEAVE) {
                 // State was previously transitioned to "One-time Fast leave", thus
                 // with the start of new parallel phase, it should be then transitioned to "Delayed leave"

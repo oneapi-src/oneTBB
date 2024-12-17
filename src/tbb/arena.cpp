@@ -291,7 +291,7 @@ arena::arena(threading_control* control, unsigned num_slots, unsigned num_reserv
 arena& arena::allocate_arena(threading_control* control, unsigned num_slots, unsigned num_reserved_slots,
                              unsigned priority_level
 #if __TBB_PREVIEW_PARALLEL_PHASE
-                             , tbb::task_arena::leave_policy wl
+                             , tbb::task_arena::leave_policy lp
 #endif
 )
 {
@@ -359,7 +359,7 @@ bool arena::has_enqueued_tasks() {
 
 void arena::request_workers(int mandatory_delta, int workers_delta, bool wakeup_threads) {
 #if __TBB_PREVIEW_PARALLEL_PHASE
-    my_thread_leave.restore_state_if_needed();
+    my_thread_leave.restore_default_policy_if_needed();
 #endif
     my_threading_control->adjust_demand(my_tc_client, mandatory_delta, workers_delta);
 

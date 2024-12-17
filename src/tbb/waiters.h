@@ -102,7 +102,7 @@ private:
     using base_type = waiter_base;
 
     bool is_delayed_leave_enabled() {
- #if __TBB_PREVIEW_PARALLEL_PHASE
+#if __TBB_PREVIEW_PARALLEL_PHASE
        return my_arena.my_thread_leave.is_retention_allowed();
 #else
        return !governor::hybrid_cpu();

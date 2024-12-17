@@ -2095,7 +2095,8 @@ std::size_t measure_median_start_time(tbb::task_arena* ta, const F1& start = F1{
     auto get_longest_start = [&] (std::chrono::steady_clock::time_point start_time) {
         std::size_t longest_time = 0;
         for (auto& time : start_times) {
-            longest_time = std::max(longest_time, (std::size_t)std::chrono::duration_cast<std::chrono::microseconds>(time - start_time).count());
+            auto diff = std::chrono::duration_cast<std::chrono::microseconds>(time - start_time);
+            longest_time = std::max(longest_time, std::size_t(diff.count()));
         }
         return longest_time;
     };
@@ -2162,7 +2163,7 @@ class start_time_collection_phase_wrapped
     std::size_t measure_impl() {
         arena->start_parallel_phase();
         auto median_start_time = measure_median_start_time(arena);
-        arena->end_parallel_phase(true);
+        arena->end_parallel_phase(/*with_fast_leave*/true);
         return median_start_time;
     };
 };
