@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2023 Intel Corporation
+    Copyright (c) 2005-2024 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -302,7 +302,7 @@ static void initialize_hardware_concurrency_info () {
         // Sometimes on systems with multiple processor groups GetNativeSystemInfo
         // reports mask and processor count from the parent process
         TBB_GROUP_AFFINITY ga;
-        if (TBB_GetThreadGroupAffinity( GetCurrentThread(), &ga)) {
+        if (TBB_GetThreadGroupAffinity(GetCurrentThread(), &ga)) {
             number_of_processors = (int)TBB_GetActiveProcessorCount(ga.Group);
         }
     }
