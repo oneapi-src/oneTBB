@@ -1220,8 +1220,7 @@ TEST("Bulk unregister drops registration of a separate thread") {
     int min_sw_threads, max_sw_threads;
     min_sw_threads = max_sw_threads = platform_tcm_concurrency();
     const tcm_permit_request_t request = make_request(min_sw_threads, max_sw_threads);
-    std::atomic<tcm_permit_handle_t> ph{nullptr};
-    ph.store(request_permit(client_id, request));
+    tcm_permit_handle_t ph = request_permit(client_id, request);
     uint32_t expected_concurrency = max_sw_threads;
     tcm_permit_t expected_permit = make_active_permit(&expected_concurrency);
     check_permit(expected_permit, ph);
@@ -1236,25 +1235,25 @@ TEST("Bulk unregister drops registration of a separate thread") {
     release_permit(nested_ph);
 
     Waiter w;
-    std::atomic<bool> registered{};
+    bool is_registered = false;
     std::thread t([&]() {
         assert_fully_subscribed();
 
         register_thread(ph);
         check(can_find_at_most(/*num_resources*/1),
               "Nested request finds own resource in a separate thread");
-        w.notify_all_about([&registered] { registered = true; });
-        w.wait_for([&registered] { return !registered; });
+        w.notify_all_about([&is_registered] { is_registered = true; });
+        w.wait_for([&is_registered] { return !is_registered; });
         assert_fully_subscribed("checking invariant separate thread was unregistered by the main");
     });
 
-    w.wait_for([&registered] { return registered.load(); });
+    w.wait_for([&is_registered] { return is_registered; });
 
     unregister_threads(ph);
-    w.notify_all_about([&registered] { registered = false; });
+    w.notify_all_about([&is_registered] { is_registered = false; });
     t.join();
 
-    assert_fully_subscribed();  // The main thread gets unregistered as well
+    assert_fully_subscribed();  // Check that the main thread gets unregistered as well
 
     disconnect_client(client_id);
 }
@@ -1267,8 +1266,7 @@ TEST("Bulk unregister drops only the last registration") {
     int32_t min_sw_threads = platform_tcm_concurrency() - 1;
     int32_t max_sw_threads = min_sw_threads;
 
-    std::atomic<tcm_permit_handle_t> ph =
-        request_permit(client, make_request(min_sw_threads, max_sw_threads));
+    tcm_permit_handle_t ph = request_permit(client, make_request(min_sw_threads, max_sw_threads));
     tcm_permit_handle_t top_ph = ph;
     register_thread(top_ph);
 
@@ -1287,8 +1285,7 @@ TEST("Bulk unregister drops only the last registration") {
         check(can_find_at_most(/*num_resources*/1), "Only own resource is available for re-use");
 
         // Allow the main thread to unregister me from my 2nd permit handle
-        ph.store(ph_2);
-        w.notify_all_about([&test_epoch] { test_epoch = worker_registers_nested; });
+        w.notify_all_about([&] { ph = ph_2; test_epoch = worker_registers_nested; });
 
         w.wait_for([&] { return test_epoch == main_unregisters_nested; });
         check(can_find_at_most(/*num_resources*/1),
@@ -1310,7 +1307,7 @@ TEST("Bulk unregister drops only the last registration") {
 }
 
 TEST("Bulk unregister works from the thread that did not request") {
-    std::atomic<tcm_permit_handle_t> ph{nullptr};
+    tcm_permit_handle_t ph{nullptr};
     Waiter w;
     std::thread t([&] {
         tcm_client_id_t client = connect_new_client(/*callback*/nullptr);
@@ -1320,15 +1317,15 @@ TEST("Bulk unregister works from the thread that did not request") {
             request_permit(client, make_request(min_sw_threads, max_sw_threads));
         register_thread(local_ph);
         check(can_find_at_most(/*num_resources*/1), "Own resource is used");
-        w.notify_all_about([&ph, local_ph] { ph.store(local_ph); });
-        w.wait_for([&] { return !ph.load(); });
+        w.notify_all_about([&ph, local_ph] { ph = local_ph; });
+        w.wait_for([&] { return !ph; });
         assert_fully_subscribed("checking invariant separate thread was unregistered by the main");
         disconnect_client(client);
     });
 
-    w.wait_for([&] { return ph.load(); });
+    w.wait_for([&] { return ph; });
     unregister_threads(ph);     // Unregister permit handle that this thread knows nothing about
-    w.notify_all_about([&ph] { ph.store(nullptr); });
+    w.notify_all_about([&ph] { ph = nullptr; });
     t.join();
 }
 
@@ -1339,18 +1336,17 @@ TEST("Bulk unregister affects only registered threads") {
     tcm_client_id_t client = connect_new_client(/*callback*/nullptr);
     int32_t max_sw_threads = platform_tcm_concurrency();
     int32_t min_sw_threads = max_sw_threads - 1;
-    std::atomic<tcm_permit_handle_t> ph =
-        request_permit(client, make_request(min_sw_threads, max_sw_threads));
+    tcm_permit_handle_t ph = request_permit(client, make_request(min_sw_threads, max_sw_threads));
 
     enum test_epoch_t {start, related_thread_registers, unrelated_thread_ready,
                        main_thread_unregisters, unrelated_thread_done};
-    std::atomic<test_epoch_t> test_epoch = start;
+    test_epoch_t test_epoch = start;
     Waiter w;
     std::thread related_thread([&ph, &w, &test_epoch] {
         register_thread(ph);
         check(can_find_at_most(/*num_resources=*/2),
               "Nested call can find at most own + 1 negotiated resource");
-        w.notify_all_about([&test_epoch] { test_epoch.store(related_thread_registers); });
+        w.notify_all_about([&test_epoch] { test_epoch = related_thread_registers; });
         w.wait_for([&] { return test_epoch == unrelated_thread_done; });
         check(can_find_at_most(/*num_resources = no own resource + 1 negotiated*/1),
               "After bulk unregister nested request can find at most 1 resource");
@@ -1367,18 +1363,18 @@ TEST("Bulk unregister affects only registered threads") {
         check_permit(make_active_permit(&unrelated_min), local_ph);
         register_thread(local_ph);
         check(can_find_at_most(/*num_resource*/1), "Nested call can find only own resource");
-        w.notify_all_about([&test_epoch] { test_epoch.store(unrelated_thread_ready); });
+        w.notify_all_about([&test_epoch] { test_epoch = unrelated_thread_ready; });
         w.wait_for([&] { return test_epoch == main_thread_unregisters; });
         check(can_find_at_most(/*num_resource*/1), "Bulk deregistration does not affect unrelated "
                                                    "thread as it can still find owned resource");
         release_permit(local_ph);
-        w.notify_all_about([&test_epoch] { test_epoch.store(unrelated_thread_done); });
+        w.notify_all_about([&test_epoch] { test_epoch = unrelated_thread_done; });
         disconnect_client(unrelated_client);
     });
 
     w.wait_for([&] { return test_epoch == unrelated_thread_ready; });
     unregister_threads(ph);
-    w.notify_all_about([&test_epoch] { test_epoch.store(main_thread_unregisters); });
+    w.notify_all_about([&test_epoch] { test_epoch = main_thread_unregisters; });
 
     related_thread.join();
     unrelated_thread.join();
