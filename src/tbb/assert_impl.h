@@ -85,9 +85,9 @@ static std::atomic<tbb::detail::do_once_state> assertion_state;
 }
 
 #if !__TBBMALLOC_BUILD && !__TBBMALLOCPROXY_BUILD && !TBB_USE_EXCEPTIONS
-// handler for the case, when TBB library is build without exception support and
-// there is no custom assertion handler provided by the user
-/* [[noreturn]] */ void throw_in_noexcept_default(const char* comment) {
+// Handler for the case when the TBB library is built without exception support and
+// no custom assertion handler is provided by the user
+/* [[noreturn]] */ void throw_for_noexcept_default(const char* comment) {
 #if __TBB_MSVC_UNREACHABLE_CODE_IGNORED
     // Workaround for erroneous "unreachable code" during assertion throwing using call_once
     #pragma warning (push)
@@ -134,12 +134,13 @@ void terminate_on_user_exception() {
     assertion_handler_type curr_handler = assertion_handler::get();
 
     // "exception in noexcept function" can report exception name
-    // for any exception, so use it if one is not redefined
+    // for any exception, so use it if the handler is not redefined
     if (curr_handler == assertion_failure_default)
         do_throw_noexcept([] { throw; });
 
     char buf[256] = { 0 };
 
+    // limited form of finding details of the exception
     try {
         throw;
     } catch (std::exception &x) {
@@ -154,8 +155,9 @@ void terminate_on_user_exception() {
         std::strncat(buf, "Unknown exception", sizeof(buf)-1);
     }
     curr_handler("", 0, "", buf);
+    assertion_failure_default(__FILE__, __LINE__, "", "User assertion handler must not return");
 }
-#endif // __TBB_BUILD
+#endif // __TBB_BUILD && TBB_USE_EXCEPTIONS
 
 void __TBB_EXPORTED_FUNC assertion_failure(const char* location, int line,
                                            const char* expression, const char* comment) {
@@ -168,6 +170,7 @@ bool try_call_user_handler_on_exception(const char* comment) {
     if (curr == assertion_failure_default)
         return false;
     curr("", 0, "", comment);
+    assertion_failure_default(__FILE__, __LINE__, "", "User assertion handler must not return");
     return true;
 }
 #endif // !__TBBMALLOC_BUILD && !__TBBMALLOCPROXY_BUILD

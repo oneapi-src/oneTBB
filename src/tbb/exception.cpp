@@ -81,7 +81,7 @@ const char* missing_wait::what() const noexcept(true) { return "wait() was not c
         std::snprintf(msg_buf, sizeof(msg_buf), \
             "Exception %s with message %s would have been thrown, "  \
             "if exception handling had not been disabled. Terminating.\n", exc_name, msg); \
-        if (!try_call_user_handler_on_exception(msg_buf)) throw_in_noexcept_default(msg_buf); }
+        if (!try_call_user_handler_on_exception(msg_buf)) throw_for_noexcept_default(msg_buf); }
     #define DO_THROW(exc, init_args) PRINT_ERROR_AND_ABORT(#exc, #init_args)
 #endif /* !TBB_USE_EXCEPTIONS */
 
