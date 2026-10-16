@@ -40,7 +40,7 @@ endif()
 
 if (POLICY CMP0148)
     # CMake 3.27: The FindPythonInterp and FindPythonLibs modules are removed
-    cmake_policy(SET CMP0148 OLD)
+    cmake_policy(SET CMP0148 NEW)
 endif()
 
 if (TBB_WINDOWS_DRIVER AND (NOT ("${CMAKE_MSVC_RUNTIME_LIBRARY}" STREQUAL MultiThreaded OR "${CMAKE_MSVC_RUNTIME_LIBRARY}" STREQUAL MultiThreadedDebug)))
