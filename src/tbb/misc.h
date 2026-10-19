@@ -284,9 +284,13 @@ static inline unsigned char is_in_transaction() {
 }
 #endif // TBB_USE_ASSERT
 
+#if TBB_USE_EXCEPTIONS
 /*[[noreturn]]*/void do_throw_noexcept(void (*throw_exception)()) noexcept;
 
+#if __TBB_BUILD
 /*[[noreturn]]*/void terminate_on_user_exception();
+#endif // __TBB_BUILD
+#endif // TBB_USE_EXCEPTIONS
 
 } // namespace r1
 } // namespace detail

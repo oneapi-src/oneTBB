@@ -94,7 +94,7 @@ static std::atomic<tbb::detail::do_once_state> assertion_state;
     #pragma warning (disable: 4702)
 #endif
     atomic_do_once([&](){
-        std::fprintf(stderr, "Detailed description: %s\n", comment);
+        std::fprintf(stderr, "%s\n", comment);
 #if _MSC_VER && _DEBUG
         if (1 == _CrtDbgReport(_CRT_ASSERT, nullptr, 0, "tbb_debug.dll", "%s\r\n%s",
                                "", comment?comment:"")) {
@@ -103,7 +103,7 @@ static std::atomic<tbb::detail::do_once_state> assertion_state;
 #endif
         {
             std::fflush(stderr);
-            std::terminate();
+            std::abort();
         }
     }, assertion_state);
 #if __TBB_MSVC_UNREACHABLE_CODE_IGNORED

@@ -126,7 +126,7 @@ void handle_perror( int error_code, const char* what ) {
 #if TBB_USE_EXCEPTIONS
     do_throw([&buf] { throw std::runtime_error(buf); }, "std::runtime_error", buf);
 #else
-    PRINT_ERROR_AND_ABORT( "runtime_error", buf);
+    PRINT_ERROR_AND_ABORT( "std::runtime_error", buf);
 #endif /* !TBB_USE_EXCEPTIONS */
 }
 

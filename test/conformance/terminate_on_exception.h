@@ -44,7 +44,7 @@ void global_control_terminate_on_exception(TestCase test_case) {
 #endif
         static std::jmp_buf buffer;
         volatile std::terminate_handler prev_terminate_handler = nullptr;
-        tbb::ext::assertion_handler_type prev_assertion_handler = nullptr;
+        tbb::assertion_handler_type prev_assertion_handler = nullptr;
 
         if (test_case == TestCase::SET_TERMINATE) {
             prev_terminate_handler = std::set_terminate([] {
@@ -54,7 +54,7 @@ void global_control_terminate_on_exception(TestCase test_case) {
             });
         } else if (test_case == TestCase::CUSTOM_ASSERTION_HANDLER) {
             prev_assertion_handler =
-                tbb::ext::set_assertion_handler([](const char* location, int line,
+                tbb::set_assertion_handler([](const char* location, int line,
                                                    const char* expression, const char* comment) {
                 CHECK(!terminate_handler_called);
                 terminate_handler_called = true;
@@ -108,7 +108,7 @@ void global_control_terminate_on_exception(TestCase test_case) {
         if (test_case == TestCase::SET_TERMINATE) {
             std::set_terminate(prev_terminate_handler);
         } else if (test_case == TestCase::CUSTOM_ASSERTION_HANDLER) {
-            tbb::ext::set_assertion_handler(prev_assertion_handler);
+            tbb::set_assertion_handler(prev_assertion_handler);
         }
 #if TBB_USE_EXCEPTIONS
     } catch (...) {

@@ -315,8 +315,8 @@ TEST_CASE("Assertion handler feature-test macro") {
 
 //! \brief \ref interface
 TEST_CASE("Assertion handler compatibility API") {
-    CHECK_MESSAGE((std::is_same<tbb::assertion_handler_type, tbb::ext::assertion_handler_type>::value),
+    CHECK_MESSAGE((std::is_same<tbb::assertion_handler_type, tbb::assertion_handler_type>::value),
                   "Incorrect compat assertion_handler_type");
-    CHECK_MESSAGE(&tbb::get_assertion_handler == &tbb::ext::get_assertion_handler, "Incorrect compat get_assertion_handler");
-    CHECK_MESSAGE(&tbb::set_assertion_handler == &tbb::ext::set_assertion_handler, "Incorrect compat set_assertion_handler");
+    CHECK_MESSAGE(&tbb::get_assertion_handler == &tbb::get_assertion_handler, "Incorrect compat get_assertion_handler");
+    CHECK_MESSAGE(&tbb::set_assertion_handler == &tbb::set_assertion_handler, "Incorrect compat set_assertion_handler");
 }

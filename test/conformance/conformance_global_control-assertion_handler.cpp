@@ -25,9 +25,9 @@
 
 #include "terminate_on_exception.h"
 
-//! Test terminate_on_exception: tbb::ext::set_assertion_handler
+//! Test terminate_on_exception: tbb::set_assertion_handler
 //! \brief \ref interface \ref requirement
-TEST_CASE("terminate_on_exception: tbb::ext::set_assertion_handler") {
+TEST_CASE("terminate_on_exception: tbb::set_assertion_handler") {
     global_control_terminate_on_exception(TestCase::CUSTOM_ASSERTION_HANDLER);
 }
 #else // (!_MSC_VER || (defined(_DLL) && !defined(_DEBUG))) && !EMSCRIPTEN
