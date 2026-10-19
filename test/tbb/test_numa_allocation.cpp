@@ -123,14 +123,17 @@ template <typename... Args>
 void TestTypedAllocation(size_t count, const Args&... args) {
     int* ptr = tbb::allocate_numa_interleaved<int>(count, args...);
     REQUIRE_MESSAGE(ptr != nullptr, "Failed to allocate " << count << " int objects");
+    REQUIRE_EQ(utils::NonZero(ptr, count * sizeof(*ptr)), 0);
     tbb::deallocate_numa_interleaved<int>(ptr, count);
 
     long* ptr_long = tbb::allocate_numa_interleaved<long>(count, args...);
     REQUIRE_MESSAGE(ptr_long != nullptr, "Failed to allocate " << count << " long objects");
+    REQUIRE_EQ(utils::NonZero(ptr_long, count * sizeof(*ptr_long)), 0);
     tbb::deallocate_numa_interleaved<long>(ptr_long, count);
 
     int (*a)[4] = tbb::allocate_numa_interleaved<int[4]>(count, args...);
     REQUIRE_MESSAGE(a != nullptr, "Failed to allocate " << count << " int[4] objects");
+    REQUIRE_EQ(utils::NonZero(a, count * sizeof(*a)), 0);
     tbb::deallocate_numa_interleaved<int[4]>(a, count);
 }
 
