@@ -83,7 +83,7 @@ inline T* allocate_numa_interleaved(
 template <typename T>
 inline void deallocate_numa_interleaved(type_identity_t<T>* ptr, size_t count)
 {
-    r1::deallocate_interleaved(ptr, count * sizeof(T));
+    r1::deallocate_interleaved(const_cast<typename std::remove_cv<T>::type*>(ptr), count * sizeof(T));
 }
 
 // Delete the generic deallocate to prevent misuse with typed pointers without
