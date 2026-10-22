@@ -2327,3 +2327,21 @@ TEST_CASE("ODR-use task_arena constants") {
     CHECK(task_arena_ptr != nullptr);
 }
 #endif // __TBB_CPP17_PRESENT
+
+//! \brief \ref regression
+TEST_CASE("Multiple nested arenas") {
+    tbb::task_arena a;
+    tbb::task_arena b;
+
+    a.execute([&] {
+        tbb::parallel_for(0, 1000, [&](int) {
+            b.execute([&] {
+                tbb::parallel_for(0, 100, [&](int) {
+                    a.execute([&] {
+                        tbb::parallel_for(0, 10, [&](int) {});
+                    });
+                });
+            });
+        });
+    });
+}
