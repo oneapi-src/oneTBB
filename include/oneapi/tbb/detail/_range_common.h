@@ -1,5 +1,6 @@
 /*
     Copyright (c) 2005-2025 Intel Corporation
+    Copyright (c) 2026 UXL Foundation Contributors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -87,7 +88,7 @@ template <typename Value>
 concept blocked_range_value = std::copyable<Value> &&
                               requires( const std::remove_reference_t<Value>& lhs, const std::remove_reference_t<Value>& rhs ) {
                                   { lhs < rhs } -> relaxed_convertible_to<bool>;
-                                  { lhs - rhs } -> std::convertible_to<std::size_t>;
+                                  { lhs - rhs } -> relaxed_convertible_to<std::size_t>;
                                   { lhs + (rhs - lhs) } -> std::convertible_to<Value>;
                               };
 

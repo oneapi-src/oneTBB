@@ -45,7 +45,7 @@ A type `Value` satisfies `BlockedRangeValue` if it meets the following requireme
 
 ``D`` is the type of the expression ``j-i``. It can be any integral type that is convertible to ``size_t``.
 Examples that model the Value requirements are integral types, pointers, and STL random-access iterators
-whose difference can be implicitly converted to a ``size_t``.
+whose difference can be converted to a ``size_t``.
 
 See also:
 
