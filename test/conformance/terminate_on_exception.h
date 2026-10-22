@@ -112,7 +112,7 @@ void global_control_terminate_on_exception(TestCase test_case) {
         }
 #if TBB_USE_EXCEPTIONS
     } catch (...) {
-        FAIL("The exception is not expected");
+        FAIL("The exception is not expected in terminate_on_exception mode");
     }
 #endif
     CHECK(terminate_handler_called);

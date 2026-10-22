@@ -44,7 +44,7 @@ namespace detail {
 namespace r1 {
 
 #if !__TBBMALLOC_BUILD && !__TBBMALLOCPROXY_BUILD
-bool try_call_user_handler_on_exception(const char* comment);
+bool try_call_user_handler_on_exception(const char* comment) noexcept;
 #if !TBB_USE_EXCEPTIONS
 void throw_for_noexcept_default(const char* comment);
 #endif
@@ -288,7 +288,7 @@ static inline unsigned char is_in_transaction() {
 /*[[noreturn]]*/void do_throw_noexcept(void (*throw_exception)()) noexcept;
 
 #if __TBB_BUILD
-/*[[noreturn]]*/void terminate_on_user_exception();
+/*[[noreturn]]*/void terminate_on_user_exception() noexcept;
 #endif // __TBB_BUILD
 #endif // TBB_USE_EXCEPTIONS
 

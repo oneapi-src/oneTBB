@@ -19,17 +19,21 @@
 
 #include "common/test.h"
 
-// The test cannot work correctly with statically linked runtime.
+constexpr char test_name[] =
+    "terminate_on_exception: tbb::set_assertion_handler";
+
+// The test does not work correctly when the runtime is statically linked.
 // TODO: investigate a failure in debug with MSVC
 #if (!_MSC_VER || (defined(_DLL) && !defined(_DEBUG))) && !EMSCRIPTEN
 
 #include "terminate_on_exception.h"
 
-//! Test terminate_on_exception: tbb::set_assertion_handler
+//! Test terminate_on_exception by using tbb::set_assertion_handler and throwing an exception from
+//! the library and a std::exception from user code.
 //! \brief \ref interface \ref requirement
-TEST_CASE("terminate_on_exception: tbb::set_assertion_handler") {
+TEST_CASE(test_name) {
     global_control_terminate_on_exception(TestCase::CUSTOM_ASSERTION_HANDLER);
 }
 #else // (!_MSC_VER || (defined(_DLL) && !defined(_DEBUG))) && !EMSCRIPTEN
-TEST_CASE("terminate_on_exception: enabled" * doctest::skip()) {}
+TEST_CASE(test_name * doctest::skip()) {}
 #endif

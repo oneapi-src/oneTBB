@@ -130,7 +130,9 @@ static assertion_handler_type get() noexcept {
 } // namespace assertion_handler
 
 #if __TBB_BUILD && TBB_USE_EXCEPTIONS
-void terminate_on_user_exception() {
+// Declare as noexcept because the user assertion handler can throw, but this function
+// is called in terminate_on_exception mode.
+void terminate_on_user_exception() noexcept {
     assertion_handler_type curr_handler = assertion_handler::get();
 
     // "exception in noexcept function" can report exception name
@@ -165,7 +167,9 @@ void __TBB_EXPORTED_FUNC assertion_failure(const char* location, int line,
 }
 
 #if !__TBBMALLOC_BUILD && !__TBBMALLOCPROXY_BUILD
-bool try_call_user_handler_on_exception(const char* comment) {
+// Declare as noexcept because the user assertion handler can throw, but this function is
+// called either in terminate_on_exception mode or when built with !TBB_USE_EXCEPTIONS.
+bool try_call_user_handler_on_exception(const char* comment) noexcept {
     assertion_handler_type curr = assertion_handler::get();
     if (curr == assertion_failure_default)
         return false;
@@ -193,4 +197,3 @@ void runtime_warning( const char* format, ... ) {
 #endif
 
 #endif // __TBB_assert_impl_H
-

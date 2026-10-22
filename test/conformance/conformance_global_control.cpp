@@ -373,6 +373,9 @@ TEST_CASE("Test worker threads remain inactive in enforced serial execution mode
     thr.join();
 }
 
+constexpr char test_name[] =
+    "terminate_on_exception: set_terminate";
+
 // The test cannot work correctly with statically linked runtime.
 // TODO: investigate a failure in debug with MSVC
 #if (!_MSC_VER || (defined(_DLL) && !defined(_DEBUG))) && !EMSCRIPTEN
@@ -381,9 +384,9 @@ TEST_CASE("Test worker threads remain inactive in enforced serial execution mode
 
 //! Test terminate_on_exception: std::set_terminate
 //! \brief \ref interface \ref requirement
-TEST_CASE("terminate_on_exception: set_terminate") {
+TEST_CASE(test_name) {
     global_control_terminate_on_exception(TestCase::SET_TERMINATE);
 }
 #else // (!_MSC_VER || (defined(_DLL) && !defined(_DEBUG))) && !EMSCRIPTEN
-TEST_CASE("terminate_on_exception: enabled" * doctest::skip()) {}
+TEST_CASE(test_name * doctest::skip()) {}
 #endif

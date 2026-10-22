@@ -28,22 +28,20 @@
 
 #include <csetjmp>
 
-//! Test terminate_on_exception: tbb::ext::set_assertion_handler with an exception
+//! Test terminate_on_exception: use tbb::set_assertion_handler, throw from user code an exception
 //! not inherited from std::exception
 //! \brief \ref interface \ref requirement
-TEST_CASE("terminate_on_exception: tbb::ext::set_assertion_handler") {
+TEST_CASE("terminate_on_exception: tbb::set_assertion_handler") {
     oneapi::tbb::global_control c(oneapi::tbb::global_control::terminate_on_exception, 1);
     static bool terminate_handler_called;
 
-#if TBB_USE_EXCEPTIONS
     try {
-#endif
         static std::jmp_buf buffer;
-        tbb::ext::assertion_handler_type prev_assertion_handler = nullptr;
+        tbb::assertion_handler_type prev_assertion_handler = nullptr;
 
-            prev_assertion_handler =
-                tbb::ext::set_assertion_handler([](const char* location, int line,
-                                                   const char* expression, const char* comment) {
+        prev_assertion_handler =
+            tbb::set_assertion_handler([](const char* location, int line,
+                                          const char* expression, const char* comment) {
                 CHECK(!terminate_handler_called);
                 terminate_handler_called = true;
                 CHECK(location);
@@ -52,36 +50,34 @@ TEST_CASE("terminate_on_exception: tbb::ext::set_assertion_handler") {
                 CHECK(expression);
                 CHECK(expression[0] == 0);
                 CHECK(comment);
-                CHECK(strcmp(comment, "Unknown exception") == 0);
+                const char *expected_comment = "Unknown exception";
+                CHECK_MESSAGE(strcmp(comment, expected_comment) == 0, "expected \"" << std::string(expected_comment) << "\", got: "
+                              << std::string(comment));
                 std::longjmp(buffer, 1);
             });
-#if TBB_USE_EXCEPTIONS
 #if _MSC_VER
 #pragma warning(push)
 #pragma warning(disable:4611) // interaction between '_setjmp' and C++ object destruction is non-portable
 #endif
-            if (setjmp(buffer) == 0) {
-                oneapi::tbb::parallel_for(0, 1, [](int) {
-                    volatile bool suppress_unreachable_code_warning = true;
-                    if (suppress_unreachable_code_warning) {
-                        throw int{1};
-                    }
-                });
-                FAIL("Unreachable code");
-            }
-            CHECK(terminate_handler_called);
-#endif
+        if (setjmp(buffer) == 0) {
+            oneapi::tbb::parallel_for(0, 1, [](int) {
+                volatile bool suppress_unreachable_code_warning = true;
+                if (suppress_unreachable_code_warning) {
+                    throw int{1};
+                }
+            });
+            FAIL("Unreachable code");
+        }
+        CHECK(terminate_handler_called);
 #if _MSC_VER
 #pragma warning(pop)
 #endif
-            tbb::ext::set_assertion_handler(prev_assertion_handler);
-#if TBB_USE_EXCEPTIONS
+        tbb::set_assertion_handler(prev_assertion_handler);
     } catch (...) {
         FAIL("The exception is not expected");
     }
-#endif
     CHECK(terminate_handler_called);
 }
-#else // (!_MSC_VER || (defined(_DLL) && !defined(_DEBUG))) && !EMSCRIPTEN
-TEST_CASE("terminate_on_exception: enabled" * doctest::skip()) {}
+#else
+TEST_CASE("terminate_on_exception: tbb::set_assertion_handler" * doctest::skip()) {}
 #endif
