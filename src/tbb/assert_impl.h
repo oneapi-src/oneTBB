@@ -146,13 +146,8 @@ void terminate_on_user_exception() noexcept {
     try {
         throw;
     } catch (std::exception &x) {
-#if __TBB_USE_OPTIONAL_RTTI
-        std::snprintf(buf, sizeof(buf), "Terminating due to exception %s with explanation %s",
-                      typeid(x).name(), x.what());
-#else
-        std::snprintf(buf, sizeof(buf), "Terminating due to unknown exception with explanation %s",
-                      x.what());
-#endif
+        std::snprintf(buf, sizeof(buf), "Terminating due to an unknown exception derived from "
+                                        "std::exception; explanation %s", x.what());
     } catch (...) {
         std::strncat(buf, "Unknown exception", sizeof(buf)-1);
     }
