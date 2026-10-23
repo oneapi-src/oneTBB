@@ -33,7 +33,6 @@ void throw_in_assertion_handler(TestCase test_case) {
     static bool assertion_handler_called;
     static TestCase my_test_case;
 
-    // Reset per-call state to keep this helper self-contained and order-independent.
     terminate_handler_called = false;
     assertion_handler_called = false;
     my_test_case = test_case;

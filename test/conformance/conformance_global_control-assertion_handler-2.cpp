@@ -19,6 +19,10 @@
 
 #include "common/test.h"
 
+constexpr char test_name[] =
+    "terminate_on_exception: uses tbb::set_assertion_handler, "
+    "throws not inherited from std::exception";
+
 // The test cannot work correctly with statically linked runtime.
 // TODO: investigate a failure in debug with MSVC
 #if TBB_USE_EXCEPTIONS && (!_MSC_VER || (defined(_DLL) && !defined(_DEBUG))) && !EMSCRIPTEN
@@ -31,7 +35,7 @@
 //! Test terminate_on_exception: use tbb::set_assertion_handler, throw from user code an exception
 //! not inherited from std::exception
 //! \brief \ref interface \ref requirement
-TEST_CASE("terminate_on_exception: tbb::set_assertion_handler") {
+TEST_CASE(test_name) {
     oneapi::tbb::global_control c(oneapi::tbb::global_control::terminate_on_exception, 1);
     static bool terminate_handler_called;
 
@@ -79,5 +83,5 @@ TEST_CASE("terminate_on_exception: tbb::set_assertion_handler") {
     CHECK(terminate_handler_called);
 }
 #else
-TEST_CASE("terminate_on_exception: tbb::set_assertion_handler" * doctest::skip()) {}
+TEST_CASE(test_name * doctest::skip()) {}
 #endif

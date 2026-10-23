@@ -131,7 +131,7 @@ static assertion_handler_type get() noexcept {
 
 #if __TBB_BUILD && TBB_USE_EXCEPTIONS
 // Declare as noexcept because the user assertion handler can throw, but this function
-// is called in terminate_on_exception mode.
+// is called only in terminate_on_exception mode.
 void terminate_on_user_exception() noexcept {
     assertion_handler_type curr_handler = assertion_handler::get();
 
